@@ -1,0 +1,30 @@
+{
+  "name": "vtwo-ops",
+  "version": "1.0.0",
+  "description": "V.Two Ops - Unified people & asset management platform",
+  "main": "server/index.js",
+  "type": "module",
+  "scripts": {
+    "dev": "node server/index.js",
+    "db:push": "prisma db push",
+    "db:seed": "node prisma/seed.js",
+    "prisma:studio": "prisma studio",
+    "build:app": "cd app && npm run build",
+    "app:dev": "cd app && npm run dev"
+  },
+  "keywords": [
+    "hrm",
+    "asset-tracking",
+    "device-management"
+  ],
+  "author": "V.Two",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "@prisma/client": "^5.8.0"
+  },
+  "devDependencies": {
+    "prisma": "^5.8.0"
+  }
+}
