@@ -8,11 +8,12 @@
 
 ## Quick Reference
 
-**Total Tasks:** 12 major chunks (50+ subtasks)
-**Estimated Time:** 6-8 hours (parallel execution)
+**Total Tasks:** 15 major chunks (65+ subtasks)
+**Estimated Time:** 8-10 hours (parallel execution)
 **Dependencies:** Phase 1 complete ✓
 **Design Reference:** `2026-03-23-rippling-mirrored-design.md`
 **Implementation Plan:** `2026-03-23-phase2-people-core.md`
+**Admin + Claude Integration:** `2026-03-23-ADMIN-CLAUDE-INTEGRATION.md`
 
 ---
 
@@ -109,6 +110,43 @@ Design system and visual refinement
   - Update: All components with Rippling colors and spacing
   - Tests: Component rendering, accessibility
 
+### Phase 2.6: Admin Panel + Custom Fields (Independence: Medium)
+Backend custom field system and admin CRUD
+
+- **[CHUNK-13]** Custom Fields Schema & Service
+  - Extend: `prisma/schema.prisma` (CustomField, CustomFieldValue models)
+  - Create: `server/services/customFieldService.js`
+  - Create: `server/routes/admin/customFields.js`
+  - Implement: Full CRUD for custom fields
+  - Validate: Field types, entity types
+  - Tests: Service layer, endpoint tests
+
+### Phase 2.7: Admin Panel UI (Independence: Low)
+Self-service admin dashboard
+
+- **[CHUNK-14]** Admin Panel Pages
+  - Create: `app/src/pages/admin/CustomFields.jsx` (field builder)
+  - Create: `app/src/pages/admin/Templates.jsx` (template manager)
+  - Create: `app/src/pages/admin/Settings.jsx` (system config)
+  - Create: `app/src/pages/admin/FeatureRequests.jsx` (request board)
+  - Create: `app/src/pages/admin/Health.jsx` (system stats)
+  - Update: `app/src/components/Sidebar.jsx` (add admin section)
+  - Update: All forms to render dynamic custom fields
+  - Tests: Admin page interactions, form rendering
+
+### Phase 2.8: Claude Chat Integration (Independence: Low)
+Chat widget and feature request system
+
+- **[CHUNK-15]** Claude Chat & Feature Requests
+  - Extend: `prisma/schema.prisma` (FeatureRequest, ChatMessage models)
+  - Create: `server/services/claudeService.js` (Claude API integration)
+  - Create: `server/routes/claude.js` (chat endpoint)
+  - Create: `app/src/components/ClaudeChat.jsx` (chat widget)
+  - Create: `app/src/hooks/useClaudeChat.js`
+  - Implement: Auto-create custom fields from chat
+  - Implement: Feature request tracking
+  - Tests: Chat interactions, Claude integration
+
 ---
 
 ## Task Execution Matrix
@@ -127,6 +165,9 @@ Design system and visual refinement
 | 10 | Notifications UI | Chunk-5, 6 | No | 4 |
 | 11 | Activity Feed | Chunk-5 | No | 3 |
 | 12 | Design Polish | 6-11 | Yes (partial) | 6 |
+| 13 | Custom Fields Schema | Chunk-1 | Yes | 3 |
+| 14 | Admin Panel UI | Chunk-13, 12 | Yes (partial) | 8 |
+| 15 | Claude Chat | Chunk-13, 14 | No | 5 |
 
 ---
 
@@ -160,13 +201,14 @@ Phase-1 ✓
 ## Recommended Execution Order
 
 ### **Round 1 (Parallel):**
-- Chunk-1: Schema extensions
+- Chunk-1: Schema extensions (includes CustomField, FeatureRequest models)
 - Chunk-6: Detail panels (independent React work)
 
 ### **Round 2 (Parallel):**
 - Chunk-2: Resume upload service
 - Chunk-4: Onboarding service
 - Chunk-5: Notification service
+- Chunk-13: Custom fields schema & service
 
 ### **Round 3 (Parallel):**
 - Chunk-3: Candidate service extensions
@@ -176,14 +218,16 @@ Phase-1 ✓
 - Chunk-8: Employee profile page
 - Chunk-9: Onboarding checklist page
 - Chunk-10: Notification UI
+- Chunk-12: Design polish (can start earlier)
 
 ### **Round 5 (Parallel):**
 - Chunk-11: Activity feed
-- Chunk-12: Design polish
+- Chunk-14: Admin panel UI (depends on Chunk-13)
 
 ### **Round 6 (Sequential):**
+- Chunk-15: Claude chat (depends on Chunk-14)
 - Integration testing (all components together)
-- Full end-to-end testing (candidate → hire → onboarding)
+- Full end-to-end testing (candidate → hire → onboarding + admin)
 - Performance optimization
 
 ---
