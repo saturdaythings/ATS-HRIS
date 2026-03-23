@@ -10,7 +10,9 @@ import employeesRouter from './routes/employees.js';
 import devicesRouter from './routes/devices.js';
 import assignmentsRouter from './routes/assignments.js';
 import activitiesRouter from './routes/activities.js';
+import notificationsRouter from './routes/notifications.js';
 import customFieldsRouter from './routes/admin/customFields.js';
+import onboardingRouter from './routes/onboarding.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -26,7 +28,9 @@ app.use('/api/employees', employeesRouter);
 app.use('/api/devices', devicesRouter);
 app.use('/api/assignments', assignmentsRouter);
 app.use('/api/activities', activitiesRouter);
+app.use('/api/notifications', notificationsRouter);
 app.use('/api/admin/custom-fields', customFieldsRouter);
+app.use('/api/onboarding', onboardingRouter);
 
 // Error handling
 app.use(errorHandler);

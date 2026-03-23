@@ -166,14 +166,28 @@ model Settings {
 
 // Onboarding module (Phase 2+)
 model OnboardingTemplate {
-  id        String   @id @default(cuid())
-  name      String   // "Engineering", "Design", "Sales"
-  role      String   // "Junior Engineer", "Senior Designer", etc.
-  items     OnboardingChecklist[]
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String   @id @default(cuid())
+  name       String   // "Engineering", "Design", "Sales"
+  role       String   // "Junior Engineer", "Senior Designer", etc.
+  items      OnboardingTemplateItem[]
+  checklists OnboardingChecklist[]
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([role])
+}
+
+model OnboardingTemplateItem {
+  id          String   @id @default(cuid())
+  templateId  String
+  template    OnboardingTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  task        String
+  assignedTo  String   // "HR", "IT", "Manager", "Employee"
+  dueDate     DateTime
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([templateId])
 }
 
 model OnboardingChecklist {
