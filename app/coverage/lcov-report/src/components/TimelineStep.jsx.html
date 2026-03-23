@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>10/10</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">92.3% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>24/26</span>
+                <span class='fraction'>0/26</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>9/9</span>
+                <span class='fraction'>0/9</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -199,20 +199,20 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16x</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">6x</span>
-<span class="cline-any cline-yes">1x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">29x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">16x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -282,7 +282,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">10x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -314,27 +314,27 @@
  */
 import { useState } from 'react';
 &nbsp;
-export default function TimelineStep({
+export default function <span class="fstat-no" title="function not covered" >TimelineStep(</span>{
   label,
   completed = <span class="branch-0 cbranch-no" title="branch not covered" >false,</span>
   items = <span class="branch-0 cbranch-no" title="branch not covered" >[],</span>
   onClick,
-  variant = 'default',
+  variant = <span class="branch-0 cbranch-no" title="branch not covered" >'default',</span>
 }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [isExpanded, setIsExpanded] = <span class="cstat-no" title="statement not covered" >useState(false);</span>
 &nbsp;
-  const handleToggle = () =&gt; {
-    setIsExpanded(!isExpanded);
-    if (onClick) {
-      onClick(!isExpanded);
+  const handleToggle = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    setIsExpanded(!isExpanded);</span>
+<span class="cstat-no" title="statement not covered" >    if (onClick) {</span>
+<span class="cstat-no" title="statement not covered" >      onClick(!isExpanded);</span>
     }
   };
 &nbsp;
-  const completedItems = items.filter((item) =&gt; item.completed).length;
+  const completedItems = <span class="cstat-no" title="statement not covered" >items.filter(<span class="fstat-no" title="function not covered" >(i</span>tem) =&gt; <span class="cstat-no" title="statement not covered" >item.completed)</span>.length;</span>
   const percentage =
-    items.length &gt; 0 ? Math.round((completedItems / items.length) * 100) : 0;
+<span class="cstat-no" title="statement not covered" >    items.length &gt; 0 ? Math.round((completedItems / items.length) * 100) : 0;</span>
 &nbsp;
-  return (
+<span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;div className="relative"&gt;
       {/* Timeline line connector (if not last) */}
       &lt;div className="absolute left-6 top-16 w-0.5 h-12 bg-slate-200" /&gt;
@@ -403,8 +403,8 @@ export default function TimelineStep({
       {/* Expandable items list */}
       {isExpanded &amp;&amp; items.length &gt; 0 &amp;&amp; (
         &lt;div className="ml-12 mt-2 space-y-2 pb-4"&gt;
-          {items.map((item) =&gt; (
-            &lt;div
+          {items.map(<span class="fstat-no" title="function not covered" >(i</span>tem) =&gt; (
+<span class="cstat-no" title="statement not covered" >            &lt;div</span>
               key={item.id}
               className={`flex items-start gap-3 p-3 bg-slate-50 rounded-lg text-sm ${
                 item.completed ? 'text-slate-500' : 'text-slate-700'
@@ -436,7 +436,7 @@ export default function TimelineStep({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-03-23T23:12:21.615Z
+                at 2026-03-23T23:15:57.488Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

@@ -25,7 +25,9 @@ export default function ClaudeChat() {
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView?.({ behavior: 'smooth' });
+    }
   }, [messages]);
 
   // Focus input when chat opens

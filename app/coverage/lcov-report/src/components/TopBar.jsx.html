@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">90% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>9/10</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>5/5</span>
+                <span class='fraction'>0/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">80% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>4/5</span>
+                <span class='fraction'>0/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">90% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>9/10</span>
+                <span class='fraction'>0/10</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -185,25 +185,25 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">28x</span>
-<span class="cline-any cline-yes">28x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">28x</span>
-<span class="cline-any cline-yes">9x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">28x</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">28x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">28x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -281,7 +281,7 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">2x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -301,26 +301,26 @@
 import NotificationDropdown from './NotificationDropdown';
 import useNotifications from '../hooks/useNotifications';
 &nbsp;
-export default function TopBar({ onMenuClick, employeeId = 'default-employee' }) {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const { notifications, loading, unreadCount, markAsRead } = useNotifications(
+export default function <span class="fstat-no" title="function not covered" >TopBar(</span>{ onMenuClick, employeeId = <span class="branch-0 cbranch-no" title="branch not covered" >'default-employee' </span>}) {
+  const [isDropdownOpen, setIsDropdownOpen] = <span class="cstat-no" title="statement not covered" >useState(false);</span>
+  const { notifications, loading, unreadCount, markAsRead } = <span class="cstat-no" title="statement not covered" >useNotifications(</span>
     employeeId
   );
 &nbsp;
-  const handleNotificationClick = () =&gt; {
-    setIsDropdownOpen(!isDropdownOpen);
+  const handleNotificationClick = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    setIsDropdownOpen(!isDropdownOpen);</span>
   };
 &nbsp;
-  const handleMarkAsRead = (notificationId) =&gt; {
-    markAsRead(notificationId);
+  const handleMarkAsRead = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >(n</span>otificationId) =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    markAsRead(notificationId);</span>
   };
 &nbsp;
-  const handleSeeAll = <span class="fstat-no" title="function not covered" >()</span> =&gt; {
+  const handleSeeAll = <span class="cstat-no" title="statement not covered" ><span class="fstat-no" title="function not covered" >()</span> =&gt; {</span>
     // Navigate to notifications center (stub for now)
 <span class="cstat-no" title="statement not covered" >    console.log('Navigate to notifications center');</span>
   };
 &nbsp;
-  return (
+<span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;div className="h-16 bg-neutral-50 border-b border-neutral-200 flex items-center justify-between px-6 shadow-sm"&gt;
       {/* Left: Menu button */}
       &lt;button
@@ -398,7 +398,7 @@ export default function TopBar({ onMenuClick, employeeId = 'default-employee' })
             notifications={notifications}
             loading={loading}
             onMarkAsRead={handleMarkAsRead}
-            onClose={() =&gt; setIsDropdownOpen(false)}
+            onClose={<span class="fstat-no" title="function not covered" >()</span> =&gt; <span class="cstat-no" title="statement not covered" >setIsDropdownOpen(false)}</span>
             onSeeAll={handleSeeAll}
           /&gt;
         &lt;/div&gt;
@@ -421,7 +421,7 @@ export default function TopBar({ onMenuClick, employeeId = 'default-employee' })
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-03-23T23:12:21.615Z
+                at 2026-03-23T23:15:57.488Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

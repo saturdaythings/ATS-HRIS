@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">87.5% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>14/16</span>
+                <span class='fraction'>0/16</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>1/1</span>
+                <span class='fraction'>0/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">100% </span>
+                <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>4/4</span>
+                <span class='fraction'>0/4</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line high'></div>
+    <div class='status-line low'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -132,21 +132,21 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">34x</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-yes">34x</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -178,30 +178,30 @@
  * Used in onboarding checklists and task tracking
  * Provides smooth animation, accessible labels, and WCAG AA contrast
  */
-export default function ProgressBar({
+export default function <span class="fstat-no" title="function not covered" >ProgressBar(</span>{
   completed = <span class="branch-0 cbranch-no" title="branch not covered" >0,</span>
   total = <span class="branch-0 cbranch-no" title="branch not covered" >0,</span>
-  label = true,
-  size = 'md',
-  showPercentage = true,
-  ariaLabel = null,
-  className = '',
+  label = <span class="branch-0 cbranch-no" title="branch not covered" >true,</span>
+  size = <span class="branch-0 cbranch-no" title="branch not covered" >'md',</span>
+  showPercentage = <span class="branch-0 cbranch-no" title="branch not covered" >true,</span>
+  ariaLabel = <span class="branch-0 cbranch-no" title="branch not covered" >null,</span>
+  className = <span class="branch-0 cbranch-no" title="branch not covered" >'',</span>
 }) {
-  const percentage = total &gt; 0 ? Math.round((completed / total) * 100) : 0;
+  const percentage = <span class="cstat-no" title="statement not covered" >total &gt; 0 ? Math.round((completed / total) * 100) : 0;</span>
 &nbsp;
-  const heightClasses = {
+  const heightClasses = <span class="cstat-no" title="statement not covered" >{</span>
     sm: 'h-1',
     md: 'h-2',
     lg: 'h-3',
   };
 &nbsp;
-  const containerPadding = {
+  const containerPadding = <span class="cstat-no" title="statement not covered" >{</span>
     sm: 'gap-2',
     md: 'gap-3',
     lg: 'gap-4',
   };
 &nbsp;
-  return (
+<span class="cstat-no" title="statement not covered" >  return (</span>
     &lt;div className={`w-full space-y-2 ${className}`} role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow={percentage} aria-label={ariaLabel || 'Progress indicator'}&gt;
       {label &amp;&amp; (
         &lt;div className={`flex justify-between items-center ${containerPadding[size]}`}&gt;
@@ -235,7 +235,7 @@ export default function ProgressBar({
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-03-23T23:12:21.615Z
+                at 2026-03-23T23:15:57.488Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>
