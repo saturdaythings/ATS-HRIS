@@ -23,30 +23,30 @@
         <div class='clearfix'>
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Branches</span>
-                <span class='fraction'>0/2</span>
+                <span class='fraction'>5/5</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Functions</span>
-                <span class='fraction'>0/1</span>
+                <span class='fraction'>1/1</span>
             </div>
         
             
             <div class='fl pad1y space-right2'>
-                <span class="strong">0% </span>
+                <span class="strong">100% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/3</span>
+                <span class='fraction'>3/3</span>
             </div>
         
             
@@ -61,7 +61,7 @@
             </div>
         </template>
     </div>
-    <div class='status-line low'></div>
+    <div class='status-line high'></div>
     <pre><table class="coverage">
 <tr><td class="line-count quiet"><a name='L1'></a><a href='#L1'>1</a>
 <a name='L2'></a><a href='#L2'>2</a>
@@ -89,27 +89,37 @@
 <a name='L24'></a><a href='#L24'>24</a>
 <a name='L25'></a><a href='#L25'>25</a>
 <a name='L26'></a><a href='#L26'>26</a>
-<a name='L27'></a><a href='#L27'>27</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<a name='L27'></a><a href='#L27'>27</a>
+<a name='L28'></a><a href='#L28'>28</a>
+<a name='L29'></a><a href='#L29'>29</a>
+<a name='L30'></a><a href='#L30'>30</a>
+<a name='L31'></a><a href='#L31'>31</a>
+<a name='L32'></a><a href='#L32'>32</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-yes">304x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">304x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-yes">304x</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -118,25 +128,30 @@
 <span class="cline-any cline-neutral">&nbsp;</span></td><td class="text"><pre class="prettyprint lang-js">/**
  * Badge Component - Status, role, and category badges
  * Used in detail panels and tables
+ * Supports 6 variants with consistent styling and color contrast (WCAG AA)
  */
-export default function <span class="fstat-no" title="function not covered" >Badge(</span>{ children, variant = <span class="branch-0 cbranch-no" title="branch not covered" >'default',</span> size = <span class="branch-0 cbranch-no" title="branch not covered" >'md' </span>}) {
-  const variantClasses = <span class="cstat-no" title="statement not covered" >{</span>
-    default: 'bg-slate-100 text-slate-700',
-    active: 'bg-green-100 text-green-700',
-    inactive: 'bg-slate-100 text-slate-700',
-    rejected: 'bg-red-100 text-red-700',
-    pending: 'bg-amber-100 text-amber-700',
-    info: 'bg-blue-100 text-blue-700',
+export default function Badge({ children, variant = 'default', size = 'md', ariaLabel = null }) {
+  const variantClasses = {
+    default: 'bg-neutral-100 text-neutral-700 border border-neutral-200',
+    active: 'bg-success-100 text-success-700 border border-success-200',
+    inactive: 'bg-neutral-100 text-neutral-700 border border-neutral-200',
+    rejected: 'bg-error-100 text-error-700 border border-error-200',
+    pending: 'bg-warning-100 text-warning-700 border border-warning-200',
+    info: 'bg-info-100 text-info-700 border border-info-200',
   };
 &nbsp;
-  const sizeClasses = <span class="cstat-no" title="statement not covered" >{</span>
-    sm: 'px-2 py-1 text-xs font-medium rounded',
-    md: 'px-3 py-1 text-sm font-medium rounded-md',
+  const sizeClasses = {
+    sm: 'px-2 py-1 text-xs font-medium rounded-sm',
+    md: 'px-3 py-1.5 text-sm font-medium rounded-md',
     lg: 'px-4 py-2 text-base font-medium rounded-lg',
   };
 &nbsp;
-<span class="cstat-no" title="statement not covered" >  return (</span>
-    &lt;span className={`inline-block ${variantClasses[variant]} ${sizeClasses[size]}`}&gt;
+  return (
+    &lt;span
+      className={`inline-block whitespace-nowrap transition-colors duration-fast ${variantClasses[variant]} ${sizeClasses[size]}`}
+      role="status"
+      aria-label={ariaLabel || `${variant} badge`}
+    &gt;
       {children}
     &lt;/span&gt;
   );
@@ -148,7 +163,7 @@ export default function <span class="fstat-no" title="function not covered" >Bad
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-03-23T22:18:45.783Z
+                at 2026-03-23T23:12:21.615Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

@@ -30,7 +30,7 @@ describe('EmployeeDetailPanel Component', () => {
         onClose={mockOnClose}
       />
     );
-    expect(container.firstChild).toBeEmptyDOMElement();
+    expect(container.firstChild).toBeNull();
   });
 
   test('renders panel when isOpen is true', () => {

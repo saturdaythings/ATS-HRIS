@@ -13,6 +13,7 @@ import activitiesRouter from './routes/activities.js';
 import notificationsRouter from './routes/notifications.js';
 import customFieldsRouter from './routes/admin/customFields.js';
 import onboardingRouter from './routes/onboarding.js';
+import claudeRouter from './routes/claude.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -31,6 +32,7 @@ app.use('/api/activities', activitiesRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/admin/custom-fields', customFieldsRouter);
 app.use('/api/onboarding', onboardingRouter);
+app.use('/api/claude', claudeRouter);
 
 // Error handling
 app.use(errorHandler);

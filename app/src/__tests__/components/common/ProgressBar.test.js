@@ -7,7 +7,7 @@ import ProgressBar from '../../../components/common/ProgressBar';
 describe('ProgressBar Component', () => {
   test('renders progress bar with correct percentage', () => {
     render(<ProgressBar completed={5} total={10} label={false} />);
-    const container = screen.getByRole('generic');
+    const container = screen.getByRole('progressbar');
     expect(container).toBeInTheDocument();
   });
 

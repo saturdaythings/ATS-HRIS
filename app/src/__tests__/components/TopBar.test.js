@@ -42,7 +42,7 @@ describe('TopBar Component', () => {
     render(<TopBar onMenuClick={mockOnMenuClick} />);
 
     expect(screen.getByPlaceholderText(/Search people/)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Toggle menu/ })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Toggle navigation menu/ })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Notifications/ })).toBeInTheDocument();
   });
 
@@ -55,7 +55,7 @@ describe('TopBar Component', () => {
   test('calls onMenuClick when menu button is clicked', () => {
     render(<TopBar onMenuClick={mockOnMenuClick} />);
 
-    const menuButton = screen.getByRole('button', { name: /Toggle menu/ });
+    const menuButton = screen.getByRole('button', { name: /Toggle navigation menu/ });
     fireEvent.click(menuButton);
 
     expect(mockOnMenuClick).toHaveBeenCalled();

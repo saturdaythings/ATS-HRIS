@@ -13,19 +13,19 @@ describe('Badge Component', () => {
   test('applies correct variant class for active status', () => {
     const { container } = render(<Badge variant="active">Active</Badge>);
     const badge = container.querySelector('span');
-    expect(badge).toHaveClass('bg-green-100', 'text-green-700');
+    expect(badge).toHaveClass('bg-success-100', 'text-success-700');
   });
 
   test('applies correct variant class for rejected status', () => {
     const { container } = render(<Badge variant="rejected">Rejected</Badge>);
     const badge = container.querySelector('span');
-    expect(badge).toHaveClass('bg-red-100', 'text-red-700');
+    expect(badge).toHaveClass('bg-error-100', 'text-error-700');
   });
 
   test('applies correct variant class for pending status', () => {
     const { container } = render(<Badge variant="pending">Pending</Badge>);
     const badge = container.querySelector('span');
-    expect(badge).toHaveClass('bg-amber-100', 'text-amber-700');
+    expect(badge).toHaveClass('bg-warning-100', 'text-warning-700');
   });
 
   test('applies correct size class for small badge', () => {
@@ -37,7 +37,7 @@ describe('Badge Component', () => {
   test('applies correct size class for medium badge', () => {
     const { container } = render(<Badge size="md">Medium</Badge>);
     const badge = container.querySelector('span');
-    expect(badge).toHaveClass('px-3', 'py-1', 'text-sm');
+    expect(badge).toHaveClass('px-3', 'py-1.5', 'text-sm');
   });
 
   test('applies correct size class for large badge', () => {

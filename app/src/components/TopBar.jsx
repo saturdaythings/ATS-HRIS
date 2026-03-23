@@ -22,15 +22,26 @@ export default function TopBar({ onMenuClick, employeeId = 'default-employee' })
   };
 
   return (
-    <div className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
+    <div className="h-16 bg-neutral-50 border-b border-neutral-200 flex items-center justify-between px-6 shadow-sm">
       {/* Left: Menu button */}
       <button
         onClick={onMenuClick}
-        className="md:hidden p-2 hover:bg-gray-100 rounded-lg transition-colors"
-        aria-label="Toggle menu"
+        className="md:hidden p-2 hover:bg-neutral-100 rounded-md transition-colors duration-fast focus-visible:outline-2 focus-visible:outline-primary-600"
+        aria-label="Toggle navigation menu"
       >
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        <svg
+          className="w-6 h-6 text-neutral-600"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M4 6h16M4 12h16M4 18h16"
+          />
         </svg>
       </button>
 
@@ -39,8 +50,9 @@ export default function TopBar({ onMenuClick, employeeId = 'default-employee' })
         <input
           type="text"
           placeholder="Search people, devices, activities..."
-          className="w-full px-4 py-2 bg-gray-100 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-purple-500 focus:bg-white"
+          className="w-full px-4 py-2 bg-neutral-100 border border-neutral-200 rounded-md text-sm text-neutral-700 placeholder-neutral-500 focus:outline-none focus:bg-white focus:ring-2 focus:ring-primary-600 focus:ring-offset-0 transition-all duration-fast"
           disabled
+          aria-label="Global search"
         />
       </div>
 
@@ -50,17 +62,32 @@ export default function TopBar({ onMenuClick, employeeId = 'default-employee' })
         <div className="relative">
           <button
             onClick={handleNotificationClick}
-            className="relative p-2 hover:bg-gray-100 rounded-lg transition-colors"
+            className="relative p-2 hover:bg-neutral-100 rounded-md transition-colors duration-fast focus-visible:outline-2 focus-visible:outline-primary-600"
             aria-label="Notifications"
             aria-expanded={isDropdownOpen}
+            aria-haspopup="true"
           >
-            <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            <svg
+              className="w-5 h-5 text-neutral-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+              />
             </svg>
 
             {/* Unread badge */}
             {unreadCount > 0 && (
-              <span className="absolute top-1 right-1 w-5 h-5 bg-red-500 text-white text-xs font-bold rounded-full flex items-center justify-center">
+              <span
+                className="absolute top-1 right-1 w-5 h-5 bg-error-500 text-white text-xs font-bold rounded-full flex items-center justify-center"
+                aria-label={`${unreadCount} unread notifications`}
+              >
                 {unreadCount > 9 ? '9+' : unreadCount}
               </span>
             )}
@@ -78,8 +105,11 @@ export default function TopBar({ onMenuClick, employeeId = 'default-employee' })
         </div>
 
         {/* User avatar */}
-        <div className="w-8 h-8 rounded-full bg-purple-200 flex items-center justify-center">
-          <span className="text-sm font-semibold text-purple-900">VO</span>
+        <div
+          className="w-8 h-8 rounded-full bg-primary-200 flex items-center justify-center cursor-pointer hover:bg-primary-300 transition-colors duration-fast"
+          title="User profile"
+        >
+          <span className="text-sm font-semibold text-primary-900">VO</span>
         </div>
       </div>
     </div>

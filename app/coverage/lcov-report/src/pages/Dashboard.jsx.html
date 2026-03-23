@@ -131,7 +131,13 @@
 <a name='L66'></a><a href='#L66'>66</a>
 <a name='L67'></a><a href='#L67'>67</a>
 <a name='L68'></a><a href='#L68'>68</a>
-<a name='L69'></a><a href='#L69'>69</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L69'></a><a href='#L69'>69</a>
+<a name='L70'></a><a href='#L70'>70</a>
+<a name='L71'></a><a href='#L71'>71</a>
+<a name='L72'></a><a href='#L72'>72</a>
+<a name='L73'></a><a href='#L73'>73</a>
+<a name='L74'></a><a href='#L74'>74</a>
+<a name='L75'></a><a href='#L75'>75</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -159,7 +165,13 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -216,10 +228,11 @@ export default function <span class="fstat-no" title="function not covered" >Das
   };
 &nbsp;
 <span class="cstat-no" title="statement not covered" >  return (</span>
-    &lt;div className="p-8"&gt;
-      &lt;h1 className="text-3xl font-bold text-gray-900 mb-2"&gt;Dashboard&lt;/h1&gt;
-      &lt;p className="text-gray-600 mb-8"&gt;Welcome to V.Two Ops - Phase 2 Implementation&lt;/p&gt;
+    &lt;div className="p-8 bg-neutral-50 min-h-screen"&gt;
+      &lt;h1 className="text-4xl font-bold text-neutral-900 mb-2"&gt;Dashboard&lt;/h1&gt;
+      &lt;p className="text-neutral-600 mb-8 text-lg"&gt;Welcome to V.Two Ops - Phase 2 Implementation&lt;/p&gt;
 &nbsp;
+      {/* Metrics Cards */}
       &lt;div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"&gt;
         {[
           { label: 'Employees', value: 'TBD', icon: '👥' },
@@ -227,20 +240,25 @@ export default function <span class="fstat-no" title="function not covered" >Das
           { label: 'Devices', value: 'TBD', icon: '🖥️' },
           { label: 'Unassigned', value: 'TBD', icon: '📦' },
         ].map(<span class="fstat-no" title="function not covered" >(c</span>ard) =&gt; (
-<span class="cstat-no" title="statement not covered" >          &lt;div key={card.label} className="bg-white rounded-lg border border-gray-200 p-6"&gt;</span>
+<span class="cstat-no" title="statement not covered" >          &lt;div</span>
+            key={card.label}
+            className="bg-white rounded-lg border border-neutral-200 p-6 shadow-sm hover:shadow-md transition-shadow duration-fast"
+          &gt;
             &lt;div className="flex items-center justify-between mb-4"&gt;
-              &lt;h3 className="text-gray-700 font-medium"&gt;{card.label}&lt;/h3&gt;
-              &lt;span className="text-2xl"&gt;{card.icon}&lt;/span&gt;
+              &lt;h3 className="text-neutral-700 font-semibold text-sm"&gt;{card.label}&lt;/h3&gt;
+              &lt;span className="text-2xl" aria-hidden="true"&gt;
+                {card.icon}
+              &lt;/span&gt;
             &lt;/div&gt;
-            &lt;p className="text-3xl font-bold text-gray-900"&gt;{card.value}&lt;/p&gt;
-            &lt;p className="text-xs text-gray-500 mt-2"&gt;Coming in Phase 2&lt;/p&gt;
+            &lt;p className="text-3xl font-bold text-neutral-900"&gt;{card.value}&lt;/p&gt;
+            &lt;p className="text-xs text-neutral-500 mt-2"&gt;Coming in Phase 2&lt;/p&gt;
           &lt;/div&gt;
         ))}
       &lt;/div&gt;
 &nbsp;
       {/* Activity Feed Widget */}
       &lt;div className="grid grid-cols-1 lg:grid-cols-3 gap-6"&gt;
-        &lt;div className="lg:col-span-2 bg-white rounded-lg border border-gray-200 p-6"&gt;
+        &lt;div className="lg:col-span-2 bg-white rounded-lg border border-neutral-200 p-6 shadow-sm"&gt;
           &lt;ActivityFeed
             activities={activities}
             loading={loading}
@@ -251,16 +269,16 @@ export default function <span class="fstat-no" title="function not covered" >Das
         &lt;/div&gt;
 &nbsp;
         {/* Info Panel */}
-        &lt;div className="bg-blue-50 border border-blue-200 rounded-lg p-6"&gt;
-          &lt;h2 className="font-semibold text-blue-900 mb-3"&gt;Phase 2 Status&lt;/h2&gt;
-          &lt;ul className="text-sm text-blue-800 space-y-2"&gt;
+        &lt;div className="bg-info-50 border border-info-200 rounded-lg p-6 shadow-sm"&gt;
+          &lt;h2 className="font-semibold text-info-900 mb-3 text-lg"&gt;Phase 2 Status&lt;/h2&gt;
+          &lt;ul className="text-sm text-info-800 space-y-2" role="list"&gt;
             &lt;li&gt;✓ Activity Feed widget added&lt;/li&gt;
             &lt;li&gt;✓ Timeline visualization&lt;/li&gt;
             &lt;li&gt;✓ Type filtering (hire, offboard, device, task)&lt;/li&gt;
             &lt;li&gt;✓ Search functionality&lt;/li&gt;
             &lt;li&gt;✓ Pagination with load more&lt;/li&gt;
-            &lt;li&gt;→ Phase 3: Real-time updates&lt;/li&gt;
-            &lt;li&gt;→ Phase 4: Analytics &amp; insights&lt;/li&gt;
+            &lt;li className="text-info-700 font-medium"&gt;→ Phase 3: Real-time updates&lt;/li&gt;
+            &lt;li className="text-info-700 font-medium"&gt;→ Phase 4: Analytics &amp; insights&lt;/li&gt;
           &lt;/ul&gt;
         &lt;/div&gt;
       &lt;/div&gt;
@@ -274,7 +292,7 @@ export default function <span class="fstat-no" title="function not covered" >Das
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2026-03-23T22:18:45.783Z
+                at 2026-03-23T23:12:21.615Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

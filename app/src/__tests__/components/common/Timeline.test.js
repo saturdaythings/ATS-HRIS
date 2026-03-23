@@ -50,7 +50,7 @@ describe('Timeline Component', () => {
 
   test('renders correct number of timeline dots', () => {
     const { container } = render(<Timeline activities={mockActivities} />);
-    const dots = container.querySelectorAll('.bg-purple-600');
+    const dots = container.querySelectorAll('.bg-primary-600');
     expect(dots.length).toBe(mockActivities.length);
   });
 });
