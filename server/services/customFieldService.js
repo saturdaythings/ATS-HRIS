@@ -149,10 +149,10 @@ export async function listAllCustomFields() {
     where: {
       active: true,
     },
-    orderBy: {
-      entityType: 'asc',
-      order: 'asc',
-    },
+    orderBy: [
+      { entityType: 'asc' },
+      { order: 'asc' },
+    ],
     include: {
       values: true,
     },
