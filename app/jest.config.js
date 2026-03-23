@@ -2,6 +2,7 @@ export default {
   testEnvironment: 'jsdom',
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.js', '**/?(*.)+(spec|test).js'],
+  testPathIgnorePatterns: ['/node_modules/', '/__tests__/setup.js'],
   moduleFileExtensions: ['js', 'jsx', 'json'],
   transform: {
     '^.+\\.jsx?$': ['babel-jest', {

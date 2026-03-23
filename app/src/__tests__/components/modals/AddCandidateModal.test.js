@@ -37,11 +37,11 @@ describe('AddCandidateModal Component', () => {
       />
     );
 
-    expect(container.firstChild).toBeEmptyDOMElement();
+    expect(container.innerHTML).toBe('');
   });
 
   test('renders modal when isOpen is true', () => {
-    render(
+    const { container } = render(
       <AddCandidateModal
         isOpen={true}
         onClose={mockOnClose}
@@ -49,7 +49,9 @@ describe('AddCandidateModal Component', () => {
       />
     );
 
-    expect(screen.getByText('Add Candidate')).toBeInTheDocument();
+    expect(container.innerHTML).not.toBe('');
+    const addCandidateButtons = screen.getAllByText('Add Candidate');
+    expect(addCandidateButtons.length).toBeGreaterThan(0);
   });
 
   test('displays form fields', () => {
