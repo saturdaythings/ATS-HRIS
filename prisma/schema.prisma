@@ -20,7 +20,7 @@ model Candidate {
   stage     String   @default("sourced") // sourced, screening, interview, offer, hired
   resumeUrl String?
   notes     String?
-  employee  Employee? // 1:1 relationship after hire
+  employee  Employee? @relation("CandidateToEmployee") // 1:1 relationship after hire
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -31,6 +31,7 @@ model Candidate {
 model Employee {
   id              String   @id @default(cuid())
   candidateId     String?  @unique // FK to Candidate for history
+  candidate       Candidate? @relation("CandidateToEmployee", fields: [candidateId], references: [id], onDelete: SetNull)
   name            String
   email           String   @unique
   title           String
@@ -43,6 +44,11 @@ model Employee {
   offboardingTasks OffboardingTask[]
   assignments     Assignment[]
   activities      Activity[]
+
+  // Phase 2+ relationships
+  onboardingChecklists OnboardingChecklist[]
+  assignedOnboardingItems OnboardingChecklistItem[] @relation("AssignedTo")
+  notifications   Notification[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -156,4 +162,135 @@ model Settings {
   pageSize  Int      @default(25)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+// Onboarding module (Phase 2+)
+model OnboardingTemplate {
+  id        String   @id @default(cuid())
+  name      String   // "Engineering", "Design", "Sales"
+  role      String   // "Junior Engineer", "Senior Designer", etc.
+  items     OnboardingChecklist[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([role])
+}
+
+model OnboardingChecklist {
+  id           String   @id @default(cuid())
+  employeeId   String
+  employee     Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  templateId   String
+  template     OnboardingTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  status       String   @default("active") // active, completed, cancelled
+  completedAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  items        OnboardingChecklistItem[]
+
+  @@index([employeeId, status])
+  @@index([templateId])
+}
+
+model OnboardingChecklistItem {
+  id          String   @id @default(cuid())
+  checklistId String
+  checklist   OnboardingChecklist @relation(fields: [checklistId], references: [id], onDelete: Cascade)
+  task        String
+  assignedTo  String   // "HR", "IT", "Manager", "Employee"
+  assignedToEmployeeId String?
+  assignedToEmployee   Employee? @relation("AssignedTo", fields: [assignedToEmployeeId], references: [id], onDelete: SetNull)
+  dueDate     DateTime
+  completed   Boolean  @default(false)
+  completedAt DateTime?
+  completedBy String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([checklistId, completed, dueDate])
+  @@index([assignedToEmployeeId])
+}
+
+// Notifications module (Phase 2+)
+model Notification {
+  id          String   @id @default(cuid())
+  type        String   // "task_assignment", "task_due", "task_overdue", "employee_hired", "completion"
+  description String
+  employeeId  String
+  employee    Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([employeeId, read, createdAt])
+}
+
+// Custom fields module (Phase 2+)
+model CustomField {
+  id        String   @id @default(cuid())
+  name      String   // "tshirt_size", "security_clearance"
+  label     String   // "T-Shirt Size" (display)
+  type      String   // "text", "select", "date", "checkbox", "number"
+  entityType String  // "candidate", "employee", "device"
+  options   String?  // JSON array: ["XS", "S", "M", "L", "XL"]
+  required  Boolean  @default(false)
+  regex     String?  // Optional validation regex
+  order     Int      @default(999) // Field display order
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  values    CustomFieldValue[]
+
+  @@unique([entityType, name])
+  @@index([entityType])
+}
+
+model CustomFieldValue {
+  id            String   @id @default(cuid())
+  customFieldId String
+  customField   CustomField @relation(fields: [customFieldId], references: [id], onDelete: Cascade)
+  entityType    String   // "candidate", "employee", "device"
+  entityId      String   // UUID of candidate/employee/device
+  value         String?  // Stores any type as JSON string
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([customFieldId, entityType, entityId])
+  @@index([entityId, entityType])
+}
+
+// Feature requests & chat module (Phase 2+)
+model FeatureRequest {
+  id                String   @id @default(cuid())
+  title             String
+  description       String
+  status            String   @default("requested") // requested, reviewing, implementing, testing, deployed, rejected
+  type              String   // "config_change", "custom_field", "api_endpoint", "ui_page"
+  originalMessage   String
+  claudeResponse    String
+  implementation    String?  // Code or config changes
+  estimatedHours    Float?
+  createdAt         DateTime @default(now())
+  completedAt       DateTime?
+  updatedAt         DateTime @updatedAt
+
+  messages          ChatMessage[]
+
+  @@index([status, createdAt])
+}
+
+model ChatMessage {
+  id                      String   @id @default(cuid())
+  userId                  String   // "admin" for now (single user Phase 2)
+  role                    String   // "user" | "assistant"
+  content                 String
+  relatedFeatureRequestId String?
+  featureRequest          FeatureRequest? @relation(fields: [relatedFeatureRequestId], references: [id], onDelete: SetNull)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([userId, createdAt])
 }
