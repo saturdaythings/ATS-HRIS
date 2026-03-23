@@ -10,6 +10,7 @@ import employeesRouter from './routes/employees.js';
 import devicesRouter from './routes/devices.js';
 import assignmentsRouter from './routes/assignments.js';
 import activitiesRouter from './routes/activities.js';
+import customFieldsRouter from './routes/admin/customFields.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -25,6 +26,7 @@ app.use('/api/employees', employeesRouter);
 app.use('/api/devices', devicesRouter);
 app.use('/api/assignments', assignmentsRouter);
 app.use('/api/activities', activitiesRouter);
+app.use('/api/admin/custom-fields', customFieldsRouter);
 
 // Error handling
 app.use(errorHandler);
