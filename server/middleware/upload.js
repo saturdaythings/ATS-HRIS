@@ -36,6 +36,12 @@ const upload = multer({
 export const uploadResume = upload.single('resume');
 
 /**
+ * Multer middleware for resume file upload with 'file' field name
+ * Used in API endpoints: POST /api/candidates/:id/resumes
+ */
+export const uploadFile = upload.single('file');
+
+/**
  * Multer middleware for multiple resume file uploads
  * Handles 'resumes' field name
  */

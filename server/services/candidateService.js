@@ -105,24 +105,124 @@ export async function deleteCandidate(id) {
 }
 
 /**
- * List all candidates with optional filters
- * @param {Object} filters - Filter options (status, stage)
- * @returns {Promise<Array>} List of candidates
+ * List all candidates with optional filters, sorting, and pagination
+ * @param {Object} options - Filter, sort, and pagination options
+ * @param {string} options.status - Filter by status (comma-separated for multiple)
+ * @param {string} options.stage - Filter by stage
+ * @param {string} options.sourceId - Filter by source ID
+ * @param {string} options.seniorityId - Filter by seniority ID
+ * @param {string} options.clientId - Filter by client ID
+ * @param {string} options.tags - Filter by skill tags (comma-separated IDs)
+ * @param {string} options.dateRangeFrom - Filter by sourcedAt from date (YYYY-MM-DD)
+ * @param {string} options.dateRangeTo - Filter by sourcedAt to date (YYYY-MM-DD)
+ * @param {string} options.sortBy - Sort by column (default: createdAt)
+ * @param {string} options.sortOrder - Sort order (asc or desc, default: desc)
+ * @param {number} options.limit - Pagination limit (default: 25)
+ * @param {number} options.offset - Pagination offset (default: 0)
+ * @returns {Promise<Object>} { candidates: [], total, page, limit }
  */
-export async function listCandidates(filters = {}) {
-  const { status, stage } = filters;
+export async function listCandidates(options = {}) {
+  const {
+    status,
+    stage,
+    sourceId,
+    seniorityId,
+    clientId,
+    tags,
+    dateRangeFrom,
+    dateRangeTo,
+    sortBy = 'createdAt',
+    sortOrder = 'desc',
+    limit = 25,
+    offset = 0,
+  } = options;
 
-  const candidates = await db.candidate.findMany({
-    where: {
-      ...(status !== undefined && { status }),
-      ...(stage !== undefined && { stage }),
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-  });
+  // Build where clause
+  const where = {};
 
-  return candidates;
+  // Status filter (support comma-separated values)
+  if (status) {
+    const statusValues = status.split(',').map(s => s.trim());
+    if (statusValues.length === 1) {
+      where.status = statusValues[0];
+    } else {
+      where.status = { in: statusValues };
+    }
+  }
+
+  if (stage) {
+    where.stage = stage;
+  }
+
+  if (sourceId) {
+    where.sourceId = sourceId;
+  }
+
+  if (seniorityId) {
+    where.seniorityId = seniorityId;
+  }
+
+  if (clientId) {
+    where.clientId = clientId;
+  }
+
+  // Date range filter
+  if (dateRangeFrom || dateRangeTo) {
+    where.sourcedAt = {};
+    if (dateRangeFrom) {
+      where.sourcedAt.gte = new Date(`${dateRangeFrom}T00:00:00Z`);
+    }
+    if (dateRangeTo) {
+      where.sourcedAt.lte = new Date(`${dateRangeTo}T23:59:59Z`);
+    }
+  }
+
+  // Tags filter (requires joining candidateSkillTag)
+  let candidates;
+  const parsedLimit = Math.min(parseInt(limit, 10) || 25, 100);
+  const parsedOffset = parseInt(offset, 10) || 0;
+
+  if (tags) {
+    // Filter by tags using findMany with nested relation query
+    const tagIds = tags.split(',').map(t => t.trim());
+    candidates = await db.candidate.findMany({
+      where: {
+        ...where,
+        skillTags: {
+          some: {
+            tagId: {
+              in: tagIds,
+            },
+          },
+        },
+      },
+      orderBy: {
+        [sortBy]: sortOrder.toLowerCase(),
+      },
+      skip: parsedOffset,
+      take: parsedLimit,
+    });
+  } else {
+    candidates = await db.candidate.findMany({
+      where,
+      orderBy: {
+        [sortBy]: sortOrder.toLowerCase(),
+      },
+      skip: parsedOffset,
+      take: parsedLimit,
+    });
+  }
+
+  // Get total count for pagination
+  const total = await db.candidate.count({ where });
+  const page = Math.floor(parsedOffset / parsedLimit) + 1;
+
+  return {
+    candidates,
+    total,
+    page,
+    limit: parsedLimit,
+  };
 }
 
 /**
@@ -271,4 +371,64 @@ export async function listCandidatesWithResumes(filters = {}) {
   });
 
   return candidates;
+}
+
+/**
+ * Check if candidate email already exists
+ * @param {string} email - Candidate email
+ * @returns {Promise<Object|null>} Existing candidate data or null
+ */
+export async function checkDuplicateEmail(email) {
+  return db.candidate.findUnique({
+    where: { email },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      roleApplied: true,
+      status: true,
+      stage: true,
+    },
+  });
+}
+
+/**
+ * Get candidate with full related data (resumes, interviews, offers, tags)
+ * @param {string} id - Candidate ID
+ * @returns {Promise<Object>} Candidate with relations
+ */
+export async function getCandidateDetail(id) {
+  const candidate = await db.candidate.findUnique({
+    where: { id },
+    include: {
+      resumes: {
+        orderBy: { uploadedAt: 'desc' },
+      },
+      interviews: {
+        include: {
+          interviewers: true,
+        },
+        orderBy: { scheduledAt: 'desc' },
+      },
+      offers: {
+        orderBy: { createdAt: 'desc' },
+      },
+      skillTags: {
+        include: {
+          tag: true,
+        },
+      },
+      source: true,
+      seniority: true,
+      client: true,
+      rejectionReason: true,
+    },
+  });
+
+  if (!candidate) {
+    throw new Error('Candidate not found');
+  }
+
+  return candidate;
 }
