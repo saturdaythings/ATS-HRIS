@@ -13,14 +13,18 @@ export default function CandidateDetailPanel({ candidate, isOpen, onClose }) {
   const [isEditing, setIsEditing] = useState(false);
   const [showPromoteModal, setShowPromoteModal] = useState(false);
   const [showResumeUpload, setShowResumeUpload] = useState(false);
+  const [selectedSkills, setSelectedSkills] = useState([]);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    role: '',
+    phone: '',
+    location: '',
+    roleApplied: '',
     stage: 'sourced',
     status: 'active',
     notes: '',
     resumeUrl: '',
+    skills: [],
   });
 
   const [activities] = useState([
@@ -42,18 +46,67 @@ export default function CandidateDetailPanel({ candidate, isOpen, onClose }) {
     },
   ]);
 
+  const [interviews] = useState([
+    {
+      id: 1,
+      type: 'Phone Screening',
+      date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
+      interviewer: 'Sarah Johnson',
+      feedback: 'Good technical knowledge, needs improvement in communication.',
+      recommendation: 'proceed',
+    },
+    {
+      id: 2,
+      type: 'Technical Interview',
+      date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
+      interviewer: 'Mike Chen',
+      feedback: 'Excellent problem-solving skills. Strong candidate.',
+      recommendation: 'strong',
+    },
+  ]);
+
+  const [resumes] = useState([
+    {
+      id: 1,
+      fileName: 'jane-smith-resume.pdf',
+      uploadedAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+      isActive: true,
+      url: '/resumes/jane-smith-resume.pdf',
+    },
+  ]);
+
+  // Available skills (would come from ConfigList in real app)
+  const availableSkills = [
+    'JavaScript',
+    'React',
+    'TypeScript',
+    'Node.js',
+    'Python',
+    'SQL',
+    'CSS',
+    'HTML',
+    'Git',
+    'Docker',
+    'AWS',
+    'GraphQL',
+  ];
+
   // Initialize form data when candidate changes
   useEffect(() => {
     if (candidate) {
       setFormData({
         name: candidate.name || '',
         email: candidate.email || '',
-        role: candidate.role || '',
+        phone: candidate.phone || '',
+        location: candidate.location || '',
+        roleApplied: candidate.roleApplied || candidate.role || '',
         stage: candidate.stage || 'sourced',
         status: candidate.status || 'active',
         notes: candidate.notes || '',
         resumeUrl: candidate.resumeUrl || '',
+        skills: candidate.skills || [],
       });
+      setSelectedSkills(candidate.skills || []);
       setIsEditing(false);
       setActiveTab('overview');
     }
@@ -131,20 +184,20 @@ export default function CandidateDetailPanel({ candidate, isOpen, onClose }) {
         </div>
 
         {/* Tabs */}
-        <div className="flex-shrink-0 px-6 border-b border-slate-200 flex gap-6">
-          {['overview', 'resume', 'history'].map(tab => (
+        <div className="flex-shrink-0 px-6 border-b border-slate-200 flex gap-6 overflow-x-auto">
+          {['overview', 'resume', 'interviews', 'skills', 'history'].map(tab => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`
-                py-4 text-sm font-medium border-b-2 transition-colors
+                py-4 text-sm font-medium border-b-2 transition-colors whitespace-nowrap
                 ${activeTab === tab
                   ? 'border-purple-600 text-purple-600'
                   : 'border-transparent text-slate-600 hover:text-slate-900'
                 }
               `}
             >
-              {tab.charAt(0).toUpperCase() + tab.slice(1)}
+              {tab === 'interviews' ? 'Interviews' : tab === 'skills' ? 'Skills' : tab.charAt(0).toUpperCase() + tab.slice(1)}
             </button>
           ))}
         </div>
@@ -167,8 +220,16 @@ export default function CandidateDetailPanel({ candidate, isOpen, onClose }) {
                       <p className="text-slate-900">{formData.email}</p>
                     </div>
                     <div>
-                      <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Role</label>
-                      <p className="text-slate-900">{formData.role}</p>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Phone</label>
+                      <p className="text-slate-900">{formData.phone || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Location</label>
+                      <p className="text-slate-900">{formData.location || '-'}</p>
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Role Applied</label>
+                      <p className="text-slate-900">{formData.roleApplied || '-'}</p>
                     </div>
                     <div>
                       <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Stage</label>
@@ -235,11 +296,31 @@ export default function CandidateDetailPanel({ candidate, isOpen, onClose }) {
                       />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-slate-900 mb-1">Role</label>
+                      <label className="block text-sm font-medium text-slate-900 mb-1">Phone</label>
+                      <input
+                        type="tel"
+                        name="phone"
+                        value={formData.phone}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-900 mb-1">Location</label>
                       <input
                         type="text"
-                        name="role"
-                        value={formData.role}
+                        name="location"
+                        value={formData.location}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-slate-900 mb-1">Role Applied</label>
+                      <input
+                        type="text"
+                        name="roleApplied"
+                        value={formData.roleApplied}
                         onChange={handleChange}
                         className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
                       />
@@ -307,28 +388,46 @@ export default function CandidateDetailPanel({ candidate, isOpen, onClose }) {
           {/* Resume Tab */}
           {activeTab === 'resume' && (
             <div className="space-y-4">
-              {formData.resumeUrl ? (
+              {resumes.length > 0 ? (
                 <>
-                  <div className="bg-slate-50 rounded-lg p-4 text-center">
-                    <svg className="w-12 h-12 text-slate-400 mx-auto mb-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M8 16.5a1 1 0 11-2 0 1 1 0 012 0zM15 7H4v5h11V7z" />
-                    </svg>
-                    <p className="text-sm font-medium text-slate-900">Resume attached</p>
-                    <p className="text-xs text-slate-600 mt-1">candidate-resume.pdf</p>
-                    <div className="flex gap-2 mt-3 justify-center">
-                      <button className="text-sm text-purple-600 hover:text-purple-700 font-medium">
-                        View
-                      </button>
-                      <button className="text-sm text-purple-600 hover:text-purple-700 font-medium">
-                        Download
-                      </button>
-                    </div>
+                  <div className="space-y-3">
+                    {resumes.map(resume => (
+                      <div key={resume.id} className="border border-slate-200 rounded-lg p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2">
+                              <svg className="w-5 h-5 text-slate-400" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M8 16.5a1 1 0 11-2 0 1 1 0 012 0zM15 7H4v5h11V7z" />
+                              </svg>
+                              <h4 className="font-medium text-slate-900">{resume.fileName}</h4>
+                              {resume.isActive && (
+                                <Badge variant="active">Active</Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-slate-500 mt-2">
+                              Uploaded {resume.uploadedAt.toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="flex gap-2">
+                            <button className="text-sm text-purple-600 hover:text-purple-700 font-medium">
+                              View
+                            </button>
+                            <button className="text-sm text-purple-600 hover:text-purple-700 font-medium">
+                              Download
+                            </button>
+                            <button className="text-sm text-red-600 hover:text-red-700 font-medium">
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                   <button
                     onClick={() => setShowResumeUpload(true)}
                     className="w-full px-4 py-2 bg-slate-100 text-slate-900 rounded-lg font-medium hover:bg-slate-200 transition-colors"
                   >
-                    Replace Resume
+                    Upload Another Resume
                   </button>
                 </>
               ) : (
@@ -347,6 +446,100 @@ export default function CandidateDetailPanel({ candidate, isOpen, onClose }) {
                     />
                   )}
                 </>
+              )}
+
+              {showResumeUpload && resumes.length > 0 && (
+                <ResumeUploadForm
+                  onUpload={handleResumeUpload}
+                  onCancel={() => setShowResumeUpload(false)}
+                />
+              )}
+            </div>
+          )}
+
+          {/* Interviews Tab */}
+          {activeTab === 'interviews' && (
+            <div className="space-y-4">
+              {interviews.length > 0 ? (
+                interviews.map(interview => (
+                  <div key={interview.id} className="border border-slate-200 rounded-lg p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div>
+                        <h4 className="font-semibold text-slate-900">{interview.type}</h4>
+                        <p className="text-sm text-slate-600 mt-1">
+                          {interview.date.toLocaleDateString()} with {interview.interviewer}
+                        </p>
+                      </div>
+                      <Badge
+                        variant={
+                          interview.recommendation === 'strong'
+                            ? 'active'
+                            : interview.recommendation === 'proceed'
+                              ? 'info'
+                              : 'default'
+                        }
+                      >
+                        {interview.recommendation === 'strong'
+                          ? 'Strong'
+                          : interview.recommendation === 'proceed'
+                            ? 'Proceed'
+                            : 'Hold'}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-slate-700 mb-3">{interview.feedback}</p>
+                  </div>
+                ))
+              ) : (
+                <p className="text-slate-600 text-center py-8">No interviews scheduled yet</p>
+              )}
+            </div>
+          )}
+
+          {/* Skills Tab */}
+          {activeTab === 'skills' && (
+            <div className="space-y-4">
+              <p className="text-sm text-slate-600 mb-4">Select relevant skills for this candidate</p>
+              <div className="grid grid-cols-2 gap-3">
+                {availableSkills.map(skill => (
+                  <label key={skill} className="flex items-center gap-2 cursor-pointer p-2 hover:bg-slate-50 rounded">
+                    <input
+                      type="checkbox"
+                      checked={selectedSkills.includes(skill)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedSkills(prev => [...prev, skill]);
+                          setFormData(prev => ({
+                            ...prev,
+                            skills: [...prev.skills, skill],
+                          }));
+                        } else {
+                          setSelectedSkills(prev => prev.filter(s => s !== skill));
+                          setFormData(prev => ({
+                            ...prev,
+                            skills: prev.skills.filter(s => s !== skill),
+                          }));
+                        }
+                      }}
+                      className="w-4 h-4 text-purple-600 border-slate-300 rounded focus:ring-purple-500"
+                    />
+                    <span className="text-sm text-slate-900">{skill}</span>
+                  </label>
+                ))}
+              </div>
+              {selectedSkills.length > 0 && (
+                <div className="mt-4 pt-4 border-t border-slate-200">
+                  <p className="text-xs font-semibold text-slate-500 uppercase mb-2">Selected Skills</p>
+                  <div className="flex flex-wrap gap-2">
+                    {selectedSkills.map(skill => (
+                      <span
+                        key={skill}
+                        className="inline-block bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm"
+                      >
+                        {skill}
+                      </span>
+                    ))}
+                  </div>
+                </div>
               )}
             </div>
           )}

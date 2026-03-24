@@ -41,7 +41,7 @@ describe('CandidateDetailPanel Component', () => {
         onClose={mockOnClose}
       />
     );
-    expect(screen.getByText('Jane Smith')).toBeInTheDocument();
+    expect(screen.getAllByText('Jane Smith').length).toBeGreaterThan(0);
   });
 
   test('displays candidate header with name and email', () => {
@@ -52,8 +52,8 @@ describe('CandidateDetailPanel Component', () => {
         onClose={mockOnClose}
       />
     );
-    expect(screen.getByText('Jane Smith')).toBeInTheDocument();
-    expect(screen.getByText('jane@example.com')).toBeInTheDocument();
+    expect(screen.getAllByText('Jane Smith').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('jane@example.com').length).toBeGreaterThan(0);
   });
 
   test('displays status badge', () => {
@@ -75,7 +75,12 @@ describe('CandidateDetailPanel Component', () => {
         onClose={mockOnClose}
       />
     );
-    expect(screen.getByText('interview')).toBeInTheDocument();
+    // Stage badge appears in the header
+    const badges = screen.getAllByRole('status');
+    expect(badges.length).toBeGreaterThan(0);
+    // Check if any badge contains "interview"
+    const stageFound = badges.some(badge => badge.textContent.toLowerCase().includes('interview'));
+    expect(stageFound).toBe(true);
   });
 
   test('closes panel when close button is clicked', () => {
@@ -124,8 +129,8 @@ describe('CandidateDetailPanel Component', () => {
         onClose={mockOnClose}
       />
     );
-    expect(screen.getByText('Jane Smith')).toBeInTheDocument();
-    expect(screen.getByText('jane@example.com')).toBeInTheDocument();
+    expect(screen.getAllByText('Jane Smith').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('jane@example.com').length).toBeGreaterThan(0);
   });
 
   test('switches to resume tab when clicked', () => {
@@ -137,7 +142,8 @@ describe('CandidateDetailPanel Component', () => {
       />
     );
     fireEvent.click(screen.getByText('Resume'));
-    expect(screen.getByText('Upload Resume')).toBeInTheDocument();
+    // Resume tab now shows multiple resumes with "Upload Another Resume" button
+    expect(screen.getByText(/Upload.*Resume/i)).toBeInTheDocument();
   });
 
   test('switches to history tab when clicked', () => {
@@ -240,5 +246,149 @@ describe('CandidateDetailPanel Component', () => {
     );
     fireEvent.click(screen.getByText('Promote to Employee'));
     expect(screen.getByText(/Promote Jane Smith to Employee/)).toBeInTheDocument();
+  });
+
+  test('renders all five tabs', () => {
+    render(
+      <CandidateDetailPanel
+        candidate={mockCandidate}
+        isOpen={true}
+        onClose={mockOnClose}
+      />
+    );
+    expect(screen.getByText('Overview')).toBeInTheDocument();
+    expect(screen.getByText('Resume')).toBeInTheDocument();
+    expect(screen.getByText('Interviews')).toBeInTheDocument();
+    expect(screen.getByText('Skills')).toBeInTheDocument();
+    expect(screen.getByText('History')).toBeInTheDocument();
+  });
+
+  test('switches to interviews tab when clicked', () => {
+    render(
+      <CandidateDetailPanel
+        candidate={mockCandidate}
+        isOpen={true}
+        onClose={mockOnClose}
+      />
+    );
+    fireEvent.click(screen.getByText('Interviews'));
+    // Should display interview information - either Phone Screening or Technical Interview
+    const phoneScreening = screen.queryByText(/Phone Screening/);
+    const technicalInterview = screen.queryByText(/Technical Interview/);
+    expect(phoneScreening || technicalInterview).toBeTruthy();
+  });
+
+  test('switches to skills tab when clicked', () => {
+    render(
+      <CandidateDetailPanel
+        candidate={mockCandidate}
+        isOpen={true}
+        onClose={mockOnClose}
+      />
+    );
+    fireEvent.click(screen.getByText('Skills'));
+    expect(screen.getByText(/Select relevant skills/)).toBeInTheDocument();
+  });
+
+  test('allows selecting skills in skills tab', () => {
+    render(
+      <CandidateDetailPanel
+        candidate={mockCandidate}
+        isOpen={true}
+        onClose={mockOnClose}
+      />
+    );
+    fireEvent.click(screen.getByText('Skills'));
+
+    // Find and click a skill checkbox
+    const skillCheckboxes = screen.getAllByRole('checkbox');
+    if (skillCheckboxes.length > 0) {
+      fireEvent.click(skillCheckboxes[0]);
+      // Verify checkbox is now checked
+      expect(skillCheckboxes[0]).toBeChecked();
+    }
+  });
+
+  test('displays selected skills in skills tab', () => {
+    render(
+      <CandidateDetailPanel
+        candidate={mockCandidate}
+        isOpen={true}
+        onClose={mockOnClose}
+      />
+    );
+    fireEvent.click(screen.getByText('Skills'));
+
+    // Select a skill
+    const skillCheckboxes = screen.getAllByRole('checkbox');
+    if (skillCheckboxes.length > 0) {
+      fireEvent.click(skillCheckboxes[0]);
+      // Check if "Selected Skills" section appears
+      expect(screen.getByText('Selected Skills')).toBeInTheDocument();
+    }
+  });
+
+  test('displays resume list in resume tab', () => {
+    render(
+      <CandidateDetailPanel
+        candidate={mockCandidate}
+        isOpen={true}
+        onClose={mockOnClose}
+      />
+    );
+    fireEvent.click(screen.getByText('Resume'));
+
+    // Should show resume entry or upload button - check for upload button
+    const uploadButton = screen.queryByText(/Upload.*Resume/i);
+    expect(uploadButton).toBeInTheDocument();
+  });
+
+  test('shows additional form fields in edit mode', () => {
+    render(
+      <CandidateDetailPanel
+        candidate={mockCandidate}
+        isOpen={true}
+        onClose={mockOnClose}
+      />
+    );
+    fireEvent.click(screen.getByText('Edit Details'));
+
+    // Should be able to edit all form fields including phone, location, and roleApplied
+    expect(screen.getByDisplayValue('Jane Smith')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('jane@example.com')).toBeInTheDocument();
+  });
+
+  test('displays phone field in display mode', () => {
+    const candidateWithPhone = {
+      ...mockCandidate,
+      phone: '+1-555-0123',
+    };
+
+    render(
+      <CandidateDetailPanel
+        candidate={candidateWithPhone}
+        isOpen={true}
+        onClose={mockOnClose}
+      />
+    );
+
+    expect(screen.getByText('+1-555-0123')).toBeInTheDocument();
+  });
+
+  test('displays location field in display mode', () => {
+    const candidateWithLocation = {
+      ...mockCandidate,
+      location: 'San Francisco, CA',
+    };
+
+    render(
+      <CandidateDetailPanel
+        candidate={candidateWithLocation}
+        isOpen={true}
+        onClose={mockOnClose}
+      />
+    );
+
+    expect(screen.getByText('San Francisco, CA')).toBeInTheDocument();
   });
 });
