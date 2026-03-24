@@ -277,6 +277,7 @@ model Employee {
   // Relationships
   assignments DeviceAssignment[]
   onboardingRuns OnboardingRun[]
+  activities  Activity[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -444,4 +445,38 @@ model AuditLog {
 
   @@index([entityType, entityId, createdAt])
   @@index([changedBy, createdAt])
+}
+
+// ============================================================================
+// ACTIVITY FEED (Dashboard Timeline)
+// ============================================================================
+
+model Activity {
+  id          String   @id @default(cuid())
+
+  type        String   // hire, onboarding, device, task, promotion, offer, interview, rejection
+  description String   // Human-readable description
+
+  // Optional relationships
+  employeeId  String?
+  employee    Employee? @relation(fields: [employeeId], references: [id], onDelete: SetNull)
+
+  candidateId String?
+  candidate   Candidate? @relation(fields: [candidateId], references: [id], onDelete: SetNull)
+
+  deviceId    String?
+  device      Device? @relation(fields: [deviceId], references: [id], onDelete: SetNull)
+
+  offerId     String?
+  offer       Offer? @relation(fields: [offerId], references: [id], onDelete: SetNull)
+
+  metadata    String?  // JSON for additional context
+
+  createdAt   DateTime @default(now())
+
+  @@index([type, createdAt])
+  @@index([employeeId, createdAt])
+  @@index([candidateId, createdAt])
+  @@index([deviceId, createdAt])
+  @@index([createdAt])
 }
