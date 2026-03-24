@@ -1,7 +1,7 @@
 /**
  * CandidateDetailPanel Component Tests
  */
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import CandidateDetailPanel from '../../../components/panels/CandidateDetailPanel';
 
 describe('CandidateDetailPanel Component', () => {
@@ -141,7 +141,9 @@ describe('CandidateDetailPanel Component', () => {
         onClose={mockOnClose}
       />
     );
-    fireEvent.click(screen.getByText('Resume'));
+    act(() => {
+      fireEvent.click(screen.getByText('Resume'));
+    });
     // Resume tab now shows multiple resumes with "Upload Another Resume" button
     expect(screen.getByText(/Upload.*Resume/i)).toBeInTheDocument();
   });
@@ -177,7 +179,9 @@ describe('CandidateDetailPanel Component', () => {
         onClose={mockOnClose}
       />
     );
-    fireEvent.click(screen.getByText('Edit Details'));
+    act(() => {
+      fireEvent.click(screen.getByText('Edit Details'));
+    });
     expect(screen.getByDisplayValue('Jane Smith')).toBeInTheDocument();
   });
 
@@ -210,7 +214,7 @@ describe('CandidateDetailPanel Component', () => {
     expect(nameInput).toHaveValue('Jane Doe');
   });
 
-  test('saves changes and exits edit mode', () => {
+  test('saves changes and exits edit mode', async () => {
     render(
       <CandidateDetailPanel
         candidate={mockCandidate}
@@ -218,8 +222,12 @@ describe('CandidateDetailPanel Component', () => {
         onClose={mockOnClose}
       />
     );
-    fireEvent.click(screen.getByText('Edit Details'));
-    fireEvent.click(screen.getByText('Save Changes'));
+    act(() => {
+      fireEvent.click(screen.getByText('Edit Details'));
+    });
+    await act(async () => {
+      fireEvent.click(screen.getByText('Save Changes'));
+    });
     expect(screen.queryByText('Save Changes')).not.toBeInTheDocument();
   });
 
@@ -244,7 +252,9 @@ describe('CandidateDetailPanel Component', () => {
         onClose={mockOnClose}
       />
     );
-    fireEvent.click(screen.getByText('Promote to Employee'));
+    act(() => {
+      fireEvent.click(screen.getByText('Promote to Employee'));
+    });
     expect(screen.getByText(/Promote Jane Smith to Employee/)).toBeInTheDocument();
   });
 
@@ -271,7 +281,9 @@ describe('CandidateDetailPanel Component', () => {
         onClose={mockOnClose}
       />
     );
-    fireEvent.click(screen.getByText('Interviews'));
+    act(() => {
+      fireEvent.click(screen.getByText('Interviews'));
+    });
     // Should display interview information - either Phone Screening or Technical Interview
     const phoneScreening = screen.queryByText(/Phone Screening/);
     const technicalInterview = screen.queryByText(/Technical Interview/);
@@ -286,7 +298,9 @@ describe('CandidateDetailPanel Component', () => {
         onClose={mockOnClose}
       />
     );
-    fireEvent.click(screen.getByText('Skills'));
+    act(() => {
+      fireEvent.click(screen.getByText('Skills'));
+    });
     expect(screen.getByText(/Select relevant skills/)).toBeInTheDocument();
   });
 
@@ -298,12 +312,16 @@ describe('CandidateDetailPanel Component', () => {
         onClose={mockOnClose}
       />
     );
-    fireEvent.click(screen.getByText('Skills'));
+    act(() => {
+      fireEvent.click(screen.getByText('Skills'));
+    });
 
     // Find and click a skill checkbox
     const skillCheckboxes = screen.getAllByRole('checkbox');
     if (skillCheckboxes.length > 0) {
-      fireEvent.click(skillCheckboxes[0]);
+      act(() => {
+        fireEvent.click(skillCheckboxes[0]);
+      });
       // Verify checkbox is now checked
       expect(skillCheckboxes[0]).toBeChecked();
     }
@@ -317,12 +335,16 @@ describe('CandidateDetailPanel Component', () => {
         onClose={mockOnClose}
       />
     );
-    fireEvent.click(screen.getByText('Skills'));
+    act(() => {
+      fireEvent.click(screen.getByText('Skills'));
+    });
 
     // Select a skill
     const skillCheckboxes = screen.getAllByRole('checkbox');
     if (skillCheckboxes.length > 0) {
-      fireEvent.click(skillCheckboxes[0]);
+      act(() => {
+        fireEvent.click(skillCheckboxes[0]);
+      });
       // Check if "Selected Skills" section appears
       expect(screen.getByText('Selected Skills')).toBeInTheDocument();
     }
@@ -336,7 +358,9 @@ describe('CandidateDetailPanel Component', () => {
         onClose={mockOnClose}
       />
     );
-    fireEvent.click(screen.getByText('Resume'));
+    act(() => {
+      fireEvent.click(screen.getByText('Resume'));
+    });
 
     // Should show resume entry or upload button - check for upload button
     const uploadButton = screen.queryByText(/Upload.*Resume/i);

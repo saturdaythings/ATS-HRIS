@@ -3,9 +3,12 @@
  * Modal for creating a new candidate with resume upload
  */
 import { useState } from 'react';
+import PropTypes from 'prop-types';
 import ResumeUploadForm from '../forms/ResumeUploadForm';
 
-export default function AddCandidateModal({
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function AddCandidateModal({
   isOpen,
   onClose,
   onSubmit,
@@ -48,6 +51,10 @@ export default function AddCandidateModal({
     }
     if (!formData.email.trim()) {
       setError('Email is required');
+      return;
+    }
+    if (!EMAIL_REGEX.test(formData.email)) {
+      setError('Please enter a valid email address');
       return;
     }
     if (!formData.role.trim()) {
@@ -212,3 +219,12 @@ export default function AddCandidateModal({
     </>
   );
 }
+
+AddCandidateModal.propTypes = {
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onSubmit: PropTypes.func.isRequired,
+  isSubmitting: PropTypes.bool,
+};
+
+export default AddCandidateModal;

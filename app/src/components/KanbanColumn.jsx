@@ -2,6 +2,7 @@
  * KanbanColumn Component
  * Single Kanban column for a hiring stage
  */
+import PropTypes from 'prop-types';
 
 const stageConfig = {
   sourced: {
@@ -36,13 +37,13 @@ const stageConfig = {
   },
 };
 
-export default function KanbanColumn({
+function KanbanColumn({
   stage,
   candidates = [],
-  onSelectCandidate,
-  onDragStart,
-  onDragOver,
-  onDrop,
+  onSelectCandidate = undefined,
+  onDragStart = undefined,
+  onDragOver = undefined,
+  onDrop = undefined,
 }) {
   const config = stageConfig[stage] || stageConfig.sourced;
   const count = candidates.length;
@@ -99,8 +100,16 @@ export default function KanbanColumn({
             <div
               key={candidate.id}
               draggable
+              role="button"
+              tabIndex={0}
+              aria-label={`${candidate.name} - ${candidate.role}`}
               onDragStart={(e) => onDragStart?.(candidate.id, stage, e)}
               onClick={() => onSelectCandidate?.(candidate)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  onSelectCandidate?.(candidate);
+                }
+              }}
               className="bg-white rounded-lg p-3 border border-gray-200 hover:border-purple-400 hover:shadow-md cursor-pointer transition-all group"
             >
               {/* Candidate Card */}
@@ -170,3 +179,23 @@ function getStatusBadgeColor(status) {
   };
   return colors[status] || 'bg-gray-100 text-gray-800';
 }
+
+KanbanColumn.propTypes = {
+  stage: PropTypes.string.isRequired,
+  candidates: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      email: PropTypes.string.isRequired,
+      role: PropTypes.string.isRequired,
+      status: PropTypes.string,
+      resumeUrl: PropTypes.string,
+    })
+  ),
+  onSelectCandidate: PropTypes.func,
+  onDragStart: PropTypes.func,
+  onDragOver: PropTypes.func,
+  onDrop: PropTypes.func,
+};
+
+export default KanbanColumn;

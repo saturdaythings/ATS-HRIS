@@ -1,7 +1,7 @@
 /**
  * AddCandidateModal Component Tests
  */
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import AddCandidateModal from '../../../components/modals/AddCandidateModal';
 
@@ -96,7 +96,9 @@ describe('AddCandidateModal Component', () => {
 
     const submitButtons = screen.getAllByText('Add Candidate');
     const submitButton = submitButtons[submitButtons.length - 1]; // Get the button in the form
-    await user.click(submitButton);
+    await act(async () => {
+      await user.click(submitButton);
+    });
 
     // Should show validation error for missing name
     await waitFor(() => {
@@ -122,10 +124,12 @@ describe('AddCandidateModal Component', () => {
     const submitButtons = screen.getAllByText('Add Candidate');
     const submitButton = submitButtons[submitButtons.length - 1]; // Get the button in the form
 
-    await user.type(nameInput, 'Jane Doe');
-    await user.type(emailInput, 'jane@example.com');
-    await user.type(roleInput, 'Software Engineer');
-    await user.click(submitButton);
+    await act(async () => {
+      await user.type(nameInput, 'Jane Doe');
+      await user.type(emailInput, 'jane@example.com');
+      await user.type(roleInput, 'Software Engineer');
+      await user.click(submitButton);
+    });
 
     await waitFor(() => {
       expect(mockOnSubmit).toHaveBeenCalledWith(
@@ -156,10 +160,12 @@ describe('AddCandidateModal Component', () => {
     const submitButtons = screen.getAllByText('Add Candidate');
     const submitButton = submitButtons[submitButtons.length - 1]; // Get the button in the form
 
-    await user.type(nameInput, 'Jane Doe');
-    await user.type(emailInput, 'jane@example.com');
-    await user.type(roleInput, 'Software Engineer');
-    await user.click(submitButton);
+    await act(async () => {
+      await user.type(nameInput, 'Jane Doe');
+      await user.type(emailInput, 'jane@example.com');
+      await user.type(roleInput, 'Software Engineer');
+      await user.click(submitButton);
+    });
 
     await waitFor(() => {
       expect(screen.getByText('Email already exists')).toBeInTheDocument();
@@ -179,10 +185,14 @@ describe('AddCandidateModal Component', () => {
     );
 
     const uploadButton = screen.getByText('Upload Resume');
-    await user.click(uploadButton);
+    await act(async () => {
+      await user.click(uploadButton);
+    });
 
     const mockUploadButton = screen.getByText('Mock Upload Resume');
-    await user.click(mockUploadButton);
+    await act(async () => {
+      await user.click(mockUploadButton);
+    });
 
     // Resume should be marked as uploaded
     await waitFor(() => {
@@ -222,10 +232,12 @@ describe('AddCandidateModal Component', () => {
     const submitButtons = screen.getAllByText('Add Candidate');
     const submitButton = submitButtons[submitButtons.length - 1]; // Get the button in the form
 
-    await user.type(nameInput, 'Jane Doe');
-    await user.type(emailInput, 'jane@example.com');
-    await user.type(roleInput, 'Software Engineer');
-    await user.click(submitButton);
+    await act(async () => {
+      await user.type(nameInput, 'Jane Doe');
+      await user.type(emailInput, 'jane@example.com');
+      await user.type(roleInput, 'Software Engineer');
+      await user.click(submitButton);
+    });
 
     // After successful submit, close should be called
     await waitFor(() => {

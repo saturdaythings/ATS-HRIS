@@ -3,6 +3,7 @@
  * Rippling-style slide-in panel for candidate editing
  */
 import { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
 import Badge from '../common/Badge';
 import Timeline from '../common/Timeline';
 import ResumeUploadForm from '../forms/ResumeUploadForm';
@@ -117,25 +118,51 @@ export default function CandidateDetailPanel({ candidate, isOpen, onClose }) {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSave = () => {
-    // TODO: Call API to save candidate
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      // TODO: Call API to save candidate
+      // await fetch(`/api/candidates/${candidate.id}`, {
+      //   method: 'PUT',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(formData),
+      // });
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Failed to save candidate:', error);
+    }
   };
 
-  const handlePromote = (promotionData) => {
-    // TODO: Call API to promote candidate to employee
-    console.log('Promote candidate:', promotionData);
-    setShowPromoteModal(false);
-    onClose();
+  const handlePromote = async (promotionData) => {
+    try {
+      // TODO: Call API to promote candidate to employee
+      // await fetch(`/api/candidates/${candidate.id}/promote`, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(promotionData),
+      // });
+      setShowPromoteModal(false);
+      onClose();
+    } catch (error) {
+      console.error('Failed to promote candidate:', error);
+    }
   };
 
-  const handleResumeUpload = (fileInfo) => {
-    // TODO: Upload to storage and update resumeUrl
-    setFormData(prev => ({
-      ...prev,
-      resumeUrl: fileInfo.url,
-    }));
-    setShowResumeUpload(false);
+  const handleResumeUpload = async (fileInfo) => {
+    try {
+      // TODO: Upload to storage and update resumeUrl
+      // await fetch(`/api/candidates/${candidate.id}/resume`, {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify({ url: fileInfo.url }),
+      // });
+      setFormData(prev => ({
+        ...prev,
+        resumeUrl: fileInfo.url,
+      }));
+      setShowResumeUpload(false);
+    } catch (error) {
+      console.error('Failed to upload resume:', error);
+    }
   };
 
   if (!isOpen || !candidate) return null;
@@ -565,3 +592,22 @@ export default function CandidateDetailPanel({ candidate, isOpen, onClose }) {
     </>
   );
 }
+
+CandidateDetailPanel.propTypes = {
+  candidate: PropTypes.shape({
+    id: PropTypes.number.isRequired,
+    name: PropTypes.string,
+    email: PropTypes.string,
+    phone: PropTypes.string,
+    location: PropTypes.string,
+    roleApplied: PropTypes.string,
+    role: PropTypes.string,
+    stage: PropTypes.string,
+    status: PropTypes.string,
+    notes: PropTypes.string,
+    resumeUrl: PropTypes.string,
+    skills: PropTypes.arrayOf(PropTypes.string),
+  }) || PropTypes.null,
+  isOpen: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+};

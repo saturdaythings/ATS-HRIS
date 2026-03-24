@@ -20,7 +20,7 @@ export default function Hiring() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Load candidates on mount
+  // Load candidates on mount and when searchTerm changes
   useEffect(() => {
     const loadCandidates = async () => {
       try {
@@ -31,7 +31,7 @@ export default function Hiring() {
     };
 
     loadCandidates();
-  }, []);
+  }, [searchTerm, fetchCandidates]);
 
   // Detect mobile viewport
   useEffect(() => {

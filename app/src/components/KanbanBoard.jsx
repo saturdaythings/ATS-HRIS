@@ -3,14 +3,15 @@
  * Kanban-style pipeline view with multiple columns
  */
 import { useState, useCallback } from 'react';
+import PropTypes from 'prop-types';
 import KanbanColumn from './KanbanColumn';
 
 const STAGES = ['sourced', 'screening', 'interview', 'offer', 'hired'];
 
-export default function KanbanBoard({
+function KanbanBoard({
   candidates = [],
-  onSelectCandidate,
-  onStageChange,
+  onSelectCandidate = undefined,
+  onStageChange = undefined,
   isLoading = false,
   isMobile = false,
 }) {
@@ -131,3 +132,23 @@ export default function KanbanBoard({
     </div>
   );
 }
+
+KanbanBoard.propTypes = {
+  candidates: PropTypes.arrayOf(
+    PropTypes.shape({
+      id: PropTypes.string.isRequired,
+      name: PropTypes.string.isRequired,
+      email: PropTypes.string.isRequired,
+      role: PropTypes.string.isRequired,
+      stage: PropTypes.string.isRequired,
+      status: PropTypes.string,
+      resumeUrl: PropTypes.string,
+    })
+  ),
+  onSelectCandidate: PropTypes.func,
+  onStageChange: PropTypes.func,
+  isLoading: PropTypes.bool,
+  isMobile: PropTypes.bool,
+};
+
+export default KanbanBoard;
