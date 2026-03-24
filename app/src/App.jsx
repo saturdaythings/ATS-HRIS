@@ -16,6 +16,7 @@ import AdminTemplates from './pages/admin/Templates';
 import AdminSettings from './pages/admin/Settings';
 import AdminFeatureRequests from './pages/admin/FeatureRequests';
 import AdminHealth from './pages/admin/Health';
+import Search from './pages/Search';
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
           <Route path="/devices/inventory" element={<DevicesInventory />} />
           <Route path="/devices/assignments" element={<DevicesAssignments />} />
           <Route path="/reports" element={<Reports />} />
+          <Route path="/search" element={<Search />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/admin/custom-fields" element={<AdminCustomFields />} />
           <Route path="/admin/templates" element={<AdminTemplates />} />
