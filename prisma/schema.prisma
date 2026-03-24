@@ -138,6 +138,7 @@ model Candidate {
   offers            Offer[]
   skillTags         CandidateSkillTag[]
   employee          Employee? @relation("CandidateToEmployee")
+  activities        Activity[]
 
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -246,6 +247,8 @@ model Offer {
   status      String   @default("pending") // pending, accepted, declined, expired
 
   notes       String?
+
+  activities  Activity[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -395,6 +398,7 @@ model Device {
   notes       String?
 
   assignments DeviceAssignment[]
+  activities  Activity[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

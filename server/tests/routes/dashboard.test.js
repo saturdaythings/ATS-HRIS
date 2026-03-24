@@ -19,12 +19,31 @@ describe('Dashboard Routes', () => {
   let testDeviceAssignment;
   let testOnboardingRun;
   let testTrack;
+  let testClientId;
 
   beforeAll(async () => {
+    // Cleanup any existing test data first (in reverse dependency order)
+    await prisma.activity.deleteMany({});
+    await prisma.interview.deleteMany({});
+    await prisma.offer.deleteMany({});
+    await prisma.resume.deleteMany({});
+    await prisma.candidateSkillTag.deleteMany({});
+    await prisma.deviceAssignment.deleteMany({});
+    await prisma.device.deleteMany({});
+    await prisma.taskInstance.deleteMany({});
+    await prisma.onboardingRun.deleteMany({});
+    await prisma.taskTemplate.deleteMany({});
+    await prisma.trackTemplate.deleteMany({});
+    // Delete employees first to remove candidateId foreign keys
+    await prisma.employee.deleteMany({});
+    await prisma.candidate.deleteMany({});
+    await prisma.client.deleteMany({}); // Clear all clients
+
     // Create test data
     const testClient = await prisma.client.create({
-      data: { name: 'Dashboard Test Client' }
+      data: { name: `Dashboard Test Client ${Date.now()}` } // Use timestamp for uniqueness
     });
+    testClientId = testClient.id;
 
     testEmployee = await prisma.employee.create({
       data: {
@@ -34,7 +53,7 @@ describe('Dashboard Routes', () => {
         department: 'Engineering',
         status: 'active',
         startDate: new Date('2026-01-15'),
-        clientId: testClient.id,
+        clientId: testClientId,
       }
     });
 
@@ -45,7 +64,7 @@ describe('Dashboard Routes', () => {
         roleApplied: 'Senior Engineer',
         stage: 'interview',
         status: 'active',
-        clientId: testClient.id,
+        clientId: testClientId,
       }
     });
 
@@ -113,15 +132,20 @@ describe('Dashboard Routes', () => {
   });
 
   afterAll(async () => {
-    // Cleanup
+    // Cleanup in reverse dependency order
+    await prisma.activity.deleteMany({});
+    await prisma.interview.deleteMany({});
+    await prisma.offer.deleteMany({});
+    await prisma.resume.deleteMany({});
     await prisma.deviceAssignment.deleteMany({});
     await prisma.device.deleteMany({});
-    await prisma.offer.deleteMany({});
+    await prisma.taskInstance.deleteMany({});
     await prisma.onboardingRun.deleteMany({});
     await prisma.taskTemplate.deleteMany({});
     await prisma.trackTemplate.deleteMany({});
-    await prisma.candidate.deleteMany({});
+    // Delete employees first to remove candidateId foreign keys
     await prisma.employee.deleteMany({});
+    await prisma.candidate.deleteMany({});
     await prisma.client.deleteMany({});
     await prisma.$disconnect();
   });
@@ -137,7 +161,7 @@ describe('Dashboard Routes', () => {
       expect(res.body.data.openPositions).toBeDefined();
       expect(res.body.data.candidatesInPipeline).toBeDefined();
       expect(res.body.data.onboardingInProgress).toBeDefined();
-      expect(res.body.data.deviceAssignments).toBeDefined();
+      expect(res.body.data.deviceInventory).toBeDefined();
     });
 
     it('should count open candidates correctly', async () => {
@@ -161,7 +185,7 @@ describe('Dashboard Routes', () => {
         .get('/api/dashboard/metrics')
         .expect(200);
 
-      expect(res.body.data.deviceAssignments).toBeGreaterThanOrEqual(1);
+      expect(res.body.data.deviceInventory.assigned).toBeGreaterThanOrEqual(1);
     });
   });
 

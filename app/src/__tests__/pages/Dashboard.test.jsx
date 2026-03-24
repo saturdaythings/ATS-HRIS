@@ -47,6 +47,37 @@ jest.mock('../../components/ActivityFeed', () => {
   };
 });
 
+// Mock widget components
+jest.mock('../../components/widgets/MetricsCard', () => {
+  return function MockMetricsCard({ label, value }) {
+    return <div data-testid={`metric-${label}`}>{label}: {value}</div>;
+  };
+});
+
+jest.mock('../../components/widgets/CandidateStageWidget', () => {
+  return function MockCandidateStageWidget() {
+    return <div data-testid="candidate-stage-widget">Candidate Stage Widget</div>;
+  };
+});
+
+jest.mock('../../components/widgets/OnboardingProgressWidget', () => {
+  return function MockOnboardingProgressWidget() {
+    return <div data-testid="onboarding-widget">Onboarding Widget</div>;
+  };
+});
+
+jest.mock('../../components/widgets/DeviceInventoryWidget', () => {
+  return function MockDeviceInventoryWidget() {
+    return <div data-testid="device-widget">Device Widget</div>;
+  };
+});
+
+jest.mock('../../components/widgets/TeamActivityWidget', () => {
+  return function MockTeamActivityWidget() {
+    return <div data-testid="team-activity-widget">Team Activity Widget</div>;
+  };
+});
+
 import { useActivities } from '../../hooks/useActivities';
 
 describe('Dashboard Page', () => {
@@ -61,7 +92,7 @@ describe('Dashboard Page', () => {
     },
     {
       id: '2',
-      type: 'device_assign',
+      type: 'device',
       description: 'Device assigned to Bob',
       employeeId: 'emp2',
       deviceId: 'dev1',
@@ -71,9 +102,35 @@ describe('Dashboard Page', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+    // Mock fetch for metrics
+    global.fetch = jest.fn(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: {
+              candidatesInPipeline: 5,
+              openPositions: 3,
+              onboardingInProgress: 2,
+              activeEmployees: 10,
+              deviceInventory: {
+                total: 20,
+                available: 5,
+                assigned: 15,
+                retired: 0,
+              },
+              recentActivityCount: 12,
+            },
+          }),
+      })
+    );
   });
 
-  test('renders dashboard header', () => {
+  afterEach(() => {
+    jest.resetAllMocks();
+  });
+
+  test('renders dashboard header', async () => {
     useActivities.mockReturnValue({
       activities: [],
       loading: false,
@@ -86,10 +143,10 @@ describe('Dashboard Page', () => {
     render(<Dashboard />);
 
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
-    expect(screen.getByText(/Welcome to V.Two Ops/)).toBeInTheDocument();
+    expect(screen.getByText(/Real-time metrics and activity overview/)).toBeInTheDocument();
   });
 
-  test('renders metric cards', () => {
+  test('renders metric cards with values', async () => {
     useActivities.mockReturnValue({
       activities: [],
       loading: false,
@@ -101,13 +158,15 @@ describe('Dashboard Page', () => {
 
     render(<Dashboard />);
 
-    expect(screen.getByText('Employees')).toBeInTheDocument();
-    expect(screen.getByText('Candidates')).toBeInTheDocument();
-    expect(screen.getByText('Devices')).toBeInTheDocument();
-    expect(screen.getByText('Unassigned')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('metric-Active Candidates')).toBeInTheDocument();
+      expect(screen.getByTestId('metric-In Pipeline')).toBeInTheDocument();
+      expect(screen.getByTestId('metric-Onboarding')).toBeInTheDocument();
+      expect(screen.getByTestId('metric-Devices')).toBeInTheDocument();
+    });
   });
 
-  test('renders activity feed widget', () => {
+  test('renders all dashboard widgets', async () => {
     useActivities.mockReturnValue({
       activities: mockActivities,
       loading: false,
@@ -119,10 +178,32 @@ describe('Dashboard Page', () => {
 
     render(<Dashboard />);
 
-    expect(screen.getByTestId('activity-feed')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('candidate-stage-widget')).toBeInTheDocument();
+      expect(screen.getByTestId('onboarding-widget')).toBeInTheDocument();
+      expect(screen.getByTestId('device-widget')).toBeInTheDocument();
+      expect(screen.getByTestId('team-activity-widget')).toBeInTheDocument();
+    });
   });
 
-  test('fetches activities on mount', () => {
+  test('renders activity feed widget', async () => {
+    useActivities.mockReturnValue({
+      activities: mockActivities,
+      loading: false,
+      error: null,
+      hasMore: false,
+      fetchActivities: jest.fn(),
+      loadMore: jest.fn(),
+    });
+
+    render(<Dashboard />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('activity-feed')).toBeInTheDocument();
+    });
+  });
+
+  test('fetches metrics and activities on mount', async () => {
     const mockFetchActivities = jest.fn();
     useActivities.mockReturnValue({
       activities: [],
@@ -136,9 +217,10 @@ describe('Dashboard Page', () => {
     render(<Dashboard />);
 
     expect(mockFetchActivities).toHaveBeenCalledWith({ limit: 20 });
+    expect(global.fetch).toHaveBeenCalledWith('/api/dashboard/metrics');
   });
 
-  test('displays activities in feed', () => {
+  test('displays activities in feed', async () => {
     useActivities.mockReturnValue({
       activities: mockActivities,
       loading: false,
@@ -150,13 +232,15 @@ describe('Dashboard Page', () => {
 
     render(<Dashboard />);
 
-    expect(screen.getByTestId('activity-1')).toBeInTheDocument();
-    expect(screen.getByTestId('activity-2')).toBeInTheDocument();
-    expect(screen.getByText('Alice Johnson hired')).toBeInTheDocument();
-    expect(screen.getByText('Device assigned to Bob')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByTestId('activity-1')).toBeInTheDocument();
+      expect(screen.getByTestId('activity-2')).toBeInTheDocument();
+      expect(screen.getByText('Alice Johnson hired')).toBeInTheDocument();
+      expect(screen.getByText('Device assigned to Bob')).toBeInTheDocument();
+    });
   });
 
-  test('displays loading state when fetching', () => {
+  test('displays loading state when fetching activities', () => {
     useActivities.mockReturnValue({
       activities: [],
       loading: true,
@@ -171,7 +255,7 @@ describe('Dashboard Page', () => {
     expect(screen.getByText('Loading activities...')).toBeInTheDocument();
   });
 
-  test('displays error state when fetch fails', () => {
+  test('displays error state when activity fetch fails', () => {
     const errorMessage = 'Failed to fetch activities';
     useActivities.mockReturnValue({
       activities: [],
@@ -187,7 +271,7 @@ describe('Dashboard Page', () => {
     expect(screen.getByText(`Error: ${errorMessage}`)).toBeInTheDocument();
   });
 
-  test('handles load more', () => {
+  test('handles load more button click', async () => {
     const mockLoadMore = jest.fn();
     useActivities.mockReturnValue({
       activities: mockActivities,
@@ -200,34 +284,16 @@ describe('Dashboard Page', () => {
 
     render(<Dashboard />);
 
-    const loadMoreButton = screen.getByTestId('load-more-button');
-    fireEvent.click(loadMoreButton);
-
-    expect(mockLoadMore).toHaveBeenCalledWith({ limit: 20 });
+    await waitFor(() => {
+      const loadMoreButton = screen.getByTestId('load-more-button');
+      fireEvent.click(loadMoreButton);
+      expect(mockLoadMore).toHaveBeenCalledWith({ limit: 20 });
+    });
   });
 
-  test('renders status info panel', () => {
+  test('responsive layout grid', () => {
     useActivities.mockReturnValue({
       activities: [],
-      loading: false,
-      error: null,
-      hasMore: false,
-      fetchActivities: jest.fn(),
-      loadMore: jest.fn(),
-    });
-
-    render(<Dashboard />);
-
-    expect(screen.getByText(/Phase 2 Status/)).toBeInTheDocument();
-    expect(screen.getByText(/Activity Feed widget added/)).toBeInTheDocument();
-    expect(screen.getByText(/Timeline visualization/)).toBeInTheDocument();
-    expect(screen.getByText(/Type filtering/)).toBeInTheDocument();
-    expect(screen.getByText(/Search functionality/)).toBeInTheDocument();
-  });
-
-  test('responsive layout on different screen sizes', () => {
-    useActivities.mockReturnValue({
-      activities: mockActivities,
       loading: false,
       error: null,
       hasMore: false,
@@ -243,7 +309,7 @@ describe('Dashboard Page', () => {
     expect(content).toContain('grid');
   });
 
-  test('has no activities initially shows empty state', () => {
+  test('has no activities initially shows empty state', async () => {
     useActivities.mockReturnValue({
       activities: [],
       loading: false,
@@ -255,6 +321,8 @@ describe('Dashboard Page', () => {
 
     render(<Dashboard />);
 
-    expect(screen.getByText('No activities')).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText('No activities')).toBeInTheDocument();
+    });
   });
 });
