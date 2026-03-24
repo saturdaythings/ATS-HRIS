@@ -1,0 +1,23 @@
+{
+  "swarms": {
+    "swarm-1774375941714-e6legt": {
+      "swarmId": "swarm-1774375941714-e6legt",
+      "topology": "mesh",
+      "maxAgents": 15,
+      "status": "running",
+      "agents": [],
+      "tasks": [],
+      "config": {
+        "topology": "mesh",
+        "maxAgents": 15,
+        "strategy": "specialized",
+        "communicationProtocol": "message-bus",
+        "autoScaling": true,
+        "consensusMechanism": "majority"
+      },
+      "createdAt": "2026-03-24T18:12:21.714Z",
+      "updatedAt": "2026-03-24T18:12:21.714Z"
+    }
+  },
+  "version": "3.0.0"
+}

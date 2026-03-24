@@ -1,0 +1,18 @@
+{
+  "tasks": {
+    "task-1774376018274-e6tklo": {
+      "taskId": "task-1774376018274-e6tklo",
+      "type": "review",
+      "description": "Comprehensive Prisma schema audit for V.Two Ops ATS platform. Current: Candidate/Employee/Device models. Missing: ConfigList dropdowns, Client, Resume versioning, Interview/Interviewer, Offer, TrackTemplate/TaskTemplate structure. CHALLENGE: Is brief schema optimal? Any gaps? Optimize for: accuracy, token efficiency, query performance, security, simplicity. Deliverables: JSON audit report with issues, recommendations, updated schema models.",
+      "priority": "high",
+      "status": "pending",
+      "progress": 0,
+      "assignedTo": [],
+      "tags": [],
+      "createdAt": "2026-03-24T18:13:38.275Z",
+      "startedAt": null,
+      "completedAt": null
+    }
+  },
+  "version": "3.0.0"
+}
