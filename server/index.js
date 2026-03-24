@@ -20,6 +20,9 @@ import activitiesRouter from './routes/activities.js';
 import notificationsRouter from './routes/notifications.js';
 import customFieldsRouter from './routes/admin/customFields.js';
 import claudeRouter from './routes/claude.js';
+import tracksRouter from './routes/tracks.js';
+import trackTemplatesRouter from './routes/trackTemplates.js';
+import configListsRouter from './routes/configLists.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -52,6 +55,9 @@ app.use('/api/activities', activitiesRouter);
 app.use('/api/notifications', notificationsRouter);
 app.use('/api/admin/custom-fields', customFieldsRouter);
 app.use('/api/claude', claudeRouter);
+app.use('/api/tracks', tracksRouter);
+app.use('/api/track-templates', trackTemplatesRouter);
+app.use('/api/config-lists', configListsRouter);
 
 // Error handling
 app.use(errorHandler);
