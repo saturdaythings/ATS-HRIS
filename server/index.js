@@ -1,5 +1,6 @@
 import express from 'express';
 import cors from 'cors';
+import session from 'express-session';
 import { db } from './db.js';
 import { errorHandler } from './middleware/errorHandler.js';
 
@@ -26,6 +27,14 @@ const PORT = process.env.PORT || 3001;
 // Middleware
 app.use(express.json());
 app.use(cors());
+
+// Session configuration
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'dev-secret-change-in-prod',
+  resave: false,
+  saveUninitialized: false,
+  cookie: { secure: false, maxAge: 1000 * 60 * 60 * 24 } // 24 hours
+}));
 
 // Routes
 app.use('/api/health', healthRouter);
