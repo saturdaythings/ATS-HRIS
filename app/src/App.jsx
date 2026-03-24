@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import SidebarLayout from './layouts/SidebarLayout';
 import ClaudeChat from './components/ClaudeChat';
 import Dashboard from './pages/Dashboard';
+import Tracks from './pages/Tracks';
 import PeopleDirectory from './pages/people/Directory';
 import PeopleHiring from './pages/people/Hiring';
 import PeopleOnboarding from './pages/people/Onboarding';
@@ -22,6 +23,7 @@ function App() {
       <SidebarLayout>
         <Routes>
           <Route path="/" element={<Dashboard />} />
+          <Route path="/tracks" element={<Tracks />} />
           <Route path="/people/directory" element={<PeopleDirectory />} />
           <Route path="/people/hiring" element={<PeopleHiring />} />
           <Route path="/people/onboarding" element={<PeopleOnboarding />} />

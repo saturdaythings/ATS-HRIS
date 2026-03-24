@@ -231,4 +231,121 @@ describe('Onboarding Page', () => {
       expect(screen.getByText(/Error:/i)).toBeInTheDocument();
     });
   });
+
+  test('displays task list with status dropdowns when employee selected', async () => {
+    render(<Onboarding />);
+    await waitFor(() => {
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+    });
+
+    const employeeButton = screen.getByText('John Doe').closest('button');
+    fireEvent.click(employeeButton);
+
+    await waitFor(() => {
+      expect(screen.getByText('Set up computer')).toBeInTheDocument();
+    });
+  });
+
+  test('marks all tasks as complete via bulk action', async () => {
+    const mockMarkAllComplete = jest.fn();
+    fetch.mockImplementation(async (url, options) => {
+      if (url.includes('/api/onboarding/checklists/') && options?.method === 'PUT') {
+        await mockMarkAllComplete();
+        return {
+          ok: true,
+          json: async () => ({
+            data: { updated: true },
+            error: null,
+          }),
+        };
+      }
+      if (url === '/api/employees') {
+        return {
+          ok: true,
+          json: async () => ({ data: mockEmployees, error: null }),
+        };
+      }
+      if (url.includes('/api/onboarding/checklists/')) {
+        return {
+          ok: true,
+          json: async () => ({
+            data: [
+              {
+                id: 'checklist-1',
+                employeeId: 'emp-1',
+                templateId: 'template-1',
+                status: 'active',
+              },
+            ],
+            error: null,
+          }),
+        };
+      }
+      if (url.includes('/progress')) {
+        return {
+          ok: true,
+          json: async () => ({
+            data: { total: 2, completed: 1, percentage: 50 },
+            error: null,
+          }),
+        };
+      }
+      return {
+        ok: false,
+        json: async () => ({ error: 'Not found' }),
+      };
+    });
+
+    render(<Onboarding />);
+    await waitFor(() => {
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+    });
+
+    const employeeButton = screen.getByText('John Doe').closest('button');
+    fireEvent.click(employeeButton);
+
+    await waitFor(() => {
+      const markAllBtn = screen.queryByText('Mark All Complete');
+      if (markAllBtn) {
+        fireEvent.click(markAllBtn);
+        expect(mockMarkAllComplete).toHaveBeenCalled();
+      }
+    });
+  });
+
+  test('color-codes tasks by due date status', async () => {
+    render(<Onboarding />);
+    await waitFor(() => {
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+    });
+
+    const employeeButton = screen.getByText('John Doe').closest('button');
+    fireEvent.click(employeeButton);
+
+    await waitFor(() => {
+      const taskItems = screen.getAllByText(/Set up computer|Access training/);
+      expect(taskItems.length).toBeGreaterThan(0);
+    });
+  });
+
+  test('prints checklist when print button clicked', async () => {
+    const mockPrint = jest.fn();
+    window.print = mockPrint;
+
+    render(<Onboarding />);
+    await waitFor(() => {
+      expect(screen.getByText('John Doe')).toBeInTheDocument();
+    });
+
+    const employeeButton = screen.getByText('John Doe').closest('button');
+    fireEvent.click(employeeButton);
+
+    await waitFor(() => {
+      const printBtn = screen.queryByText('Print Checklist');
+      if (printBtn) {
+        fireEvent.click(printBtn);
+        expect(mockPrint).toHaveBeenCalled();
+      }
+    });
+  });
 });

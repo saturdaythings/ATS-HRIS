@@ -2,6 +2,8 @@ import express from 'express';
 import { db } from '../db.js';
 import * as resumeService from '../services/resumeService.js';
 import * as candidateService from '../services/candidateService.js';
+import * as offerService from '../services/offerService.js';
+import * as promotionService from '../services/promotionService.js';
 import { uploadFile } from '../middleware/upload.js';
 
 const router = express.Router();
@@ -170,6 +172,12 @@ router.get('/:id', async (req, res) => {
  * Update candidate
  * Body can include: name, email, phone, location, roleApplied, status, stage,
  *   sourceId, seniorityId, clientId, referredBy, notes
+ *
+ * Stage progression rules (TASK 4.1):
+ *   - Valid forward progression: applied → screening → interview → offer → closed
+ *   - Can move to rejected from any stage
+ *   - Cannot move backward (except to rejected)
+ *   - Updates latestStageChangeAt when stage changes
  */
 router.patch('/:id', async (req, res) => {
   try {
@@ -180,6 +188,45 @@ router.patch('/:id', async (req, res) => {
     const existing = await db.candidate.findUnique({ where: { id } });
     if (!existing) {
       return res.status(404).json({ error: 'Candidate not found' });
+    }
+
+    // Validate stage progression if stage is being updated
+    if (updates.stage && updates.stage !== existing.stage) {
+      const validStages = ['applied', 'screening', 'interview', 'offer', 'closed', 'rejected'];
+
+      if (!validStages.includes(updates.stage)) {
+        return res.status(400).json({
+          error: `Invalid stage: ${updates.stage}. Valid stages are: ${validStages.join(', ')}`
+        });
+      }
+
+      // Define stage progression order
+      const stageOrder = {
+        'applied': 0,
+        'screening': 1,
+        'interview': 2,
+        'offer': 3,
+        'closed': 4,
+        'rejected': 999, // Can move to rejected from any stage
+      };
+
+      const currentStageOrder = stageOrder[existing.stage];
+      const newStageOrder = stageOrder[updates.stage];
+
+      // Allow forward progression, movement to rejected, or staying at same stage
+      if (newStageOrder < currentStageOrder && updates.stage !== 'rejected') {
+        return res.status(400).json({
+          error: `Cannot move from ${existing.stage} to ${updates.stage}. Only forward progression or move to rejected is allowed.`
+        });
+      }
+
+      // Update latestStageChangeAt when stage changes
+      updates.latestStageChangeAt = new Date();
+    }
+
+    // Update latestStageChangeAt when status changes to rejected
+    if (updates.status === 'rejected' && existing.status !== 'rejected') {
+      updates.latestStageChangeAt = new Date();
     }
 
     // Try to update
@@ -316,6 +363,82 @@ router.delete('/:id/resumes/:resumeId', async (req, res) => {
       return res.status(404).json({ error: error.message });
     }
     res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================================
+// OFFER MANAGEMENT ENDPOINTS (TASK 4.2)
+// ============================================================================
+
+/**
+ * GET /api/candidates/:id/offers
+ * List all offers for a candidate
+ */
+router.get('/:id/offers', async (req, res) => {
+  try {
+    const { id: candidateId } = req.params;
+
+    const offers = await offerService.listOffers(candidateId);
+
+    res.json(offers);
+  } catch (error) {
+    if (error.message === 'Candidate not found') {
+      return res.status(404).json({ error: error.message });
+    }
+    console.error('[GET /api/candidates/:id/offers]', error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ============================================================================
+// TASK 4.3-4.4: PROMOTION & REJECTION ENDPOINTS
+// ============================================================================
+
+/**
+ * POST /api/candidates/:id/promote
+ * Promote candidate to employee
+ * Creates Employee record, links Candidate, auto-applies company tracks,
+ * creates OnboardingRuns and TaskInstances
+ *
+ * Body:
+ *   - confirmDetails (required): { title, department, startDate }
+ *   - selectedTrackIds (optional): Array of track template IDs to apply
+ *
+ * Returns: { employee, onboardingRuns }
+ */
+router.post('/:id/promote', async (req, res) => {
+  try {
+    const { id: candidateId } = req.params;
+    const { confirmDetails, selectedTrackIds = [] } = req.body;
+
+    // Validate required fields
+    if (!confirmDetails) {
+      return res.status(400).json({ error: 'confirmDetails is required' });
+    }
+    if (!confirmDetails.title) {
+      return res.status(400).json({ error: 'confirmDetails.title is required' });
+    }
+    if (!confirmDetails.department) {
+      return res.status(400).json({ error: 'confirmDetails.department is required' });
+    }
+
+    // Promote candidate
+    const result = await promotionService.promoteCandidate(
+      candidateId,
+      confirmDetails,
+      selectedTrackIds
+    );
+
+    res.status(201).json(result);
+  } catch (error) {
+    if (error.message === 'Candidate not found') {
+      return res.status(404).json({ error: 'Candidate not found' });
+    }
+    if (error.message.includes('already promoted')) {
+      return res.status(409).json({ error: error.message });
+    }
+    console.error('[POST /api/candidates/:id/promote]', error.message);
+    res.status(400).json({ error: error.message });
   }
 });
 

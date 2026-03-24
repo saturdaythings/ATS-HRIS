@@ -2,6 +2,8 @@ import request from 'supertest';
 import express from 'express';
 import { db } from '../../db.js';
 import candidatesRouter from '../../routes/candidates.js';
+import trackTemplatesRouter from '../../routes/trackTemplates.js';
+import configListsRouter from '../../routes/configLists.js';
 import multer from 'multer';
 import { Readable } from 'stream';
 
@@ -578,6 +580,665 @@ describe('Resume API Endpoints', () => {
       );
       expect(listRes.body.find((r) => r.id === resumeId2)).toBeUndefined();
       expect(listRes.body.length).toBe(2); // v1 and v3 remain
+    });
+  });
+});
+
+// ============================================================================
+// TASK 4.3-4.4: CANDIDATE PROMOTION & REJECTION WORKFLOWS
+// ============================================================================
+
+describe('Candidate Promotion & Rejection Workflows', () => {
+  let app;
+  let testCandidateId;
+  let testTrackId;
+
+  beforeEach(() => {
+    app = express();
+    app.use(express.json());
+    app.use('/api/candidates', candidatesRouter);
+    app.use('/api/track-templates', trackTemplatesRouter);
+    app.use('/api/config-lists', configListsRouter);
+
+    // Error handler
+    app.use((err, req, res, next) => {
+      console.error('Test error:', err);
+      res.status(500).json({ error: err.message || 'Server error' });
+    });
+  });
+
+  describe('Setup: Create test data', () => {
+    it('should create test candidate, track templates, and tasks', async () => {
+      const timestamp = Date.now();
+
+      // Create test candidate
+      const candidateRes = await request(app)
+        .post('/api/candidates')
+        .send({
+          name: `Promotion Test Candidate ${timestamp}`,
+          email: `promote${timestamp}@example.com`,
+          phone: '555-7777',
+          location: 'Austin, TX',
+          roleApplied: 'Senior Engineer',
+          stage: 'offer',
+          status: 'active',
+        });
+
+      expect(candidateRes.status).toBe(201);
+      testCandidateId = candidateRes.body.id;
+
+      // Create company auto-apply track template
+      const companyTrackRes = await request(app)
+        .post('/api/track-templates')
+        .send({
+          name: `Company Onboarding ${timestamp}`,
+          type: 'company',
+          autoApply: true,
+          description: 'Standard company onboarding',
+        });
+
+      expect(companyTrackRes.status).toBe(201);
+      testTrackId = companyTrackRes.body.id;
+
+      // Create task templates for track
+      const taskRes = await request(app)
+        .post(`/api/track-templates/${testTrackId}/tasks`)
+        .send({
+          name: 'Benefits Setup',
+          description: 'Enroll in health insurance',
+          ownerRole: 'ops',
+          dueDaysOffset: 0,
+          order: 1,
+        });
+
+      expect(taskRes.status).toBe(201);
+    });
+  });
+
+  describe('4.3: POST /api/candidates/:id/promote - Promote to Employee', () => {
+    beforeEach(async () => {
+      // Create a fresh test candidate and track for each test
+      const timestamp = Date.now();
+      const res = await request(app)
+        .post('/api/candidates')
+        .send({
+          name: `Promote Candidate ${timestamp}`,
+          email: `promotetest${timestamp}@example.com`,
+          phone: '555-8888',
+          location: 'Austin, TX',
+          roleApplied: 'Senior Engineer',
+          stage: 'offer',
+          status: 'active',
+        });
+      testCandidateId = res.body.id;
+
+      const trackRes = await request(app)
+        .post('/api/track-templates')
+        .send({
+          name: `Company Track ${timestamp}`,
+          type: 'company',
+          autoApply: true,
+          description: 'Auto-apply track',
+        });
+      testTrackId = trackRes.body.id;
+    });
+
+    it('should promote candidate to employee with status=hired', async () => {
+      const res = await request(app)
+        .post(`/api/candidates/${testCandidateId}/promote`)
+        .send({
+          confirmDetails: {
+            title: 'Senior Software Engineer',
+            department: 'Engineering',
+            startDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString(),
+          },
+          selectedTrackIds: [testTrackId],
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body).toHaveProperty('employee');
+      expect(res.body.employee).toHaveProperty('id');
+      expect(res.body.employee.title).toBe('Senior Software Engineer');
+      expect(res.body.employee.department).toBe('Engineering');
+      expect(res.body).toHaveProperty('onboardingRuns');
+      expect(Array.isArray(res.body.onboardingRuns)).toBe(true);
+    });
+
+    it('should create Employee record with candidate data', async () => {
+      const res = await request(app)
+        .post(`/api/candidates/${testCandidateId}/promote`)
+        .send({
+          confirmDetails: {
+            title: 'Software Engineer',
+            department: 'Tech',
+            startDate: new Date().toISOString(),
+          },
+          selectedTrackIds: [],
+        });
+
+      expect(res.status).toBe(201);
+      const employee = res.body.employee;
+      expect(employee.name).toContain('Promote Candidate');
+      expect(employee.email).toContain('promotetest');
+      expect(employee.status).toBe('active');
+    });
+
+    it('should auto-apply company tracks with type=company and autoApply=true', async () => {
+      // Get candidate to see current state
+      let getRes = await request(app).get(`/api/candidates/${testCandidateId}`);
+      expect(getRes.status).toBe(200);
+
+      // Promote with selected tracks
+      const promoteRes = await request(app)
+        .post(`/api/candidates/${testCandidateId}/promote`)
+        .send({
+          confirmDetails: {
+            title: 'Engineer',
+            department: 'Eng',
+            startDate: new Date().toISOString(),
+          },
+          selectedTrackIds: [testTrackId],
+        });
+
+      expect(promoteRes.status).toBe(201);
+      expect(promoteRes.body.onboardingRuns.length).toBeGreaterThanOrEqual(1);
+      const runs = promoteRes.body.onboardingRuns;
+      expect(runs.some(r => r.type === 'onboarding')).toBe(true);
+    });
+
+    it('should create OnboardingRun and TaskInstances for each track', async () => {
+      const res = await request(app)
+        .post(`/api/candidates/${testCandidateId}/promote`)
+        .send({
+          confirmDetails: {
+            title: 'Senior Engineer',
+            department: 'Engineering',
+            startDate: new Date().toISOString(),
+          },
+          selectedTrackIds: [testTrackId],
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.onboardingRuns.length).toBeGreaterThanOrEqual(1);
+
+      const run = res.body.onboardingRuns[0];
+      expect(run).toHaveProperty('id');
+      expect(run).toHaveProperty('employeeId');
+      expect(run).toHaveProperty('trackId');
+      expect(run.type).toBe('onboarding');
+      expect(run.status).toBe('pending');
+      expect(run).toHaveProperty('tasks');
+      expect(Array.isArray(run.tasks)).toBe(true);
+    });
+
+    it('should set candidate status=hired after promotion', async () => {
+      const res = await request(app)
+        .post(`/api/candidates/${testCandidateId}/promote`)
+        .send({
+          confirmDetails: {
+            title: 'Engineer',
+            department: 'Eng',
+            startDate: new Date().toISOString(),
+          },
+          selectedTrackIds: [],
+        });
+
+      expect(res.status).toBe(201);
+
+      // Verify candidate status
+      const getRes = await request(app).get(`/api/candidates/${testCandidateId}`);
+      expect(getRes.status).toBe(200);
+      expect(getRes.body.status).toBe('hired');
+    });
+
+    it('should return 404 if candidate not found', async () => {
+      const res = await request(app)
+        .post('/api/candidates/nonexistent/promote')
+        .send({
+          confirmDetails: {
+            title: 'Engineer',
+            department: 'Eng',
+            startDate: new Date().toISOString(),
+          },
+          selectedTrackIds: [],
+        });
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toContain('not found');
+    });
+
+    it('should validate required confirmDetails fields', async () => {
+      const res = await request(app)
+        .post(`/api/candidates/${testCandidateId}/promote`)
+        .send({
+          confirmDetails: {
+            // Missing title and department
+            startDate: new Date().toISOString(),
+          },
+          selectedTrackIds: [],
+        });
+
+      expect(res.status).toBe(400);
+      expect(res.body.error).toBeDefined();
+    });
+
+    it('should reject if candidate already promoted (has employeeId)', async () => {
+      // First promotion
+      const res1 = await request(app)
+        .post(`/api/candidates/${testCandidateId}/promote`)
+        .send({
+          confirmDetails: {
+            title: 'Engineer',
+            department: 'Eng',
+            startDate: new Date().toISOString(),
+          },
+          selectedTrackIds: [],
+        });
+
+      expect(res1.status).toBe(201);
+
+      // Second promotion attempt
+      const res2 = await request(app)
+        .post(`/api/candidates/${testCandidateId}/promote`)
+        .send({
+          confirmDetails: {
+            title: 'Senior Engineer',
+            department: 'Eng',
+            startDate: new Date().toISOString(),
+          },
+          selectedTrackIds: [],
+        });
+
+      expect(res2.status).toBe(409);
+      expect(res2.body.error).toMatch(/already|already promoted/i);
+    });
+
+    it('should link created Employee to Candidate', async () => {
+      const res = await request(app)
+        .post(`/api/candidates/${testCandidateId}/promote`)
+        .send({
+          confirmDetails: {
+            title: 'Engineer',
+            department: 'Eng',
+            startDate: new Date().toISOString(),
+          },
+          selectedTrackIds: [],
+        });
+
+      expect(res.status).toBe(201);
+      const employee = res.body.employee;
+      expect(employee.candidateId).toBe(testCandidateId);
+    });
+
+    it('should handle empty selectedTrackIds (no onboarding runs)', async () => {
+      const timestamp = Date.now();
+      const candidateRes = await request(app)
+        .post('/api/candidates')
+        .send({
+          name: `No Tracks Candidate ${timestamp}`,
+          email: `notracks${timestamp}@example.com`,
+          phone: '555-9999',
+          location: 'Austin, TX',
+          roleApplied: 'Intern',
+          stage: 'offer',
+          status: 'active',
+        });
+
+      const candidateId = candidateRes.body.id;
+
+      const res = await request(app)
+        .post(`/api/candidates/${candidateId}/promote`)
+        .send({
+          confirmDetails: {
+            title: 'Intern',
+            department: 'Eng',
+            startDate: new Date().toISOString(),
+          },
+          selectedTrackIds: [],
+        });
+
+      expect(res.status).toBe(201);
+      expect(res.body.employee).toBeDefined();
+      expect(res.body.onboardingRuns).toEqual([]);
+    });
+  });
+
+  describe('4.4: PATCH /api/candidates/:id - Rejection Workflow', () => {
+    let rejectionReasonId;
+
+    beforeEach(async () => {
+      // Create rejection reason config
+      const configRes = await request(app)
+        .post('/api/config-lists')
+        .send({
+          name: 'rejection_reason',
+          description: 'Reasons for candidate rejection',
+          items: [
+            { label: 'Not a good fit', value: 'not_fit' },
+            { label: 'Over qualified', value: 'overqualified' },
+            { label: 'Salary expectations', value: 'salary' },
+          ],
+        });
+
+      if (configRes.status === 201 || configRes.status === 200) {
+        const configList = configRes.body;
+        rejectionReasonId = configList.items?.[0]?.id || 'test-reason-id';
+      }
+    });
+
+    it('should update candidate status to rejected with rejectionReasonId', async () => {
+      const timestamp = Date.now();
+      const candidateRes = await request(app)
+        .post('/api/candidates')
+        .send({
+          name: `Reject Candidate ${timestamp}`,
+          email: `reject${timestamp}@example.com`,
+          phone: '555-1010',
+          location: 'San Francisco, CA',
+          roleApplied: 'Product Manager',
+          stage: 'interview',
+          status: 'active',
+        });
+
+      const candidateId = candidateRes.body.id;
+
+      const res = await request(app)
+        .patch(`/api/candidates/${candidateId}`)
+        .send({
+          status: 'rejected',
+          rejectionReasonId: rejectionReasonId,
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe('rejected');
+      if (rejectionReasonId && rejectionReasonId !== 'test-reason-id') {
+        expect(res.body.rejectionReasonId).toBe(rejectionReasonId);
+      }
+    });
+
+    it('should update latestStageChangeAt timestamp when rejecting', async () => {
+      const timestamp = Date.now();
+      const candidateRes = await request(app)
+        .post('/api/candidates')
+        .send({
+          name: `Timestamp Candidate ${timestamp}`,
+          email: `timestamp${timestamp}@example.com`,
+          phone: '555-1111',
+          location: 'New York, NY',
+          roleApplied: 'Designer',
+          stage: 'screening',
+          status: 'active',
+        });
+
+      const candidateId = candidateRes.body.id;
+      const beforeTime = new Date();
+
+      const res = await request(app)
+        .patch(`/api/candidates/${candidateId}`)
+        .send({
+          status: 'rejected',
+          rejectionReasonId: rejectionReasonId,
+        });
+
+      expect(res.status).toBe(200);
+      const afterTime = new Date();
+      const changeTime = new Date(res.body.latestStageChangeAt);
+      expect(changeTime.getTime()).toBeGreaterThanOrEqual(beforeTime.getTime());
+      expect(changeTime.getTime()).toBeLessThanOrEqual(afterTime.getTime());
+    });
+
+    it('should accept rejection without rejectionReasonId', async () => {
+      const timestamp = Date.now();
+      const candidateRes = await request(app)
+        .post('/api/candidates')
+        .send({
+          name: `No Reason Candidate ${timestamp}`,
+          email: `noreason${timestamp}@example.com`,
+          phone: '555-1212',
+          location: 'Boston, MA',
+          roleApplied: 'QA Engineer',
+          stage: 'applied',
+          status: 'active',
+        });
+
+      const candidateId = candidateRes.body.id;
+
+      const res = await request(app)
+        .patch(`/api/candidates/${candidateId}`)
+        .send({
+          status: 'rejected',
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe('rejected');
+    });
+
+    it('should return 404 if candidate not found', async () => {
+      const res = await request(app)
+        .patch('/api/candidates/nonexistent')
+        .send({
+          status: 'rejected',
+          rejectionReasonId: rejectionReasonId,
+        });
+
+      expect(res.status).toBe(404);
+      expect(res.body.error).toContain('not found');
+    });
+
+    it('should allow other status updates via PATCH', async () => {
+      const timestamp = Date.now();
+      const candidateRes = await request(app)
+        .post('/api/candidates')
+        .send({
+          name: `Update Candidate ${timestamp}`,
+          email: `update${timestamp}@example.com`,
+          phone: '555-1313',
+          location: 'Seattle, WA',
+          roleApplied: 'DevOps',
+          stage: 'applied',
+          status: 'active',
+        });
+
+      const candidateId = candidateRes.body.id;
+
+      const res = await request(app)
+        .patch(`/api/candidates/${candidateId}`)
+        .send({
+          status: 'withdrawn',
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe('withdrawn');
+    });
+
+    it('should preserve other candidate fields when rejecting', async () => {
+      const timestamp = Date.now();
+      const candidateRes = await request(app)
+        .post('/api/candidates')
+        .send({
+          name: `Preserve Candidate ${timestamp}`,
+          email: `preserve${timestamp}@example.com`,
+          phone: '555-1414',
+          location: 'Denver, CO',
+          roleApplied: 'Backend Engineer',
+          stage: 'interview',
+          status: 'active',
+          notes: 'Strong technical skills',
+        });
+
+      const candidateId = candidateRes.body.id;
+
+      const res = await request(app)
+        .patch(`/api/candidates/${candidateId}`)
+        .send({
+          status: 'rejected',
+          rejectionReasonId: rejectionReasonId,
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.name).toBe(`Preserve Candidate ${timestamp}`);
+      expect(res.body.email).toContain('preserve');
+      expect(res.body.phone).toBe('555-1414');
+      expect(res.body.notes).toBe('Strong technical skills');
+    });
+
+    it('should handle rejection reason from ConfigListItem', async () => {
+      const timestamp = Date.now();
+      const candidateRes = await request(app)
+        .post('/api/candidates')
+        .send({
+          name: `Config Candidate ${timestamp}`,
+          email: `configtest${timestamp}@example.com`,
+          phone: '555-1515',
+          location: 'Chicago, IL',
+          roleApplied: 'Data Scientist',
+          stage: 'interview',
+          status: 'active',
+        });
+
+      const candidateId = candidateRes.body.id;
+
+      const res = await request(app)
+        .patch(`/api/candidates/${candidateId}`)
+        .send({
+          status: 'rejected',
+          rejectionReasonId: rejectionReasonId,
+        });
+
+      expect(res.status).toBe(200);
+      expect(res.body.status).toBe('rejected');
+      if (rejectionReasonId && rejectionReasonId !== 'test-reason-id') {
+        expect(res.body.rejectionReasonId).toBe(rejectionReasonId);
+      }
+    });
+  });
+
+  describe('Integration: Full Promotion & Rejection Workflows', () => {
+    it('should handle complete promotion workflow with auto-apply tracks', async () => {
+      const timestamp = Date.now();
+
+      // 1. Create candidate
+      const candidateRes = await request(app)
+        .post('/api/candidates')
+        .send({
+          name: `Full Workflow ${timestamp}`,
+          email: `workflow${timestamp}@example.com`,
+          phone: '555-2020',
+          location: 'Austin, TX',
+          roleApplied: 'Engineering Manager',
+          stage: 'offer',
+          status: 'active',
+        });
+
+      expect(candidateRes.status).toBe(201);
+      const candidateId = candidateRes.body.id;
+
+      // 2. Verify candidate is active
+      let getRes = await request(app).get(`/api/candidates/${candidateId}`);
+      expect(getRes.body.status).toBe('active');
+
+      // 3. Create company track
+      const trackRes = await request(app)
+        .post('/api/track-templates')
+        .send({
+          name: `Manager Track ${timestamp}`,
+          type: 'company',
+          autoApply: true,
+          description: 'Manager onboarding',
+        });
+
+      expect(trackRes.status).toBe(201);
+      const trackId = trackRes.body.id;
+
+      // 4. Add task to track
+      const taskRes = await request(app)
+        .post(`/api/track-templates/${trackId}/tasks`)
+        .send({
+          name: 'Team Charter',
+          description: 'Define team goals',
+          ownerRole: 'hiring_manager',
+          dueDaysOffset: 7,
+          order: 1,
+        });
+
+      expect(taskRes.status).toBe(201);
+
+      // 5. Promote candidate to employee
+      const promoteRes = await request(app)
+        .post(`/api/candidates/${candidateId}/promote`)
+        .send({
+          confirmDetails: {
+            title: 'Engineering Manager',
+            department: 'Engineering',
+            startDate: new Date().toISOString(),
+          },
+          selectedTrackIds: [trackId],
+        });
+
+      expect(promoteRes.status).toBe(201);
+      const employeeId = promoteRes.body.employee.id;
+      expect(promoteRes.body.onboardingRuns.length).toBeGreaterThanOrEqual(1);
+
+      // 6. Verify candidate status is now hired
+      getRes = await request(app).get(`/api/candidates/${candidateId}`);
+      expect(getRes.body.status).toBe('hired');
+      expect(getRes.body.candidateId || getRes.body.id).toBeDefined();
+
+      // 7. Verify onboarding run exists
+      const onboardingRun = promoteRes.body.onboardingRuns[0];
+      expect(onboardingRun.employeeId).toBe(employeeId);
+      expect(onboardingRun.status).toBe('pending');
+      expect(onboardingRun.tasks.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('should handle rejection workflow independently', async () => {
+      const timestamp = Date.now();
+
+      // 1. Create candidate
+      const candidateRes = await request(app)
+        .post('/api/candidates')
+        .send({
+          name: `Rejection Test ${timestamp}`,
+          email: `rejecttest${timestamp}@example.com`,
+          phone: '555-2121',
+          location: 'Austin, TX',
+          roleApplied: 'Senior Developer',
+          stage: 'interview',
+          status: 'active',
+        });
+
+      expect(candidateRes.status).toBe(201);
+      const candidateId = candidateRes.body.id;
+
+      // 2. Create rejection reason
+      const configRes = await request(app)
+        .post('/api/config-lists')
+        .send({
+          name: `rejection_reason_${timestamp}`,
+          items: [
+            { label: 'Skill mismatch', value: 'skill_mismatch' },
+          ],
+        });
+
+      let rejectionReasonId = null;
+      if (configRes.status === 201 || configRes.status === 200) {
+        rejectionReasonId = configRes.body.items?.[0]?.id || null;
+      }
+
+      // 3. Reject candidate
+      const rejectRes = await request(app)
+        .patch(`/api/candidates/${candidateId}`)
+        .send({
+          status: 'rejected',
+          ...(rejectionReasonId && { rejectionReasonId }),
+        });
+
+      expect(rejectRes.status).toBe(200);
+      expect(rejectRes.body.status).toBe('rejected');
+
+      // 4. Verify candidate is rejected
+      const getRes = await request(app).get(`/api/candidates/${candidateId}`);
+      expect(getRes.body.status).toBe('rejected');
     });
   });
 });

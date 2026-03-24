@@ -3,6 +3,7 @@ import { useOnboarding } from '../../hooks/useOnboarding';
 import ProgressBar from '../../components/common/ProgressBar';
 import TimelineStep from '../../components/TimelineStep';
 import Badge from '../../components/common/Badge';
+import OnboardingRun from '../../components/OnboardingRun';
 
 export default function Onboarding() {
   const { fetchTemplates, getChecklistDetail, markItemComplete } = useOnboarding();
