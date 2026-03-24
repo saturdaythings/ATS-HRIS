@@ -12,3 +12,6 @@ build/
 *.swo
 .prisma/
 .worktrees/
+server/uploads/
+app/.claude-flow/
+prisma/dev.db
