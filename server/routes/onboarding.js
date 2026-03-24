@@ -14,6 +14,16 @@ import {
 
 const router = express.Router();
 
+// GET /api/onboarding - List all onboarding runs
+router.get('/', async (req, res, next) => {
+  try {
+    // TODO: Implement onboarding runs listing
+    res.json({ message: 'GET /api/onboarding - List onboarding runs (Phase 2)', data: [], error: null });
+  } catch (error) {
+    next(error);
+  }
+});
+
 // ============ Template Routes (Admin) ============
 
 /**
