@@ -474,7 +474,26 @@ function addEmployee() {
 
 // Tracks page helper functions
 let selectedTrackId = null;
-let tracks = [];
+let tracks = [
+  {id:'t1',name:'Engineering Onboarding',type:'role',autoApply:true,tasks:[
+    {id:'tt1',name:'Complete I-9 and W-4 paperwork',ownerRole:'HR',dueDaysOffset:-7},
+    {id:'tt2',name:'Set up dev environment',ownerRole:'IT',dueDaysOffset:1},
+    {id:'tt3',name:'Access to repos and tools',ownerRole:'IT',dueDaysOffset:1},
+    {id:'tt4',name:'Meet team and manager 1:1',ownerRole:'Manager',dueDaysOffset:3},
+    {id:'tt5',name:'Complete security training',ownerRole:'HR',dueDaysOffset:7},
+    {id:'tt6',name:'30-day check-in',ownerRole:'Manager',dueDaysOffset:30},
+  ]},
+  {id:'t2',name:'Company General Onboarding',type:'company',autoApply:true,tasks:[
+    {id:'tt7',name:'Welcome email and Slack invite',ownerRole:'HR',dueDaysOffset:-1},
+    {id:'tt8',name:'Benefits enrollment',ownerRole:'HR',dueDaysOffset:3},
+    {id:'tt9',name:'Company handbook review',ownerRole:'HR',dueDaysOffset:5},
+  ]},
+  {id:'t3',name:'Engineering Offboarding',type:'role',autoApply:false,tasks:[
+    {id:'tt10',name:'Return devices',ownerRole:'IT',dueDaysOffset:-3},
+    {id:'tt11',name:'Knowledge transfer doc',ownerRole:'Manager',dueDaysOffset:-7},
+    {id:'tt12',name:'Revoke system access',ownerRole:'IT',dueDaysOffset:0},
+  ]},
+];
 
 function trackListHTML() {
   return tracks.map(t => `
