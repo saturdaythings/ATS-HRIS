@@ -56,9 +56,15 @@ export default function Onboarding() {
 
     const loadChecklist = async () => {
       try {
-        // Get checklists for employee
+        // Try to get checklists for employee
         const res = await fetch(`/api/onboarding/checklists/${selectedEmployee.id}`);
-        if (!res.ok) throw new Error('Failed to load checklist');
+        if (!res.ok) {
+          // Endpoint not yet implemented, show empty state
+          setSelectedChecklist(null);
+          setProgress(null);
+          return;
+        }
+
         const { data: checklists } = await res.json();
 
         if (checklists && checklists.length > 0) {
@@ -77,6 +83,7 @@ export default function Onboarding() {
           setProgress(null);
         }
       } catch (err) {
+        // Silently fail for missing endpoints
         setSelectedChecklist(null);
         setProgress(null);
       }
