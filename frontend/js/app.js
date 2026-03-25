@@ -89,6 +89,9 @@ let employees = [];
 let devices = [];
 let assignments = [];
 
+// Global state for onboarding page
+let onboardingRuns = [];
+
 // Hiring page helper functions
 function filterKanbanStatus(v) {
   kanbanFilter = v;
@@ -467,6 +470,43 @@ function addEmployee() {
   // Refresh directory display
   const tb = document.getElementById('emp-tbody');
   if (tb) tb.innerHTML = empRows(employees);
+}
+
+// Onboarding page helper functions
+function openRunDetail(id) {
+  const run = onboardingRuns.find(r => r.id === id);
+  if (!run) return;
+  const e = employees.find(x => x.id === run.employeeId) || { name: 'Unknown' };
+  const done = run.tasks.filter(t => t.status === 'completed').length;
+  showModal(`
+    <div class="modal" style="max-width:540px">
+      <div class="modal-header"><div class="modal-title">${e.name} — Onboarding</div><button class="detail-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Start: ${run.startDate} · ${done}/${run.tasks.length} complete</p>
+        ${run.tasks.map(t => `
+          <div style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;cursor:pointer" onclick="toggleTask('${run.id}','${t.id}')">
+            <div class="task-check${t.status === 'completed' ? ' done' : ''}">${t.status === 'completed' ? '✓' : ''}</div>
+            <div style="flex:1">
+              <div style="font-size:13px;font-weight:${t.status === 'completed' ? '400' : '500'};text-decoration:${t.status === 'completed' ? 'line-through' : ''};color:${t.status === 'completed' ? 'var(--text3)' : 'var(--text)'}">${t.name}</div>
+              <div style="font-size:11px;color:var(--text3)">${t.ownerRole} · Due ${t.dueDate}</div>
+            </div>
+            ${statusPill(t.status)}
+          </div>`).join('')}
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Close</button></div>
+    </div>
+  `);
+}
+
+function toggleTask(runId, taskId) {
+  const run = onboardingRuns.find(r => r.id === runId);
+  if (!run) return;
+  const task = run.tasks.find(t => t.id === taskId);
+  if (task) {
+    task.status = task.status === 'completed' ? 'pending' : 'completed';
+    showToast(task.status === 'completed' ? 'Task complete' : 'Reopened');
+  }
+  openRunDetail(runId);
 }
 
 class Application {
@@ -1241,41 +1281,37 @@ class Application {
 
   async renderOnboarding() {
     try {
-      const onboarding = await api.getOnboarding();
-      const runs = onboarding || [];
+      // Fetch onboarding runs from API
+      const runs = await api.getOnboarding ? await api.getOnboarding().catch(() => []) : [];
+      onboardingRuns = runs.filter(r => r.type === 'onboarding' || !r.type); // Filter for onboarding type
 
       return `
-        <main style="padding:20px;">
-          <header style="margin-bottom:24px;">
-            <h1 style="font-size:24px;font-weight:500;color:#111;margin-bottom:8px;">Onboarding</h1>
-            <p style="font-size:13px;color:#888;">Manage new employee onboarding and orientation</p>
-          </header>
-          <section id="onboarding-runs">
-            ${runs.length > 0
-              ? runs.map(run => `
-                  <div class="run-card" onclick="router.navigate('/onboarding/${run.id}')" style="cursor: pointer;">
-                    <div class="run-header">
-                      <div class="run-name">${run.employee?.name || 'Employee'}</div>
-                      <div class="run-sub" style="color:#888;">Status: ${run.status || 'active'}</div>
-                    </div>
-                    <div class="progress-bg">
-                      <div class="progress-fill" style="width: ${(run.tasks?.filter(t => t.status === 'completed').length || 0) / (run.tasks?.length || 1) * 100}%"></div>
-                    </div>
-                    ${(run.tasks || []).slice(0, 3).map(t => `
-                      <div class="run-task">
-                        <span>${t.status === 'completed' ? '✓' : '○'}</span>
-                        <span style="margin-left:8px;">${t.taskTemplate?.name || 'Task'}</span>
-                      </div>
-                    `).join('')}
-                  </div>
-                `).join('')
-              : '<p style="color:#aaa;padding:20px;">No onboarding runs in progress</p>'
-            }
-          </section>
-        </main>
+        <div class="page-header">
+          <div>
+            <div class="page-title">Onboarding</div>
+            <div class="page-subtitle">${onboardingRuns.length} run${onboardingRuns.length !== 1 ? 's' : ''} in progress</div>
+          </div>
+          <button class="btn btn-primary" onclick="showToast('Start onboarding run')">+ Start Run</button>
+        </div>
+        ${onboardingRuns.length ? onboardingRuns.map(run => {
+          const e = employees.find(x => x.id === run.employeeId) || { name: 'Unknown' };
+          const done = run.tasks.filter(t => t.status === 'completed').length;
+          const pct = Math.round(done / run.tasks.length * 100);
+          return `<div class="run-card" onclick="openRunDetail('${run.id}')">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div>${personCell(e.name, `Starts ${run.startDate}`)}</div>
+              <div style="text-align:right"><div style="font-size:12px;font-weight:600;color:var(--accent)">${pct}%</div><div style="font-size:11px;color:var(--text3)">${done}/${run.tasks.length}</div></div>
+            </div>
+            <div class="run-progress-wrap"><div class="run-progress-fill" style="width:${pct}%"></div></div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              ${run.tasks.slice(0, 4).map(t => `<div class="run-task"><div class="task-check${t.status === 'completed' ? ' done' : ''}">${t.status === 'completed' ? '✓' : ''}</div><span>${t.name}</span><span style="margin-left:auto;font-size:11px;color:var(--text3)">${t.dueDate}</span></div>`).join('')}
+            </div>
+          </div>`;
+        }).join('') : renderEmpty('No onboarding runs', 'Start a run when a new hire is confirmed')}
       `;
     } catch (error) {
-      return `<main style="padding:20px;"><p>Error loading onboarding: ${error.message}</p></main>`;
+      console.error('Onboarding page error:', error);
+      return `<div style="padding:20px"><p>Error loading onboarding: ${error.message}</p></div>`;
     }
   }
 
