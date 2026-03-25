@@ -199,28 +199,26 @@ export default function Candidates() {
           </div>
 
           {/* Filter controls */}
-          <div className="flex flex-wrap gap-3 items-center">
-            <span className="text-sm font-medium text-neutral-600">Filters:</span>
+          <div className="table-toolbar">
+            {/* Stage filter chips */}
+            {STAGE_OPTIONS.map(stage => {
+              const isActive = stageFilter === stage;
+              return (
+                <button
+                  key={stage}
+                  className={`filter-chip${isActive ? ' on' : ''}`}
+                  onClick={() => {
+                    setStageFilter(isActive ? 'all' : stage);
+                    setCurrentPage(1);
+                  }}
+                >
+                  {stage.charAt(0).toUpperCase() + stage.slice(1)}
+                  {isActive && ' ✕'}
+                </button>
+              );
+            })}
 
-            {/* Stage filter - traditional select for now */}
-            <div className="inline-block">
-              <select
-                value={stageFilter}
-                onChange={(e) => {
-                  setStageFilter(e.target.value);
-                  setCurrentPage(1);
-                }}
-                className="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
-              >
-                {STAGES.map(stage => (
-                  <option key={stage.value} value={stage.value}>
-                    {stage.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Additional filter chips can be added here */}
+            {/* Status filter chip */}
             <FilterChip
               label="Status"
               options={['active', 'inactive', 'archived']}
@@ -230,14 +228,13 @@ export default function Candidates() {
 
             {tableState.getActiveFilterCount() > 0 && (
               <button
+                className="filter-chip"
                 onClick={() => tableState.clearFilters()}
-                className="ml-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 font-medium"
+                style={{ color: '#e74c3c', borderColor: '#e74c3c' }}
               >
-                Clear chip filters
+                Clear filters
               </button>
             )}
-
-            <div className="flex-grow" />
 
             <ColumnVisibilityToggle
               allColumns={ALL_COLUMNS}
@@ -279,76 +276,61 @@ export default function Candidates() {
                     {tableState.visibleColumns.includes('name') && (
                       <th
                         onClick={() => handleSort('name')}
-                        className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 transition-colors"
+                        className={`px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 transition-colors${tableState.sortColumn === 'name' ? ' sorted' : ''}`}
+                        style={{ userSelect: 'none' }}
                       >
-                        <div className="flex items-center gap-2">
-                          Name
-                          {tableState.sortColumn === 'name' && (
-                            <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
-                          )}
-                        </div>
+                        Name
+                        <span className="sort-arrow">{tableState.sortColumn === 'name' ? (tableState.sortOrder === 'asc' ? '↑' : '↓') : '↕'}</span>
                       </th>
                     )}
                     {tableState.visibleColumns.includes('email') && (
                       <th
                         onClick={() => handleSort('email')}
-                        className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 transition-colors"
+                        className={`px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 transition-colors${tableState.sortColumn === 'email' ? ' sorted' : ''}`}
+                        style={{ userSelect: 'none' }}
                       >
-                        <div className="flex items-center gap-2">
-                          Email
-                          {tableState.sortColumn === 'email' && (
-                            <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
-                          )}
-                        </div>
+                        Email
+                        <span className="sort-arrow">{tableState.sortColumn === 'email' ? (tableState.sortOrder === 'asc' ? '↑' : '↓') : '↕'}</span>
                       </th>
                     )}
                     {tableState.visibleColumns.includes('roleApplied') && (
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 transition-colors"
+                      <th
                         onClick={() => handleSort('roleApplied')}
+                        className={`px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 transition-colors${tableState.sortColumn === 'roleApplied' ? ' sorted' : ''}`}
+                        style={{ userSelect: 'none' }}
                       >
-                        <div className="flex items-center gap-2">
-                          Role
-                          {tableState.sortColumn === 'roleApplied' && (
-                            <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
-                          )}
-                        </div>
+                        Role
+                        <span className="sort-arrow">{tableState.sortColumn === 'roleApplied' ? (tableState.sortOrder === 'asc' ? '↑' : '↓') : '↕'}</span>
                       </th>
                     )}
                     {tableState.visibleColumns.includes('stage') && (
                       <th
                         onClick={() => handleSort('stage')}
-                        className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 transition-colors"
+                        className={`px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 transition-colors${tableState.sortColumn === 'stage' ? ' sorted' : ''}`}
+                        style={{ userSelect: 'none' }}
                       >
-                        <div className="flex items-center gap-2">
-                          Stage
-                          {tableState.sortColumn === 'stage' && (
-                            <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
-                          )}
-                        </div>
+                        Stage
+                        <span className="sort-arrow">{tableState.sortColumn === 'stage' ? (tableState.sortOrder === 'asc' ? '↑' : '↓') : '↕'}</span>
                       </th>
                     )}
                     {tableState.visibleColumns.includes('status') && (
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 transition-colors"
+                      <th
                         onClick={() => handleSort('status')}
+                        className={`px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 transition-colors${tableState.sortColumn === 'status' ? ' sorted' : ''}`}
+                        style={{ userSelect: 'none' }}
                       >
-                        <div className="flex items-center gap-2">
-                          Status
-                          {tableState.sortColumn === 'status' && (
-                            <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
-                          )}
-                        </div>
+                        Status
+                        <span className="sort-arrow">{tableState.sortColumn === 'status' ? (tableState.sortOrder === 'asc' ? '↑' : '↓') : '↕'}</span>
                       </th>
                     )}
                     {tableState.visibleColumns.includes('createdAt') && (
-                      <th className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 transition-colors"
+                      <th
                         onClick={() => handleSort('createdAt')}
+                        className={`px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 transition-colors${tableState.sortColumn === 'createdAt' ? ' sorted' : ''}`}
+                        style={{ userSelect: 'none' }}
                       >
-                        <div className="flex items-center gap-2">
-                          Date Added
-                          {tableState.sortColumn === 'createdAt' && (
-                            <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
-                          )}
-                        </div>
+                        Date Added
+                        <span className="sort-arrow">{tableState.sortColumn === 'createdAt' ? (tableState.sortOrder === 'asc' ? '↑' : '↓') : '↕'}</span>
                       </th>
                     )}
                     <th className="px-6 py-4 text-right text-xs font-semibold text-neutral-700 uppercase tracking-wider">

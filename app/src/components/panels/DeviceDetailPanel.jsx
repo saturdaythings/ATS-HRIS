@@ -154,40 +154,6 @@ export default function DeviceDetailPanel({
             </div>
           </div>
 
-          {/* Current Assignment */}
-          {currentAssignment && (
-            <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">
-                Current Assignment
-              </h3>
-              <div className="space-y-2">
-                <div>
-                  <span className="text-sm text-gray-600">Employee</span>
-                  <p className="text-sm font-medium text-gray-900">
-                    {currentAssignment.employee?.name || 'Unknown'}
-                  </p>
-                  <p className="text-xs text-gray-600">
-                    {currentAssignment.employee?.email}
-                  </p>
-                </div>
-                <div>
-                  <span className="text-sm text-gray-600">Assigned Date</span>
-                  <p className="text-sm font-medium text-gray-900">
-                    {formatDate(currentAssignment.assignedDate)}
-                  </p>
-                </div>
-                {currentAssignment.notes && (
-                  <div>
-                    <span className="text-sm text-gray-600">Notes</span>
-                    <p className="text-xs text-gray-900 mt-1 bg-white p-2 rounded">
-                      {currentAssignment.notes}
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
           {/* Assignment History */}
           {loading ? (
             <div className="text-center py-4 text-gray-500">
@@ -201,76 +167,45 @@ export default function DeviceDetailPanel({
             </div>
           ) : (
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-4">
-                Assignment History
-              </h3>
-              <div className="space-y-4">
-                {history.map((assignment, idx) => {
-                  const assignedDateStr = formatDate(assignment.assignedDate);
-                  const returnedDateStr = assignment.returnedDate
-                    ? formatDate(assignment.returnedDate)
-                    : 'present';
+              <div className="sec-head">Assignment history</div>
+              {history.map((assignment) => {
+                const isCurrent = !assignment.returnedDate;
+                const assignedDateStr = formatDate(assignment.assignedDate);
+                const conditionLabel = assignment.device?.condition || assignment.conditionIn || 'good';
+                const capitalizedCondition = conditionLabel.charAt(0).toUpperCase() + conditionLabel.slice(1);
 
-                  // Format: "Name    Mar 24 – present    In: New"
-                  const dateRange = assignment.returnedDate
-                    ? `${assignedDateStr} – ${returnedDateStr}`
-                    : `${assignedDateStr} – present`;
-
-                  return (
-                    <div key={assignment.id} className="space-y-1">
-                      {/* Employee name and date range */}
-                      <div className="flex justify-between items-start">
-                        <span className="text-sm font-medium text-gray-900">
-                          {assignment.employee?.name || 'Unknown'}
-                        </span>
-                        <span className="text-sm text-gray-600">
-                          {dateRange}
-                        </span>
+                return (
+                  <div
+                    key={assignment.id}
+                    className={`assign-row${isCurrent ? ' assign-current' : ''}`}
+                  >
+                    <div className="assign-top">
+                      <div className="assign-name">
+                        {assignment.employee?.name || 'Unknown'}
                       </div>
-
-                      {/* Condition badges and notes */}
-                      <div className="flex items-start gap-2 flex-wrap">
-                        <div className="flex gap-1 items-center text-xs">
-                          <span className="text-gray-600">In:</span>
-                          <span
-                            className={`px-2 py-1 rounded font-medium ${
-                              conditionColors[assignment.device?.condition || 'good']
-                            }`}
-                          >
-                            {(assignment.device?.condition || 'good')
-                              .charAt(0)
-                              .toUpperCase() +
-                              (assignment.device?.condition || 'good').slice(1)}
+                      {isCurrent ? (
+                        <span className="stage-pill s-assigned" style={{ fontSize: '10px' }}>
+                          Current
+                        </span>
+                      ) : (
+                        assignment.condition && (
+                          <span className="assign-condition">
+                            Returned: {assignment.condition.charAt(0).toUpperCase() + assignment.condition.slice(1)}
                           </span>
-                        </div>
-                        {assignment.returnedDate && assignment.condition && (
-                          <>
-                            <span className="text-gray-600">·</span>
-                            <div className="flex gap-1 items-center text-xs">
-                              <span className="text-gray-600">Out:</span>
-                              <span
-                                className={`px-2 py-1 rounded font-medium ${
-                                  conditionColors[assignment.condition]
-                                }`}
-                              >
-                                {assignment.condition
-                                  .charAt(0)
-                                  .toUpperCase() + assignment.condition.slice(1)}
-                              </span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Notes if present */}
-                      {assignment.notes && (
-                        <p className="text-xs text-gray-600 mt-1">
-                          Notes: {assignment.notes}
-                        </p>
+                        )
                       )}
                     </div>
-                  );
-                })}
+                    <div className="assign-dates">
+                      {isCurrent
+                        ? `Assigned ${assignedDateStr} · Condition: ${capitalizedCondition}`
+                        : `${assignedDateStr} → ${formatDate(assignment.returnedDate)}`
+                      }
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="assign-helper-text">
+                When a new device is assigned, the previous assignment is automatically closed with a return date and condition — no history is lost.
               </div>
             </div>
           )}

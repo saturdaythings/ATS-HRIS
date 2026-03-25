@@ -106,9 +106,7 @@ export default function Inventory() {
 
       {/* Filters & Controls */}
       <div className="mt-6 bg-white rounded-lg border border-gray-200 p-4">
-        <div className="flex flex-wrap gap-3 items-center">
-          <span className="text-sm font-medium text-gray-600">Filters:</span>
-
+        <div className="table-toolbar">
           <FilterChip
             label="Type"
             options={DEVICE_TYPES}
@@ -132,14 +130,13 @@ export default function Inventory() {
 
           {tableState.getActiveFilterCount() > 0 && (
             <button
+              className="filter-chip"
               onClick={() => tableState.clearFilters()}
-              className="ml-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 font-medium"
+              style={{ color: '#e74c3c', borderColor: '#e74c3c' }}
             >
               Clear all
             </button>
           )}
-
-          <div className="flex-grow" />
 
           <ColumnVisibilityToggle
             allColumns={ALL_COLUMNS}
@@ -157,66 +154,51 @@ export default function Inventory() {
               {tableState.visibleColumns.includes('serial') && (
                 <th
                   onClick={() => tableState.handleSortClick('serial')}
-                  className="text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                  className={`text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors${tableState.sortColumn === 'serial' ? ' sorted' : ''}`}
+                  style={{ userSelect: 'none' }}
                 >
-                  <div className="flex items-center gap-2">
-                    Serial
-                    {tableState.sortColumn === 'serial' && (
-                      <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
-                    )}
-                  </div>
+                  Serial
+                  <span className="sort-arrow">{tableState.sortColumn === 'serial' ? (tableState.sortOrder === 'asc' ? '↑' : '↓') : '↕'}</span>
                 </th>
               )}
               {tableState.visibleColumns.includes('type') && (
                 <th
                   onClick={() => tableState.handleSortClick('type')}
-                  className="text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                  className={`text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors${tableState.sortColumn === 'type' ? ' sorted' : ''}`}
+                  style={{ userSelect: 'none' }}
                 >
-                  <div className="flex items-center gap-2">
-                    Type
-                    {tableState.sortColumn === 'type' && (
-                      <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
-                    )}
-                  </div>
+                  Type
+                  <span className="sort-arrow">{tableState.sortColumn === 'type' ? (tableState.sortOrder === 'asc' ? '↑' : '↓') : '↕'}</span>
                 </th>
               )}
               {tableState.visibleColumns.includes('make') && (
                 <th
                   onClick={() => tableState.handleSortClick('make')}
-                  className="text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                  className={`text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors${tableState.sortColumn === 'make' ? ' sorted' : ''}`}
+                  style={{ userSelect: 'none' }}
                 >
-                  <div className="flex items-center gap-2">
-                    Make / Model
-                    {tableState.sortColumn === 'make' && (
-                      <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
-                    )}
-                  </div>
+                  Make / Model
+                  <span className="sort-arrow">{tableState.sortColumn === 'make' ? (tableState.sortOrder === 'asc' ? '↑' : '↓') : '↕'}</span>
                 </th>
               )}
               {tableState.visibleColumns.includes('condition') && (
                 <th
                   onClick={() => tableState.handleSortClick('condition')}
-                  className="text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                  className={`text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors${tableState.sortColumn === 'condition' ? ' sorted' : ''}`}
+                  style={{ userSelect: 'none' }}
                 >
-                  <div className="flex items-center gap-2">
-                    Condition
-                    {tableState.sortColumn === 'condition' && (
-                      <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
-                    )}
-                  </div>
+                  Condition
+                  <span className="sort-arrow">{tableState.sortColumn === 'condition' ? (tableState.sortOrder === 'asc' ? '↑' : '↓') : '↕'}</span>
                 </th>
               )}
               {tableState.visibleColumns.includes('status') && (
                 <th
                   onClick={() => tableState.handleSortClick('status')}
-                  className="text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                  className={`text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors${tableState.sortColumn === 'status' ? ' sorted' : ''}`}
+                  style={{ userSelect: 'none' }}
                 >
-                  <div className="flex items-center gap-2">
-                    Status
-                    {tableState.sortColumn === 'status' && (
-                      <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
-                    )}
-                  </div>
+                  Status
+                  <span className="sort-arrow">{tableState.sortColumn === 'status' ? (tableState.sortOrder === 'asc' ? '↑' : '↓') : '↕'}</span>
                 </th>
               )}
               <th className="text-right py-3 px-4 font-semibold text-gray-700">Actions</th>

@@ -52,19 +52,46 @@ export default function CandidateDetailPanel({ candidate, isOpen, onClose }) {
   const [interviews] = useState([
     {
       id: 1,
-      type: 'Phone Screening',
-      date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-      interviewer: 'Sarah Johnson',
-      feedback: 'Good technical knowledge, needs improvement in communication.',
-      recommendation: 'proceed',
+      date: 'Mar 25, 2026 \u00b7 2:00 PM',
+      format: 'Video',
+      interviewers: [
+        { name: 'J. Kim', role: 'Tech Lead', recommendation: 'hire' },
+        { name: 'T. Park', role: 'PM', recommendation: 'maybe' },
+      ],
+      feedback: 'Strong systems thinking. Needs follow-up on client-facing exp.',
     },
     {
       id: 2,
-      type: 'Technical Interview',
-      date: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-      interviewer: 'Mike Chen',
-      feedback: 'Excellent problem-solving skills. Strong candidate.',
-      recommendation: 'strong',
+      date: 'Mar 18, 2026 \u00b7 10:00 AM',
+      format: 'Phone',
+      interviewers: [
+        { name: 'R. Patel', role: 'Screening', recommendation: 'hire' },
+      ],
+      feedback: 'Good comms. Clear alignment on role scope.',
+    },
+  ]);
+
+  const [interviewActivities] = useState([
+    {
+      id: 1,
+      dotColor: '#3b82f6',
+      text: 'Stage',
+      detail: 'moved to Interview',
+      time: 'Mar 18 \u00b7 R. Patel',
+    },
+    {
+      id: 2,
+      dotColor: '#aaa',
+      text: 'Interview',
+      detail: 'logged \u00b7 Phone screen',
+      time: 'Mar 18',
+    },
+    {
+      id: 3,
+      dotColor: '#aaa',
+      text: 'Candidate',
+      detail: 'added \u00b7 LinkedIn',
+      time: 'Mar 10',
     },
   ]);
 
@@ -503,39 +530,47 @@ export default function CandidateDetailPanel({ candidate, isOpen, onClose }) {
 
           {/* Interviews Tab */}
           {activeTab === 'interviews' && (
-            <div className="space-y-4">
+            <div>
+              <div className="sec-head">Interview history</div>
               {interviews.length > 0 ? (
                 interviews.map(interview => (
-                  <div key={interview.id} className="border border-slate-200 rounded-lg p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <h4 className="font-semibold text-slate-900">{interview.type}</h4>
-                        <p className="text-sm text-slate-600 mt-1">
-                          {interview.date.toLocaleDateString()} with {interview.interviewer}
-                        </p>
-                      </div>
-                      <Badge
-                        variant={
-                          interview.recommendation === 'strong'
-                            ? 'active'
-                            : interview.recommendation === 'proceed'
-                              ? 'info'
-                              : 'default'
-                        }
-                      >
-                        {interview.recommendation === 'strong'
-                          ? 'Strong'
-                          : interview.recommendation === 'proceed'
-                            ? 'Proceed'
-                            : 'Hold'}
-                      </Badge>
+                  <div key={interview.id} className="int-card">
+                    <div className="int-card-top">
+                      <div className="int-card-date">{interview.date}</div>
+                      <span className="int-fmt">{interview.format}</span>
                     </div>
-                    <p className="text-sm text-slate-700 mb-3">{interview.feedback}</p>
+                    {interview.interviewers.map((interviewer, idx) => (
+                      <div key={idx} className="int-card-interviewer">
+                        <div>
+                          <span className="int-name">{interviewer.name}</span>{' '}
+                          <span className="int-role">&middot; {interviewer.role}</span>
+                        </div>
+                        <span className={`rec-${interviewer.recommendation}`}>
+                          {interviewer.recommendation === 'hire' ? 'Hire' : interviewer.recommendation === 'maybe' ? 'Maybe' : 'No'}
+                        </span>
+                      </div>
+                    ))}
+                    {interview.feedback && (
+                      <div className="int-feedback">{interview.feedback}</div>
+                    )}
                   </div>
                 ))
               ) : (
                 <p className="text-slate-600 text-center py-8">No interviews scheduled yet</p>
               )}
+
+              <div className="sec-head">Activity</div>
+              {interviewActivities.map(activity => (
+                <div key={activity.id} className="act-item">
+                  <div className="act-dot" style={{ background: activity.dotColor }} />
+                  <div>
+                    <div className="act-text">
+                      <span className="act-bold">{activity.text}</span> {activity.detail}
+                    </div>
+                    <div className="act-time">{activity.time}</div>
+                  </div>
+                </div>
+              ))}
             </div>
           )}
 

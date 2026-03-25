@@ -42,73 +42,65 @@ export default function FilterChip({
     onChange(selected.filter(s => s !== option));
   };
 
+  const isActive = selected.length > 0;
+
   return (
-    <div ref={dropdownRef} className="relative inline-block">
+    <div ref={dropdownRef} style={{ position: 'relative', display: 'inline-block' }}>
       {/* Main filter button */}
       <button
         onClick={() => !disabled && setIsOpen(!isOpen)}
         disabled={disabled}
-        className={`px-3 py-2 rounded-full text-sm font-medium transition-all ${
-          disabled
-            ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-            : selected.length > 0
-            ? 'bg-purple-600 text-white hover:bg-purple-700'
-            : 'bg-slate-100 text-slate-700 hover:bg-slate-200'
-        }`}
+        className={`filter-chip${isActive ? ' on' : ''}`}
+        style={disabled ? { opacity: 0.5, cursor: 'not-allowed' } : undefined}
       >
         {label}
-        {selected.length > 0 && <span className="ml-2">({selected.length})</span>}
-        <span className="ml-1">▾</span>
+        {isActive && <span> ({selected.length})</span>}
+        <span> ▾</span>
       </button>
 
       {/* Dropdown menu */}
       {isOpen && (
-        <div className="absolute top-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg z-50 min-w-56">
+        <div className="col-dropdown open" style={{ top: '100%', marginTop: '4px', left: 0, right: 'auto' }}>
+          <div className="col-dropdown-title">{label}</div>
           {options.length === 0 ? (
-            <div className="px-4 py-3 text-sm text-slate-500">No options available</div>
+            <div className="col-row" style={{ color: '#aaa' }}>No options available</div>
           ) : (
-            <div className="max-h-64 overflow-y-auto">
-              {options.map(option => (
-                <label
+            options.map(option => {
+              const isChecked = selected.includes(option);
+              return (
+                <div
                   key={option}
-                  className="block px-4 py-2 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0"
+                  className="col-row"
+                  onClick={() => handleToggleOption(option)}
+                  style={{ cursor: 'pointer' }}
                 >
-                  <input
-                    type="checkbox"
-                    checked={selected.includes(option)}
-                    onChange={() => handleToggleOption(option)}
-                    className="mr-3 cursor-pointer"
-                  />
+                  <div className={`col-checkbox${isChecked ? ' checked' : ''}`}>
+                    {isChecked ? '✓' : ''}
+                  </div>
                   {option}
-                </label>
-              ))}
-            </div>
-          )}
-
-          {/* Selected items summary */}
-          {selected.length > 0 && (
-            <div className="px-4 py-2 bg-slate-50 border-t border-slate-100 text-xs font-medium text-slate-700">
-              {selected.length} selected
-            </div>
+                </div>
+              );
+            })
           )}
         </div>
       )}
 
-      {/* Active filter chips below button */}
+      {/* Active filter chips */}
       {selected.length > 0 && (
-        <div className="absolute top-full mt-10 left-0 flex flex-wrap gap-2 pt-2">
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '4px' }}>
           {selected.map(item => (
             <span
               key={item}
-              className="inline-flex items-center gap-1 px-2 py-1 bg-purple-100 text-purple-700 rounded-full text-xs font-medium"
+              className="filter-chip on"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
             >
               {item}
-              <button
+              <span
                 onClick={(e) => handleRemoveChip(item, e)}
-                className="ml-1 text-purple-500 hover:text-purple-700"
+                style={{ cursor: 'pointer', marginLeft: '2px' }}
               >
-                ×
-              </button>
+                ✕
+              </span>
             </span>
           ))}
         </div>

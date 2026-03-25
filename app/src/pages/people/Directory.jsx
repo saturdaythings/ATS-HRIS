@@ -100,9 +100,7 @@ export default function Directory() {
         </div>
 
         {/* Filter chips row */}
-        <div className="flex flex-wrap gap-3 items-center">
-          <span className="text-sm font-medium text-gray-600">Filters:</span>
-
+        <div className="table-toolbar">
           <FilterChip
             label="Department"
             options={departments}
@@ -119,14 +117,13 @@ export default function Directory() {
 
           {tableState.getActiveFilterCount() > 0 && (
             <button
+              className="filter-chip"
               onClick={() => tableState.clearFilters()}
-              className="ml-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 font-medium"
+              style={{ color: '#e74c3c', borderColor: '#e74c3c' }}
             >
               Clear all
             </button>
           )}
-
-          <div className="flex-grow" />
 
           <ColumnVisibilityToggle
             allColumns={ALL_COLUMNS}
@@ -164,66 +161,51 @@ export default function Directory() {
                   {tableState.visibleColumns.includes('name') && (
                     <th
                       onClick={() => tableState.handleSortClick('name')}
-                      className="text-left py-3 px-6 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className={`text-left py-3 px-6 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors${tableState.sortColumn === 'name' ? ' sorted' : ''}`}
+                      style={{ userSelect: 'none' }}
                     >
-                      <div className="flex items-center gap-2">
-                        Name
-                        {tableState.sortColumn === 'name' && (
-                          <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
-                        )}
-                      </div>
+                      Name
+                      <span className="sort-arrow">{tableState.sortColumn === 'name' ? (tableState.sortOrder === 'asc' ? '↑' : '↓') : '↕'}</span>
                     </th>
                   )}
                   {tableState.visibleColumns.includes('email') && (
                     <th
                       onClick={() => tableState.handleSortClick('email')}
-                      className="text-left py-3 px-6 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className={`text-left py-3 px-6 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors${tableState.sortColumn === 'email' ? ' sorted' : ''}`}
+                      style={{ userSelect: 'none' }}
                     >
-                      <div className="flex items-center gap-2">
-                        Email
-                        {tableState.sortColumn === 'email' && (
-                          <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
-                        )}
-                      </div>
+                      Email
+                      <span className="sort-arrow">{tableState.sortColumn === 'email' ? (tableState.sortOrder === 'asc' ? '↑' : '↓') : '↕'}</span>
                     </th>
                   )}
                   {tableState.visibleColumns.includes('title') && (
                     <th
                       onClick={() => tableState.handleSortClick('title')}
-                      className="text-left py-3 px-6 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className={`text-left py-3 px-6 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors${tableState.sortColumn === 'title' ? ' sorted' : ''}`}
+                      style={{ userSelect: 'none' }}
                     >
-                      <div className="flex items-center gap-2">
-                        Title
-                        {tableState.sortColumn === 'title' && (
-                          <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
-                        )}
-                      </div>
+                      Title
+                      <span className="sort-arrow">{tableState.sortColumn === 'title' ? (tableState.sortOrder === 'asc' ? '↑' : '↓') : '↕'}</span>
                     </th>
                   )}
                   {tableState.visibleColumns.includes('department') && (
                     <th
                       onClick={() => tableState.handleSortClick('department')}
-                      className="text-left py-3 px-6 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className={`text-left py-3 px-6 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors${tableState.sortColumn === 'department' ? ' sorted' : ''}`}
+                      style={{ userSelect: 'none' }}
                     >
-                      <div className="flex items-center gap-2">
-                        Department
-                        {tableState.sortColumn === 'department' && (
-                          <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
-                        )}
-                      </div>
+                      Department
+                      <span className="sort-arrow">{tableState.sortColumn === 'department' ? (tableState.sortOrder === 'asc' ? '↑' : '↓') : '↕'}</span>
                     </th>
                   )}
                   {tableState.visibleColumns.includes('status') && (
                     <th
                       onClick={() => tableState.handleSortClick('status')}
-                      className="text-left py-3 px-6 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                      className={`text-left py-3 px-6 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors${tableState.sortColumn === 'status' ? ' sorted' : ''}`}
+                      style={{ userSelect: 'none' }}
                     >
-                      <div className="flex items-center gap-2">
-                        Status
-                        {tableState.sortColumn === 'status' && (
-                          <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
-                        )}
-                      </div>
+                      Status
+                      <span className="sort-arrow">{tableState.sortColumn === 'status' ? (tableState.sortOrder === 'asc' ? '↑' : '↓') : '↕'}</span>
                     </th>
                   )}
                   {tableState.visibleColumns.includes('startDate') && (
