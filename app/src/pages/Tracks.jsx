@@ -1,167 +1,86 @@
-/**
- * Tracks Page
- * Main page for managing onboarding and offboarding tracks
- */
 import { useState, useEffect } from 'react';
-import { useTracks } from '../hooks/useTracks';
-import TrackList from '../components/TrackList';
-import TrackDetail from '../components/TrackDetail';
-import TimelinePreview from '../components/TimelinePreview';
 
 export default function Tracks() {
-  const {
-    tracks,
-    loading,
-    error,
-    createTrack,
-    updateTrack,
-    deleteTrack,
-    addTask,
-    updateTask,
-    deleteTask,
-    reorderTasks,
-  } = useTracks();
+  const [tracks, setTracks] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const [selectedTrack, setSelectedTrack] = useState(null);
-  const [showCreateModal, setShowCreateModal] = useState(false);
+  useEffect(() => {
+    const fetchTracks = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/tracks');
 
-  const handleCreateTrack = () => {
-    setShowCreateModal(true);
-  };
+        if (!response.ok) {
+          throw new Error('Failed to load tracks');
+        }
 
-  const handleSelectTrack = (track) => {
-    setSelectedTrack(track);
-  };
+        const { data } = await response.json();
+        setTracks(data || []);
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  const handleCloseDetail = () => {
-    setSelectedTrack(null);
-  };
-
-  const handleUpdateTrack = async (trackData) => {
-    if (selectedTrack) {
-      await updateTrack(selectedTrack.id, trackData);
-      setSelectedTrack(null);
-    }
-  };
-
-  const handleAddTask = async (taskData) => {
-    if (selectedTrack) {
-      await addTask(selectedTrack.id, taskData);
-      // Refresh selected track to show new task
-      const updatedTrack = tracks.find(t => t.id === selectedTrack.id);
-      setSelectedTrack(updatedTrack);
-    }
-  };
-
-  const handleEditTask = async (taskId, taskData) => {
-    if (selectedTrack) {
-      await updateTask(selectedTrack.id, taskId, taskData);
-      const updatedTrack = tracks.find(t => t.id === selectedTrack.id);
-      setSelectedTrack(updatedTrack);
-    }
-  };
-
-  const handleDeleteTask = async (taskId) => {
-    if (selectedTrack) {
-      await deleteTask(selectedTrack.id, taskId);
-      const updatedTrack = tracks.find(t => t.id === selectedTrack.id);
-      setSelectedTrack(updatedTrack);
-    }
-  };
-
-  const handleReorderTasks = async (taskId, newOrder) => {
-    if (selectedTrack) {
-      await reorderTasks(selectedTrack.id, taskId, newOrder);
-      const updatedTrack = tracks.find(t => t.id === selectedTrack.id);
-      setSelectedTrack(updatedTrack);
-    }
-  };
+    fetchTracks();
+  }, []);
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-screen">
-        <div className="text-center">
-          <div className="w-8 h-8 border-4 border-slate-300 border-t-blue-500 rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-slate-600">Loading tracks...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="p-6">
-        <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-          <p className="text-red-700">{error}</p>
+      <div className="p-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Tracks</h1>
+        <div className="mt-6 bg-white rounded-lg border border-gray-200 p-6 text-center text-gray-500">
+          Loading tracks...
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-slate-50">
-      {/* Main content */}
-      <div className="flex-1 overflow-auto">
-        <div className="p-6 space-y-6">
-          {/* Header */}
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-slate-900">Tracks</h1>
-              <p className="text-slate-600 mt-1">Manage onboarding and offboarding tracks</p>
-            </div>
-            <button
-              onClick={handleCreateTrack}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-            >
-              + Create Track
-            </button>
-          </div>
+    <div className="p-8">
+      <h1 className="text-3xl font-bold text-gray-900 mb-2">Tracks</h1>
+      <p className="text-gray-600">Manage career development and progression tracks</p>
 
-          {/* Track list */}
-          {tracks.length === 0 ? (
-            <div className="p-8 bg-white rounded-lg border border-slate-200 text-center">
-              <p className="text-slate-600">No tracks created yet</p>
-              <button
-                onClick={handleCreateTrack}
-                className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-              >
-                Create your first track
-              </button>
-            </div>
-          ) : (
-            <TrackList
-              tracks={tracks}
-              onCreateTrack={handleCreateTrack}
-              onSelectTrack={handleSelectTrack}
-              onUpdateTrack={handleUpdateTrack}
-              onDeleteTrack={deleteTrack}
-              showCreateModal={showCreateModal}
-              onCloseModal={() => setShowCreateModal(false)}
-              onSubmitCreate={createTrack}
-            />
-          )}
-        </div>
-      </div>
-
-      {/* Detail panel */}
-      {selectedTrack && (
-        <div className="w-1/2 bg-white border-l border-slate-200 overflow-auto flex flex-col">
-          <TrackDetail
-            track={selectedTrack}
-            onClose={handleCloseDetail}
-            onUpdate={handleUpdateTrack}
-            onAddTask={handleAddTask}
-            onEditTask={handleEditTask}
-            onDeleteTask={handleDeleteTask}
-            onReorderTasks={handleReorderTasks}
-          />
-
-          {/* Timeline preview */}
-          <div className="border-t border-slate-200 p-6 bg-slate-50">
-            <TimelinePreview track={selectedTrack} />
-          </div>
+      {error && (
+        <div className="mt-4 p-4 bg-red-50 text-red-800 rounded-lg">
+          {error}
         </div>
       )}
+
+      <div className="mt-6 bg-white rounded-lg border border-gray-200 overflow-hidden">
+        {tracks.length === 0 ? (
+          <div className="p-6 text-center text-gray-500">
+            No tracks defined yet. Create one from Admin → Templates.
+          </div>
+        ) : (
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-200 bg-gray-50">
+                <th className="text-left py-3 px-4 font-semibold text-gray-700">Track Name</th>
+                <th className="text-left py-3 px-4 font-semibold text-gray-700">Role</th>
+                <th className="text-left py-3 px-4 font-semibold text-gray-700">Items</th>
+                <th className="text-right py-3 px-4 font-semibold text-gray-700">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {tracks.map(track => (
+                <tr key={track.id} className="border-b border-gray-100 hover:bg-gray-50">
+                  <td className="py-3 px-4 font-medium text-gray-900">{track.name}</td>
+                  <td className="py-3 px-4 text-gray-600 capitalize">{track.role}</td>
+                  <td className="py-3 px-4 text-gray-600">{track.items?.length || 0} items</td>
+                  <td className="py-3 px-4 text-right">
+                    <button className="text-sm px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded">
+                      View
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+      </div>
     </div>
   );
 }
