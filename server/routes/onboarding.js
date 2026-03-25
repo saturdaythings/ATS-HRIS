@@ -8,7 +8,42 @@ import {
   getPendingTasksNextSevenDays,
 } from '../services/onboardingService.js';
 
+// Template data store (in-memory for Phase 5)
+const templates = [
+  {
+    id: '1',
+    name: 'Standard Onboarding',
+    role: 'employee',
+    items: [
+      { id: '1-1', task: 'IT Setup', dueDay: 1, assignee: 'it-team' },
+      { id: '1-2', task: 'Orientation', dueDay: 1, assignee: 'hr' },
+      { id: '1-3', task: 'Manager 1-on-1', dueDay: 3, assignee: 'manager' },
+      { id: '1-4', task: '30-day Review', dueDay: 30, assignee: 'manager' },
+    ],
+    createdAt: new Date('2026-01-01'),
+  },
+];
+
 const router = express.Router();
+
+/**
+ * GET /api/onboarding/templates
+ * Get all onboarding templates, optionally filtered by role
+ */
+router.get('/templates', async (req, res, next) => {
+  try {
+    const { role } = req.query;
+    let filtered = templates;
+
+    if (role) {
+      filtered = templates.filter(t => t.role === role);
+    }
+
+    res.json({ data: filtered, error: null });
+  } catch (error) {
+    next(error);
+  }
+});
 
 // ============================================================================
 // TASK 6.1: ONBOARDING RUN ENDPOINTS

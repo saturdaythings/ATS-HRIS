@@ -144,6 +144,49 @@ describe('Onboarding/Offboarding Run & Task Instance APIs (TASK 6.1-6.2)', () =>
     return instances;
   }
 
+  // ==================== PHASE 5: TEMPLATE ENDPOINTS ====================
+
+  describe('GET /api/templates', () => {
+    test('should return all templates', async () => {
+      const res = await request(app).get('/api/templates');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toBeDefined();
+      expect(Array.isArray(res.body.data)).toBe(true);
+      expect(res.body.data.length).toBeGreaterThan(0);
+      expect(res.body.error).toBeNull();
+    });
+
+    test('should return templates with expected shape', async () => {
+      const res = await request(app).get('/api/templates');
+
+      expect(res.status).toBe(200);
+      const template = res.body.data[0];
+      expect(template).toHaveProperty('id');
+      expect(template).toHaveProperty('name');
+      expect(template).toHaveProperty('role');
+      expect(template).toHaveProperty('items');
+      expect(Array.isArray(template.items)).toBe(true);
+    });
+
+    test('should filter templates by role', async () => {
+      const res = await request(app).get('/api/templates?role=employee');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data.length).toBeGreaterThan(0);
+      res.body.data.forEach(t => {
+        expect(t.role).toBe('employee');
+      });
+    });
+
+    test('should return empty array for non-matching role filter', async () => {
+      const res = await request(app).get('/api/templates?role=nonexistent');
+
+      expect(res.status).toBe(200);
+      expect(res.body.data).toEqual([]);
+    });
+  });
+
   // ==================== TASK 6.1: ONBOARDING RUN API ====================
 
   describe('TASK 6.1: Onboarding Run API', () => {
