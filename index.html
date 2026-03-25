@@ -320,7 +320,7 @@ async function sheetsSet(tab,data){
     });
     if(!writeR.ok){const err=await writeR.json().catch(()=>({}));throw new Error(`Write ${tab}: ${writeR.status} ${err?.error?.message||''}`);}
     setSyncState('ok');
-  }catch(e){setSyncState('error');console.error('sheetsSet error:',e.message);throw e;}
+  }catch(e){setSyncState('error');showToast('Save failed: '+e.message);throw e;}
 }
 
 function setSyncState(s){
