@@ -907,7 +907,7 @@ class Application {
   async renderWorkflows() {
     try {
       const tracksData = await api.call('GET', '/tracks');
-      const workflows = tracksData.data || tracksData || [];
+      const workflows = Array.isArray(tracksData) ? tracksData : (tracksData.data || []);
 
       let html = `
         <main style="padding:20px;">
@@ -959,7 +959,7 @@ class Application {
   async renderTemplates() {
     try {
       const tracksData = await api.call('GET', '/tracks');
-      const templates = tracksData.data || tracksData || [];
+      const templates = Array.isArray(tracksData) ? tracksData : (tracksData.data || []);
 
       let html = `
         <main style="padding:20px;">
@@ -1127,7 +1127,7 @@ class Application {
   async renderTracks() {
     try {
       const tracksData = await api.call('GET', '/tracks');
-      const tracks = tracksData.data || tracksData || [];
+      const tracks = Array.isArray(tracksData) ? tracksData : (tracksData.data || []);
 
       return `
         <main style="padding:20px;">
