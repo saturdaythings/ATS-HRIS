@@ -166,11 +166,36 @@ tr.selected td{background:var(--accent-light)}
 ::-webkit-scrollbar{width:5px;height:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px}
+@media (max-width:768px){
+.app{flex-direction:column}
+.sidebar{position:fixed;top:52px;left:0;bottom:0;width:var(--sidebar-w);background:var(--surface);z-index:999;transform:translateX(-100%);transition:transform 0.3s ease;box-shadow:2px 0 8px rgba(0,0,0,0.1)}
+.sidebar.open{transform:translateX(0)}
+.sidebar-overlay{display:none;position:fixed;top:52px;left:0;right:0;bottom:0;background:rgba(0,0,0,0.5);z-index:998}
+.sidebar.open~.sidebar-overlay{display:block}
+.main{width:100%}
+.page{padding:16px 16px 40px}
+.hamburger{display:flex;width:44px;height:44px;align-items:center;justify-content:center;background:none;border:none;cursor:pointer;font-size:20px;color:var(--text);margin-right:auto}
+.hamburger{display:none}
+.show-hamburger .hamburger{display:flex}
+.split-layout{flex-direction:column}
+.split-detail{width:100%;min-width:100%;border-left:none;border-top:1px solid var(--border)}
+table{font-size:12px}
+th,td{padding:8px 10px}
+.stat-grid{grid-template-columns:repeat(2,1fr)}
+.form-row{flex-direction:column}
+.form-row>div{width:100%}
+.modal{max-width:95vw;max-height:90vh}
+.filter-search,.filter-select{font-size:12px;padding:6px 8px}
+button.btn{min-height:44px;padding:10px 14px}
+.page-header{flex-direction:column;gap:12px}
+.page-header>div:last-child{width:100%}
+.page-header button{width:100%}
+}
 </style>
 </head>
 <body>
-<div class="app">
-<nav class="sidebar">
+<div class="app show-hamburger">
+<nav class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <div class="logo-mark">V2</div>
     <span class="logo-text">V.Two Ops</span>
@@ -226,6 +251,7 @@ tr.selected td{background:var(--accent-light)}
 </nav>
 <div class="main">
   <div class="topbar">
+    <button class="hamburger" onclick="toggleSidebar()">☰</button>
     <div class="topbar-title" id="topbar-title">Dashboard</div>
     <div style="flex:1"></div>
     <div class="sync-status" id="sync-status"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Loading...</span></div>
@@ -234,6 +260,7 @@ tr.selected td{background:var(--accent-light)}
   <div class="page" id="page" style="display:flex;align-items:center;justify-content:center;color:var(--text3)">Loading...</div>
 </div>
 </div>
+<div class="sidebar-overlay" onclick="closeSidebar()"></div>
 <div id="modal-root"></div>
 <div class="toast" id="toast"></div>
 
@@ -473,8 +500,17 @@ function fmtSelect(opts,val,id,cls='form-input form-select'){return`<select clas
 const TITLES={dashboard:'Dashboard',hiring:'Hiring',directory:'Directory',onboarding:'Onboarding',offboarding:'Offboarding',inventory:'Inventory',assignments:'Assignments',tracks:'Tracks',settings:'Settings'};
 let currentPage='';
 
+function toggleSidebar(){
+  const sidebar=document.getElementById('sidebar');
+  sidebar.classList.toggle('open');
+}
+function closeSidebar(){
+  const sidebar=document.getElementById('sidebar');
+  sidebar.classList.remove('open');
+}
 function nav(page){
   currentPage=page;
+  closeSidebar();
   document.querySelectorAll('.nav-item').forEach(el=>{el.classList.toggle('active',el.getAttribute('onclick')===`nav('${page}')`)});
   document.getElementById('topbar-title').textContent=TITLES[page]||page;
   const p=document.getElementById('page');
