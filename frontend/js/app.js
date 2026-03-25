@@ -472,6 +472,162 @@ function addEmployee() {
   if (tb) tb.innerHTML = empRows(employees);
 }
 
+// Tracks page helper functions
+let selectedTrackId = null;
+let tracks = [];
+
+function trackListHTML() {
+  return tracks.map(t => `
+    <div style="padding:10px 12px;border-radius:var(--radius);cursor:pointer;margin-bottom:4px;border:1px solid ${selectedTrackId === t.id ? 'var(--accent)' : 'transparent'};background:${selectedTrackId === t.id ? 'var(--accent-light)' : 'transparent'}" onclick="selectTrack('${t.id}')">
+      <div style="font-weight:500;font-size:13px;color:${selectedTrackId === t.id ? 'var(--accent-text)' : 'var(--text)'}">${t.name}</div>
+      <div style="font-size:11px;color:var(--text3);margin-top:2px">${t.type} · ${t.tasks.length} tasks</div>
+    </div>`).join('');
+}
+
+function selectTrack(id) {
+  selectedTrackId = id;
+  const tl = document.getElementById('track-list');
+  if (tl) tl.innerHTML = trackListHTML();
+  renderTrackDetail(id);
+}
+
+function renderTrackDetail(id) {
+  const t = tracks.find(x => x.id === id);
+  const d = document.getElementById('track-detail');
+  if (!d || !t) return;
+  d.innerHTML = `
+    <div class="page-header">
+      <div><div class="page-title">${t.name}</div><div class="page-subtitle">Type: ${t.type} · Auto-apply: ${t.autoApply ? 'Yes' : 'No'}</div></div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-secondary btn-sm" onclick="showEditTrackModal('${t.id}')">Edit Track</button>
+        <button class="btn btn-primary btn-sm" onclick="showToast('Apply track to employee')">Apply Track</button>
+      </div>
+    </div>
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px">Tasks (${t.tasks.length})</div>
+        <button class="btn btn-sm btn-secondary" onclick="showAddTaskModal('${t.id}')">+ Add Task</button>
+      </div>
+      <div id="task-list-${t.id}">
+        ${taskListHTML(t)}
+      </div>
+    </div>
+  `;
+}
+
+function taskListHTML(t) {
+  if (!t.tasks.length) return `<div style="font-size:12px;color:var(--text3);padding:8px 0">No tasks yet</div>`;
+  return t.tasks.map((task, i) => `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:${i < t.tasks.length - 1 ? '1px solid var(--border)' : 'none'}">
+      <div style="width:22px;height:22px;border-radius:50%;background:var(--accent-light);color:var(--accent-text);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0">${i + 1}</div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:500">${task.name}</div><div style="font-size:11px;color:var(--text3)">Owner: ${task.ownerRole}</div></div>
+      <div style="font-size:12px;color:var(--text2)">${task.dueDaysOffset === 0 ? 'Day 0' : task.dueDaysOffset > 0 ? `+${task.dueDaysOffset}d` : `${task.dueDaysOffset}d`}</div>
+      <button class="btn-ghost btn-sm" style="color:var(--red);padding:4px 6px" onclick="deleteTask('${t.id}','${task.id}')">✕</button>
+    </div>`).join('');
+}
+
+function deleteTask(trackId, taskId) {
+  const t = tracks.find(x => x.id === trackId);
+  t.tasks = t.tasks.filter(x => x.id !== taskId);
+  renderTrackDetail(trackId);
+  const tl = document.getElementById('track-list');
+  if (tl) tl.innerHTML = trackListHTML();
+  showToast('Task removed');
+}
+
+function showAddTaskModal(trackId) {
+  showModal(`
+    <div class="modal">
+      <div class="modal-header"><div class="modal-title">Add Task</div><button class="detail-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">
+        <div class="form-group"><label class="form-label">Task Name</label><input class="form-input" id="tname" placeholder="e.g. Complete I-9 paperwork"/></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Owner Role</label><select class="form-input form-select" id="towner"><option>HR</option><option>IT</option><option>Manager</option><option>Finance</option><option>Employee</option></select></div>
+          <div class="form-group"><label class="form-label">Due (days from start)</label><input type="number" class="form-input" id="tdays" placeholder="0" value="1"/></div>
+        </div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addTask('${trackId}')">Add Task</button></div>
+    </div>`);
+}
+
+function addTask(trackId) {
+  const name = document.getElementById('tname').value.trim();
+  if (!name) { showToast('Task name required'); return; }
+  const t = tracks.find(x => x.id === trackId);
+  t.tasks.push({ id: 'tt' + Date.now(), name, ownerRole: document.getElementById('towner').value, dueDaysOffset: parseInt(document.getElementById('tdays').value) || 0 });
+  closeModal();
+  showToast('Task added');
+  renderTrackDetail(trackId);
+  const tl = document.getElementById('track-list');
+  if (tl) tl.innerHTML = trackListHTML();
+}
+
+function showEditTrackModal(id) {
+  const t = tracks.find(x => x.id === id);
+  showModal(`
+    <div class="modal">
+      <div class="modal-header"><div class="modal-title">Edit Track</div><button class="detail-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">
+        <div class="form-group"><label class="form-label">Track Name</label><input class="form-input" id="etname" value="${t.name}"/></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="ettype"><option${t.type === 'company' ? ' selected' : ''}>company</option><option${t.type === 'role' ? ' selected' : ''}>role</option><option${t.type === 'client' ? ' selected' : ''}>client</option></select></div>
+          <div class="form-group"><label class="form-label">Auto-apply</label><select class="form-input form-select" id="etauto"><option value="true"${t.autoApply ? ' selected' : ''}>Yes</option><option value="false"${!t.autoApply ? ' selected' : ''}>No</option></select></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-danger btn-sm" style="margin-right:auto" onclick="deleteTrack('${t.id}')">Delete Track</button>
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="saveTrack('${t.id}')">Save</button>
+      </div>
+    </div>`);
+}
+
+function saveTrack(id) {
+  const t = tracks.find(x => x.id === id);
+  t.name = document.getElementById('etname').value;
+  t.type = document.getElementById('ettype').value;
+  t.autoApply = document.getElementById('etauto').value === 'true';
+  closeModal();
+  showToast('Track saved');
+  renderTracks();
+}
+
+function deleteTrack(id) {
+  if (!confirm('Delete this track?')) return;
+  const idx = tracks.findIndex(x => x.id === id);
+  tracks.splice(idx, 1);
+  selectedTrackId = tracks[0]?.id || null;
+  closeModal();
+  showToast('Track deleted');
+  renderTracks();
+}
+
+function showAddTrackModal() {
+  showModal(`
+    <div class="modal">
+      <div class="modal-header"><div class="modal-title">New Track</div><button class="detail-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">
+        <div class="form-group"><label class="form-label">Track Name</label><input class="form-input" id="ntname" placeholder="e.g. Design Onboarding"/></div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="nttype"><option>company</option><option>role</option><option>client</option></select></div>
+          <div class="form-group"><label class="form-label">Auto-apply</label><select class="form-input form-select" id="ntauto"><option value="false">No</option><option value="true">Yes</option></select></div>
+        </div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addTrack()">Create</button></div>
+    </div>`);
+}
+
+function addTrack() {
+  const name = document.getElementById('ntname').value.trim();
+  if (!name) { showToast('Name required'); return; }
+  const nt = { id: 't' + Date.now(), name, type: document.getElementById('nttype').value, autoApply: document.getElementById('ntauto').value === 'true', tasks: [] };
+  tracks.push(nt);
+  selectedTrackId = nt.id;
+  closeModal();
+  showToast('Track created');
+  renderTracks();
+}
+
 // Onboarding page helper functions
 function openRunDetail(id) {
   const run = onboardingRuns.find(r => r.id === id);
@@ -829,6 +985,11 @@ class Application {
       if (e.detail.path === '/employees') {
         const tb = document.getElementById('emp-tbody');
         if (tb) tb.innerHTML = empRows(employees);
+      }
+
+      // Initialize tracks page detail
+      if (e.detail.path === '/tracks') {
+        renderTrackDetail(selectedTrackId);
       }
     });
 
@@ -1750,31 +1911,23 @@ class Application {
 
   async renderTracks() {
     try {
+      // Fetch tracks from API
       const tracksData = await api.call('GET', '/tracks').catch(() => []);
-      const tracks = Array.isArray(tracksData) ? tracksData : (tracksData.data || []);
+      const tracksFromAPI = Array.isArray(tracksData) ? tracksData : (tracksData.data || []);
+
+      // Store in global variable
+      tracks = tracksFromAPI;
+      selectedTrackId = tracks[0]?.id || null;
 
       return `
-        <div class="page-header">
-          <div>
-            <div class="page-title">Career Tracks</div>
-            <div class="page-subtitle">Development pathways and progression</div>
+        <div style="display:flex;height:100%">
+          <div style="width:260px;border-right:1px solid var(--border);overflow-y:auto;padding:16px;flex-shrink:0">
+            <div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px;padding:0 4px">Track Templates</div>
+            <div id="track-list">${trackListHTML()}</div>
+            <button class="btn btn-secondary" style="width:100%;margin-top:8px;font-size:12px" onclick="showAddTrackModal()">+ New Track</button>
           </div>
+          <div style="flex:1;overflow-y:auto;padding:28px" id="track-detail"></div>
         </div>
-        ${tracks.length ? tracks.map(track => `
-          <div class="card" style="margin-bottom:16px">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-              <div>
-                <div style="font-weight:600;font-size:15px">${track.name || 'Track'}</div>
-                <div style="font-size:12px;color:var(--text2);margin-top:2px">${track.type || 'standard'}</div>
-              </div>
-            </div>
-            ${track.description ? `<p style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5">${track.description}</p>` : ''}
-            ${(track.tasks || []).length ? `
-              <div style="font-size:12px;font-weight:500;color:var(--text3);margin-bottom:8px">Milestones:</div>
-              ${(track.tasks || []).map(t => `<div style="padding:6px 0;color:var(--text2);font-size:13px">✓ ${t.name || 'Task'}</div>`).join('')}
-            ` : ''}
-          </div>
-        `).join('') : renderEmpty('No tracks', 'Career development tracks will appear here')}
       `;
     } catch (error) {
       return `<div style="padding:20px"><p>Error loading tracks: ${error.message}</p></div>`;
