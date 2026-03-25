@@ -6,23 +6,11 @@ export default function AdminSettings() {
 
   const [formData, setFormData] = useState({
     companyName: '',
-    logo: '',
-    timezone: 'UTC',
-    smtpHost: '',
-    smtpPort: '587',
-    smtpFrom: '',
-    phases: {
-      preBoard: 'Pre-boarding',
-      day1: 'Day 1',
-      week1: 'Week 1',
-      day30: '30-day',
-      day90: '90-day',
-    },
-    features: {
-      chatEnabled: true,
-      autoAssignEnabled: true,
-      notificationsEnabled: true,
-    },
+    logoUrl: '',
+    theme: 'light',
+    timezone: 'America/New_York',
+    language: 'en',
+    maxUsers: 50,
   });
 
   const [message, setMessage] = useState('');
@@ -34,10 +22,10 @@ export default function AdminSettings() {
   const loadSettings = async () => {
     try {
       const data = await getSettings();
-      if (data.settings) {
+      if (data.data) {
         setFormData((prev) => ({
           ...prev,
-          ...data.settings,
+          ...data.data,
         }));
       }
     } catch (err) {
@@ -47,31 +35,10 @@ export default function AdminSettings() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-
-    if (name.startsWith('phase_')) {
-      const phaseKey = name.replace('phase_', '');
-      setFormData((prev) => ({
-        ...prev,
-        phases: {
-          ...prev.phases,
-          [phaseKey]: value,
-        },
-      }));
-    } else if (name.startsWith('feature_')) {
-      const featureKey = name.replace('feature_', '');
-      setFormData((prev) => ({
-        ...prev,
-        features: {
-          ...prev.features,
-          [featureKey]: type === 'checkbox' ? checked : value,
-        },
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: type === 'checkbox' ? checked : value,
-      }));
-    }
+    setFormData((prev) => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : (type === 'number' ? parseInt(value) : value),
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -94,7 +61,7 @@ export default function AdminSettings() {
     <div className="p-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">System Settings</h1>
-        <p className="text-gray-600">Configure company information, email settings, and features</p>
+        <p className="text-gray-600">Configure company information and workspace preferences</p>
       </div>
 
       {/* Messages */}
@@ -121,7 +88,7 @@ export default function AdminSettings() {
                 name="companyName"
                 value={formData.companyName}
                 onChange={handleChange}
-                placeholder="V.Two"
+                placeholder="V.Two Operations"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
               />
             </div>
@@ -130,14 +97,21 @@ export default function AdminSettings() {
               <label className="block text-sm font-medium text-gray-700 mb-2">Logo URL</label>
               <input
                 type="url"
-                name="logo"
-                value={formData.logo}
+                name="logoUrl"
+                value={formData.logoUrl}
                 onChange={handleChange}
                 placeholder="https://example.com/logo.png"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
               />
             </div>
+          </div>
+        </div>
 
+        {/* Regional & Localization Section */}
+        <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Regional & Localization</h2>
+
+          <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Timezone</label>
               <select
@@ -146,105 +120,65 @@ export default function AdminSettings() {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
               >
+                <option value="America/New_York">America/New_York (EST)</option>
+                <option value="America/Chicago">America/Chicago (CST)</option>
+                <option value="America/Denver">America/Denver (MST)</option>
+                <option value="America/Los_Angeles">America/Los_Angeles (PST)</option>
                 <option value="UTC">UTC</option>
-                <option value="EST">EST</option>
-                <option value="CST">CST</option>
-                <option value="MST">MST</option>
-                <option value="PST">PST</option>
+                <option value="Europe/London">Europe/London</option>
+                <option value="Europe/Paris">Europe/Paris</option>
+                <option value="Asia/Tokyo">Asia/Tokyo</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Language</label>
+              <select
+                name="language"
+                value={formData.language}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="en">English</option>
+                <option value="es">Spanish</option>
+                <option value="fr">French</option>
+                <option value="de">German</option>
+                <option value="ja">Japanese</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Theme</label>
+              <select
+                name="theme"
+                value={formData.theme}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
+              >
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
               </select>
             </div>
           </div>
         </div>
 
-        {/* Email Settings Section */}
+        {/* Workspace Section */}
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Email Settings</h2>
+          <h2 className="text-lg font-bold text-gray-900 mb-4">Workspace</h2>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">SMTP Host</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Max Users</label>
               <input
-                type="text"
-                name="smtpHost"
-                value={formData.smtpHost}
+                type="number"
+                name="maxUsers"
+                value={formData.maxUsers}
                 onChange={handleChange}
-                placeholder="smtp.gmail.com"
+                placeholder="50"
+                min="1"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
               />
             </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">SMTP Port</label>
-                <input
-                  type="number"
-                  name="smtpPort"
-                  value={formData.smtpPort}
-                  onChange={handleChange}
-                  placeholder="587"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">From Email</label>
-                <input
-                  type="email"
-                  name="smtpFrom"
-                  value={formData.smtpFrom}
-                  onChange={handleChange}
-                  placeholder="noreply@vtwo.co"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Onboarding Phases Section */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Onboarding Phases</h2>
-          <p className="text-sm text-gray-600 mb-4">
-            Customize the names of onboarding phases used in your company
-          </p>
-
-          <div className="space-y-4">
-            {Object.entries(formData.phases).map(([key, value]) => (
-              <div key={key}>
-                <label className="block text-sm font-medium text-gray-700 mb-2 capitalize">
-                  {key.replace(/([A-Z])/g, ' $1').trim()} Phase
-                </label>
-                <input
-                  type="text"
-                  name={`phase_${key}`}
-                  value={value}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Feature Flags Section */}
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <h2 className="text-lg font-bold text-gray-900 mb-4">Feature Flags</h2>
-
-          <div className="space-y-4">
-            {Object.entries(formData.features).map(([key, value]) => (
-              <label key={key} className="flex items-center">
-                <input
-                  type="checkbox"
-                  name={`feature_${key}`}
-                  checked={value}
-                  onChange={handleChange}
-                  className="w-4 h-4 rounded border-gray-300"
-                />
-                <span className="ml-3 text-sm text-gray-700 capitalize">
-                  {key.replace(/([A-Z])/g, ' $1').trim()} Enabled
-                </span>
-              </label>
-            ))}
           </div>
         </div>
 
