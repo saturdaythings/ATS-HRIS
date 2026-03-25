@@ -640,7 +640,7 @@ function refreshHiringView(){
   // Update archive toggle label
   const at=document.getElementById('archive-toggle');
   const hiddenCount=DB.candidates.filter(c=>c.candStatus==='Hired'||c.candStatus==='Closed').length;
-  if(at){at.textContent=hiringFilters.showArchived?'Hiding Archived':`Show Archived${hiddenCount>0?' ('+hiddenCount+')':''}`;at.className='btn btn-sm '+(hiringFilters.showArchived?'btn-active btn-secondary':'btn-secondary');}
+  if(at){at.textContent=hiringFilters.showArchived?`Showing Hired & Closed${hiddenCount>0?' ('+hiddenCount+')':''}`:'Show Hired & Closed'+(hiddenCount>0?' ('+hiddenCount+')':'');at.className='btn btn-sm '+(hiringFilters.showArchived?'btn-active btn-secondary':'btn-secondary');}
   const main=document.getElementById('hiring-main');
   if(!main)return;
   if(hiringView==='kanban')renderKanban(list,main);
@@ -900,8 +900,7 @@ function promoteCandidate(id){
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Promote to Employee</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
     <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Promoting <strong>${c.name}</strong> to employee. They will appear in the Directory and be marked Hired in Hiring.</p>
     <div class="form-row"><div class="form-group"><label class="form-label">Department</label><select class="form-input form-select" id="pdept"><option>Engineering</option><option>Design</option><option>Product</option><option>Data</option><option>Operations</option></select></div><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="pstart" value="${new Date(Date.now()+7*86400000).toISOString().split('T')[0]}"/></div></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Manager</label><select class="form-input form-select" id="pmgr"><option value="">${DB.employees.length===0?'No existing employees':'(no manager)'}
-</option>${DB.employees.map(e=>`<option value="${e.id}">${e.name} — ${e.role}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Work Location</label><input class="form-input" id="ploc" value="${c.city||'Remote'}"/></div></div>
+    <div class="form-group"><label class="form-label">Work Location</label><input class="form-input" id="ploc" value="${c.city||'Remote'}"/></div>
     <div class="form-group"><label class="form-label">Work Email</label><input class="form-input" id="pemail" value="${autoEmail}" placeholder="${autoEmail}"/></div>
   </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="doPromote('${id}')">Confirm & Promote</button></div></div>`);
 }
@@ -909,8 +908,7 @@ function promoteCandidate(id){
 async function doPromote(id){
   const c=DB.candidates.find(x=>x.id===id);
   c.candStatus='Hired';c.stage='hired';touch(c);
-  const mgrId=document.getElementById('pmgr').value;
-  const mgr=DB.employees.find(x=>x.id===mgrId);
+  const mgr=null;
   const email=document.getElementById('pemail').value.trim()||c.name.split(' ')[0].toLowerCase()+'@vtwo.co';
   const ne={id:uid(),name:c.name,role:c.role,dept:document.getElementById('pdept').value,status:'onboarding',location:document.getElementById('ploc').value,city:c.city||'',state:c.state||'',country:c.country||'US',manager:mgr?mgr.name:'TBD',startDate:document.getElementById('pstart').value,email,phone:'—'};
   DB.employees.push(ne);
@@ -1392,7 +1390,35 @@ function renderDropdownsTab(){
 }
 
 function renderTags(listKey){
-  return getList(listKey).map(v=>`<span class="tag">${v}<button onclick="removeListItem('${listKey}','${v}')">×</button></span>`).join('');
+  return getList(listKey).map((v,i)=>`<span class="tag" draggable="true" data-index="${i}" data-list="${listKey}" ondragstart="dragStartTag(event)" ondragover="dragOverTag(event)" ondrop="dropTag(event)">${v}<button onclick="removeListItem('${listKey}','${v}')">×</button></span>`).join('');
+}
+
+let dragSource=null;
+
+function dragStartTag(e){
+  dragSource=e.target.closest('.tag');
+  e.dataTransfer.effectAllowed='move';
+}
+
+function dragOverTag(e){
+  e.preventDefault();
+  e.dataTransfer.dropEffect='move';
+}
+
+async function dropTag(e){
+  e.preventDefault();
+  if(!dragSource||dragSource===e.target.closest('.tag'))return;
+  const src=dragSource;
+  const dst=e.target.closest('.tag');
+  if(!src||!dst)return;
+  const listKey=src.dataset.list;
+  const srcIdx=parseInt(src.dataset.index);
+  const dstIdx=parseInt(dst.dataset.index);
+  const items=getList(listKey);
+  [items[srcIdx],items[dstIdx]]=[items[dstIdx],items[srcIdx]];
+  items.forEach((v,i)=>{const l=DB.lists.find(x=>x.listKey===listKey&&x.value===v);if(l)l.order=String(i);});
+  await save('lists');
+  const tags=document.getElementById(`tags-${listKey}`);if(tags)tags.innerHTML=renderTags(listKey);
 }
 
 async function addListItem(listKey){
