@@ -34,7 +34,7 @@ router.get('/', async (req, res, next) => {
       // Unassigned device count
       getUnassignedDevices(),
       // Stale candidates (active, no activity in 14+ days)
-      getstaleCandidates(),
+      getStaleCandidates(),
       // Upcoming interviews next 7 days
       getUpcomingInterviews(),
       // Pending onboarding tasks due next 7 days
@@ -95,7 +95,7 @@ async function getUnassignedDevices() {
   return count;
 }
 
-async function gettaleCandidates() {
+async function getStaleCandidates() {
   const db = (await import('../db.js')).db;
   const fourteenDaysAgo = new Date();
   fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);

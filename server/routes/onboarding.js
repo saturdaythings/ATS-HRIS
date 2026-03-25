@@ -32,7 +32,14 @@ const router = express.Router();
  */
 router.get('/', async (req, res, next) => {
   try {
-    const runs = await getRuns();
+    const { db } = await import('../db.js');
+    const runs = await db.onboardingRun.findMany({
+      include: {
+        employee: { select: { name: true, title: true } },
+        tasks: { include: { taskTemplate: { select: { name: true, ownerRole: true } } } },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
     res.json({ data: runs, error: null });
   } catch (error) {
     next(error);
