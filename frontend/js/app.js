@@ -35,7 +35,7 @@ class Application {
     try {
       // Initialize core systems
       console.log('Step 1: Initializing router');
-      router.init('app');
+      router.init('main-content');
 
       console.log('Step 2: Registering routes');
       this.registerRoutes();
