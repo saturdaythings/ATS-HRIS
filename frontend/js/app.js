@@ -83,6 +83,12 @@ let selectedCandId = null;
 let kanbanFilter = '';
 let candidates = []; // Will be populated from API
 
+// Global state for directory page
+let selectedEmpId = null;
+let employees = [];
+let devices = [];
+let assignments = [];
+
 // Hiring page helper functions
 function filterKanbanStatus(v) {
   kanbanFilter = v;
@@ -343,6 +349,126 @@ function promoteCandidate(candId) {
   showToast('Promotion not yet implemented');
 }
 
+// Directory page helper functions
+function empRows(list) {
+  return list.map(e => `
+    <tr class="clickable${selectedEmpId === e.id ? ' selected' : ''}" onclick="selectEmp('${e.id}')">
+      <td>${personCell(e.name, e.email)}</td>
+      <td>${e.role}</td>
+      <td>${e.dept}</td>
+      <td>${statusPill(e.status)}</td>
+      <td>${e.location}</td>
+      <td>${e.startDate}</td>
+    </tr>`).join('');
+}
+
+function filterEmps(q) {
+  const list = q ? employees.filter(e =>
+    e.name.toLowerCase().includes(q.toLowerCase()) ||
+    e.role.toLowerCase().includes(q.toLowerCase())
+  ) : employees;
+  const tb = document.getElementById('emp-tbody');
+  if (tb) tb.innerHTML = empRows(list);
+}
+
+function selectEmp(id) {
+  selectedEmpId = id;
+  document.querySelectorAll('#emp-tbody tr').forEach(r =>
+    r.classList.toggle('selected', r.getAttribute('onclick') === `selectEmp('${id}')`)
+  );
+  const e = employees.find(x => x.id === id);
+  if (!e) return;
+  const d = document.getElementById('emp-detail');
+  if (!d) return;
+  d.classList.add('open');
+  const empDevs = assignments
+    .filter(a => a.employeeId === id)
+    .map(a => devices.find(dv => dv.id === a.deviceId))
+    .filter(Boolean);
+
+  d.innerHTML = `
+    <div class="detail-header">
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="person-av" style="${av(e.name)};width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600">${initials(e.name)}</div>
+        <div><div style="font-weight:600;font-size:15px">${e.name}</div><div style="font-size:12px;color:var(--text2)">${e.role} · ${e.dept}</div></div>
+      </div>
+      <button class="detail-close" onclick="closeEmpDetail()">×</button>
+    </div>
+    <div class="detail-body">
+      <div class="detail-section">
+        <div class="detail-section-title">Info</div>
+        <div class="detail-row"><span class="detail-key">Status</span>${statusPill(e.status)}</div>
+        <div class="detail-row"><span class="detail-key">Manager</span><span class="detail-val">${e.manager}</span></div>
+        <div class="detail-row"><span class="detail-key">Location</span><span class="detail-val">${e.location}</span></div>
+        <div class="detail-row"><span class="detail-key">Email</span><span class="detail-val" style="font-size:12px">${e.email}</span></div>
+        <div class="detail-row"><span class="detail-key">Start Date</span><span class="detail-val">${e.startDate}</span></div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Devices (${empDevs.length})</div>
+        ${empDevs.length ? empDevs.map(dv =>
+          `<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)">
+            <span>${dv.name}</span>
+            <span class="pill pill-gray" style="font-size:10px;font-family:var(--mono)">${dv.serial}</span>
+          </div>`
+        ).join('') : '<div style="font-size:12px;color:var(--text3);padding:8px 0">No devices</div>'}
+      </div>
+    </div>
+  `;
+}
+
+function closeEmpDetail() {
+  selectedEmpId = null;
+  const d = document.getElementById('emp-detail');
+  if (d) d.classList.remove('open');
+}
+
+function showAddEmployeeModal() {
+  showModal(`
+    <div class="modal">
+      <div class="modal-header"><div class="modal-title">Add Employee</div><button class="detail-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">First Name</label><input class="form-input" id="efn" placeholder="Jane"/></div>
+          <div class="form-group"><label class="form-label">Last Name</label><input class="form-input" id="eln" placeholder="Smith"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Role</label><input class="form-input" id="erole" placeholder="Engineer"/></div>
+          <div class="form-group"><label class="form-label">Department</label><select class="form-input form-select" id="edept"><option>Engineering</option><option>Design</option><option>Product</option><option>Operations</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="estart"/></div>
+          <div class="form-group"><label class="form-label">Location</label><select class="form-input form-select" id="eloc"><option>Remote</option><option>NYC</option><option>SF</option></select></div>
+        </div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addEmployee()">Add</button></div>
+    </div>
+  `);
+}
+
+function addEmployee() {
+  const fn = document.getElementById('efn').value.trim();
+  const ln = document.getElementById('eln').value.trim();
+  if (!fn || !ln) { showToast('Name required'); return; }
+  const ne = {
+    id: 'e' + Date.now(),
+    name: `${fn} ${ln}`,
+    role: document.getElementById('erole').value || 'TBD',
+    dept: document.getElementById('edept').value,
+    status: 'active',
+    location: document.getElementById('eloc').value,
+    manager: 'Jordan Lee',
+    startDate: document.getElementById('estart').value || today(),
+    email: fn.toLowerCase() + '@vtwo.co',
+    phone: '—'
+  };
+  employees.push(ne);
+  closeModal();
+  showToast(`${ne.name} added`);
+  // Refresh directory display
+  const tb = document.getElementById('emp-tbody');
+  if (tb) tb.innerHTML = empRows(employees);
+}
+
 class Application {
   constructor() {
     this.initialized = false;
@@ -458,6 +584,12 @@ class Application {
       // Initialize hiring page kanban
       if (e.detail.path === '/candidates') {
         renderKanban(kanbanFilter ? candidates.filter(c => c.candStatus === kanbanFilter) : candidates);
+      }
+
+      // Initialize directory page table
+      if (e.detail.path === '/employees') {
+        const tb = document.getElementById('emp-tbody');
+        if (tb) tb.innerHTML = empRows(employees);
       }
     });
 
@@ -819,67 +951,40 @@ class Application {
 
   async renderEmployees() {
     try {
-      const employees = await api.getEmployees();
+      // Fetch employees and devices from API, store in global variables
+      const fetchedEmps = await api.getEmployees().catch(() => []);
+      const fetchedDevs = await api.getDevices().catch(() => []);
+      const fetchedAssignments = await api.getAssignments ? await api.getAssignments().catch(() => []) : [];
 
-      let html = `
-        <main>
-          <header>
-            <h1>Employees</h1>
-            <button class="btn btn-primary" onclick="router.navigate('/employees/new')">
-              + New Employee
-            </button>
-          </header>
+      employees = fetchedEmps;
+      devices = fetchedDevs;
+      assignments = fetchedAssignments;
+      selectedEmpId = null;
 
-          <section class="table-section">
-            <input type="search" placeholder="Filter by name..." data-filter="name" class="search-input">
-            <table>
-              <thead>
-                <tr>
-                  <th data-sort-by="name">Name</th>
-                  <th data-sort-by="email">Email</th>
-                  <th data-sort-by="department">Department</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-      `;
-
-      employees.forEach(emp => {
-        html += `
-          <tr>
-            <td data-column="name">
-              <a data-navigate="/employees/${emp.id}" href="#/employees/${emp.id}">
-                ${emp.name || 'N/A'}
-              </a>
-            </td>
-            <td data-column="email">${emp.email || 'N/A'}</td>
-            <td data-column="department">${emp.department || 'N/A'}</td>
-            <td>
-              <button class="btn btn-sm" data-toggle-row="${emp.id}">Details</button>
-              <button class="btn btn-danger btn-sm" data-delete-row="${emp.id}">Delete</button>
-            </td>
-          </tr>
-          <tr class="detail-row">
-            <td colspan="4">
-              <div class="detail-content">
-                <p><strong>Title:</strong> ${emp.title || 'N/A'}</p>
-                <p><strong>Phone:</strong> ${emp.phone || 'N/A'}</p>
+      return `
+        <div class="split-layout" style="height:100%">
+          <div class="split-list" style="flex:1;padding:24px;overflow-y:auto">
+            <div class="page-header">
+              <div><div class="page-title">Directory</div><div class="page-subtitle">${employees.length} employees</div></div>
+              <button class="btn btn-primary" onclick="showAddEmployeeModal()">+ Add Employee</button>
+            </div>
+            <div class="table-wrap">
+              <div class="table-toolbar">
+                <div class="table-search">
+                  <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+                  <input placeholder="Search..." oninput="filterEmps(this.value)"/>
+                </div>
               </div>
-            </td>
-          </tr>
-        `;
-      });
-
-      html += `
-              </tbody>
-            </table>
-          </section>
-        </main>
+              <table><thead><tr><th>Employee</th><th>Role</th><th>Dept</th><th>Status</th><th>Location</th><th>Start Date</th></tr></thead>
+              <tbody id="emp-tbody">${empRows(employees)}</tbody></table>
+            </div>
+          </div>
+          <div class="split-detail" id="emp-detail"></div>
+        </div>
       `;
-
-      return html;
     } catch (error) {
-      return `<main><p>Error loading employees: ${error.message}</p></main>`;
+      console.error('Directory page error:', error);
+      return `<div style="padding:20px"><p>Error loading directory: ${error.message}</p></div>`;
     }
   }
 
