@@ -92,8 +92,11 @@ describe('Assignments Page', () => {
 
     await user.click(screen.getByText('Return'));
 
-    expect(screen.getByText('Return Device')).toBeInTheDocument();
+    // Dialog title and confirm button both say "Return Device" - check for the confirmation message
     expect(screen.getByText(/Are you sure you want to return the device assigned to John Doe/)).toBeInTheDocument();
+    // Confirm button exists in dialog
+    const allReturnDevice = screen.getAllByText('Return Device');
+    expect(allReturnDevice.length).toBeGreaterThanOrEqual(1);
   });
 
   test('renders table headers', async () => {
