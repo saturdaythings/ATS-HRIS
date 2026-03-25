@@ -1,0 +1,96 @@
+<!-- Dashboard Page Template -->
+<div class="page active" id="page-dashboard" data-page="dashboard">
+  <div class="dash-pad">
+
+    <!-- Stats Row -->
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-lbl">Active candidates</div>
+        <div class="stat-val" id="stat-candidates">0</div>
+        <div class="stat-sub">in pipeline</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-lbl">Interviews this week</div>
+        <div class="stat-val" id="stat-interviews">0</div>
+        <div class="stat-sub">scheduled</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-lbl">Onboardings in progress</div>
+        <div class="stat-val" id="stat-onboardings">0</div>
+        <div class="stat-sub">active runs</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-lbl">Devices unassigned</div>
+        <div class="stat-val" id="stat-devices">0</div>
+        <div class="stat-sub">available</div>
+      </div>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="dash-grid">
+      <!-- Stale Candidates Widget -->
+      <div class="widget">
+        <div class="widget-title">Stale candidates <span class="badge-red" id="stale-count">0</span></div>
+        <div id="stale-list">
+          <!-- Placeholder for stale candidates -->
+          <div class="stale-row">
+            <div>
+              <div class="stale-name">No stale candidates</div>
+              <div class="stale-meta">All candidates are active</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Upcoming Interviews Widget -->
+      <div class="widget">
+        <div class="widget-title">Upcoming interviews</div>
+        <div id="interviews-list">
+          <!-- Placeholder for interviews -->
+          <div class="int-row">
+            <div class="date-block">
+              <div class="d">—</div>
+              <div class="m">—</div>
+            </div>
+            <div style="flex:1;">
+              <div class="int-name">No interviews scheduled</div>
+              <div class="int-meta">Schedule one to get started</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Secondary Grid -->
+    <div class="dash-grid">
+      <!-- Pending Tasks Widget -->
+      <div class="widget">
+        <div class="widget-title">Pending onboarding tasks <span class="badge-amber" id="tasks-count">0</span></div>
+        <div id="tasks-list">
+          <!-- Placeholder for tasks -->
+          <div class="task-row">
+            <div class="task-name">No pending tasks</div>
+            <div class="task-who">—</div>
+            <div class="task-due due-future">—</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Activity Widget -->
+      <div class="widget">
+        <div class="widget-title">Recent activity</div>
+        <div id="activity-list">
+          <!-- Placeholder for activity -->
+          <div class="act-row">
+            <div class="act-dot" style="background:#ccc;"></div>
+            <div>
+              <div class="act-text">No recent activity</div>
+              <div class="act-time">Activity will appear here</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

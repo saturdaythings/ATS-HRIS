@@ -34,9 +34,41 @@ import adminHealthRouter from './routes/admin/health.js';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// CORS Configuration for different environments
+const getCorsOptions = () => {
+  const NODE_ENV = process.env.NODE_ENV || 'development';
+  const origins = [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'http://localhost:5173',
+    'http://localhost:8000',
+    'http://localhost:8080',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:3001',
+    'http://127.0.0.1:5173',
+  ];
+
+  if (NODE_ENV === 'production') {
+    // Add production frontend URLs
+    if (process.env.FRONTEND_URL) {
+      origins.push(process.env.FRONTEND_URL);
+    }
+    // Support GitHub Pages and Vercel deployments
+    origins.push(/github\.io$/);
+    origins.push(/vercel\.app$/);
+  }
+
+  return {
+    origin: origins,
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  };
+};
+
 // Middleware
 app.use(express.json());
-app.use(cors());
+app.use(cors(getCorsOptions()));
 
 // Session configuration
 app.use(session({
@@ -77,8 +109,10 @@ app.use('/api/assistant', assistantRouter);
 app.use(errorHandler);
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`✓ V.Two Ops server running on http://localhost:${PORT}`);
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✓ Server running on http://0.0.0.0:${PORT}`);
+  console.log(`✓ Local access: http://localhost:${PORT}`);
+  console.log(`✓ Network access: http://<your-ip>:${PORT}`);
   console.log(`✓ API docs available at http://localhost:${PORT}/api/health`);
 });
 

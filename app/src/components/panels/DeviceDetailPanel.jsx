@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getApiBaseUrl } from '../../config';
 
 /**
  * DeviceDetailPanel Component
@@ -25,7 +26,7 @@ export default function DeviceDetailPanel({
       setLoading(true);
       setError(null);
       const response = await fetch(
-        `http://localhost:3001/api/devices/${device.id}/history`
+        `${getApiBaseUrl()}/api/devices/${device.id}/history`
       );
       if (!response.ok) throw new Error('Failed to load history');
       const data = await response.json();

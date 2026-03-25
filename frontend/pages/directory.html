@@ -1,0 +1,128 @@
+<!-- Employees/Directory Page Template -->
+<div class="page-split active" id="page-directory" data-page="directory">
+  <!-- Table Section -->
+  <div class="page-flex active" style="position:relative;flex:1;">
+
+    <!-- Table Toolbar -->
+    <div class="table-toolbar">
+      <div class="filter-chip" data-filter="status">Status ▾</div>
+      <div class="filter-chip" data-filter="department">Department ▾</div>
+      <div class="filter-chip" data-filter="role">Role ▾</div>
+      <div class="filter-chip" data-filter="location">Location ▾</div>
+      <div class="filter-chip" data-filter="team">Team ▾</div>
+      <div class="filter-chip" data-filter="reports">Direct reports ▾</div>
+    </div>
+
+    <!-- Table Wrapper -->
+    <div class="tbl-wrap">
+      <table id="employees-table">
+        <thead>
+          <tr>
+            <th data-sort="name">Name ↕</th>
+            <th data-sort="role">Role</th>
+            <th data-sort="department">Department</th>
+            <th data-sort="status">Status</th>
+            <th data-sort="location">Location</th>
+            <th data-sort="manager">Manager</th>
+            <th data-sort="start">Start Date ↕</th>
+          </tr>
+        </thead>
+        <tbody id="employees-tbody">
+          <!-- Rows populated by JS -->
+        </tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <!-- Detail Panel -->
+  <div class="detail-panel" id="employee-detail-panel" style="display:none;">
+    <div class="dp-header">
+      <span class="dp-close" onclick="closeDetailPanel()">✕</span>
+      <div class="dp-name" id="employee-name"></div>
+      <div class="dp-sub" id="employee-title"></div>
+      <div class="dp-meta" id="employee-tags"></div>
+    </div>
+
+    <div class="dp-tabs">
+      <div class="dp-tab active" data-tab="profile">Profile</div>
+      <div class="dp-tab" data-tab="devices">Devices</div>
+      <div class="dp-tab" data-tab="timeline">Timeline</div>
+      <div class="dp-tab" data-tab="docs">Documents</div>
+    </div>
+
+    <div class="dp-body">
+      <!-- Profile Tab -->
+      <div class="tab-content" data-tab="profile">
+        <div class="sec-head">Work Info</div>
+        <div class="field">
+          <div class="field-lbl">Role</div>
+          <div class="field-val" id="employee-role">—</div>
+        </div>
+        <div class="field">
+          <div class="field-lbl">Department</div>
+          <div class="field-val" id="employee-department">—</div>
+        </div>
+        <div class="field">
+          <div class="field-lbl">Manager</div>
+          <div class="field-val" id="employee-manager">—</div>
+        </div>
+        <div class="field">
+          <div class="field-lbl">Start Date</div>
+          <div class="field-val" id="employee-start-date">—</div>
+        </div>
+
+        <div class="sec-head">Contact</div>
+        <div class="field">
+          <div class="field-lbl">Email</div>
+          <div class="field-val" id="employee-email">—</div>
+        </div>
+        <div class="field">
+          <div class="field-lbl">Phone</div>
+          <div class="field-val" id="employee-phone">—</div>
+        </div>
+        <div class="field">
+          <div class="field-lbl">Location</div>
+          <div class="field-val" id="employee-location">—</div>
+        </div>
+
+        <div class="sec-head">Status</div>
+        <div class="field">
+          <div class="field-lbl">Employment Status</div>
+          <div class="field-val" id="employee-status">—</div>
+        </div>
+        <div class="field">
+          <div class="field-lbl">Reports</div>
+          <div class="field-val" id="employee-reports">—</div>
+        </div>
+      </div>
+
+      <!-- Devices Tab -->
+      <div class="tab-content" data-tab="devices" style="display:none;">
+        <div id="devices-container">
+          <!-- Assigned devices will be populated by JS -->
+        </div>
+      </div>
+
+      <!-- Timeline Tab -->
+      <div class="tab-content" data-tab="timeline" style="display:none;">
+        <div id="timeline-container">
+          <!-- Timeline events will be populated by JS -->
+        </div>
+      </div>
+
+      <!-- Documents Tab -->
+      <div class="tab-content" data-tab="docs" style="display:none;">
+        <div id="documents-container">
+          <!-- Documents will be populated by JS -->
+        </div>
+      </div>
+    </div>
+
+    <div class="dp-actions">
+      <button class="btn btn-secondary" id="edit-employee-btn">Edit</button>
+      <button class="btn btn-danger" id="offboard-btn">Offboard</button>
+    </div>
+  </div>
+
+</div>

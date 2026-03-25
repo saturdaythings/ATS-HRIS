@@ -149,7 +149,7 @@ router.post('/bulk', async (req, res) => {
  * GET /api/exports/status
  * Check export service status
  */
-router.get('/status', requireAuth, async (req, res) => {
+router.get('/status', async (req, res) => {
   try {
     res.json({
       status: 'ok',

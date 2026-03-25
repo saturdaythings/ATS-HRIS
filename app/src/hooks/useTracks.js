@@ -3,8 +3,7 @@
  * Manages tracks and tasks state with CRUD operations
  */
 import { useState, useEffect } from 'react';
-
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:3001/api';
+import { getApiBaseUrl } from '../config';
 
 export function useTracks() {
   const [tracks, setTracks] = useState([]);
@@ -16,7 +15,7 @@ export function useTracks() {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE_URL}/tracks`);
+      const response = await fetch(`${getApiBaseUrl()}/api/tracks`);
       if (!response.ok) throw new Error('Failed to fetch tracks');
       const data = await response.json();
       setTracks(data);
@@ -31,7 +30,7 @@ export function useTracks() {
   // Create track
   const createTrack = async (trackData) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/tracks`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/tracks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(trackData),
@@ -49,7 +48,7 @@ export function useTracks() {
   // Update track
   const updateTrack = async (trackId, trackData) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/tracks/${trackId}`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/tracks/${trackId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(trackData),
@@ -67,7 +66,7 @@ export function useTracks() {
   // Delete track
   const deleteTrack = async (trackId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/tracks/${trackId}`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/tracks/${trackId}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Failed to delete track');
@@ -81,7 +80,7 @@ export function useTracks() {
   // Add task to track
   const addTask = async (trackId, taskData) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/tracks/${trackId}/tasks`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/tracks/${trackId}/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(taskData),
@@ -105,7 +104,7 @@ export function useTracks() {
   // Update task
   const updateTask = async (trackId, taskId, taskData) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/tracks/${trackId}/tasks/${taskId}`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/tracks/${trackId}/tasks/${taskId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(taskData),
@@ -132,7 +131,7 @@ export function useTracks() {
   // Delete task
   const deleteTask = async (trackId, taskId) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/tracks/${trackId}/tasks/${taskId}`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/tracks/${trackId}/tasks/${taskId}`, {
         method: 'DELETE',
       });
       if (!response.ok) throw new Error('Failed to delete task');
@@ -152,7 +151,7 @@ export function useTracks() {
   // Reorder tasks in track
   const reorderTasks = async (trackId, taskId, newOrder) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/tracks/${trackId}/tasks/${taskId}/order`, {
+      const response = await fetch(`${getApiBaseUrl()}/api/tracks/${trackId}/tasks/${taskId}/order`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ order: newOrder }),

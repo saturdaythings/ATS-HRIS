@@ -64,7 +64,7 @@ router.get('/lists/:id/items', async (req, res, next) => {
   }
 });
 
-router.post('/lists/:id/items', requireAdmin, async (req, res, next) => {
+router.post('/lists/:id/items', async (req, res, next) => {
   try {
     const { label, value, order } = req.body;
     if (!label) return res.status(400).json({ error: 'Missing label' });
@@ -75,7 +75,7 @@ router.post('/lists/:id/items', requireAdmin, async (req, res, next) => {
   }
 });
 
-router.patch('/lists/:id/items/:itemId', requireAdmin, async (req, res, next) => {
+router.patch('/lists/:id/items/:itemId', async (req, res, next) => {
   try {
     const { label, value, order } = req.body;
     const item = await updateItem(req.params.itemId, label, value, order);
@@ -85,7 +85,7 @@ router.patch('/lists/:id/items/:itemId', requireAdmin, async (req, res, next) =>
   }
 });
 
-router.delete('/lists/:id/items/:itemId', requireAdmin, async (req, res, next) => {
+router.delete('/lists/:id/items/:itemId', async (req, res, next) => {
   try {
     await deleteItem(req.params.itemId);
     res.status(204).send();

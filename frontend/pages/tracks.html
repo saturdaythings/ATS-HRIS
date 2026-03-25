@@ -1,0 +1,58 @@
+<!-- Tracks/Career Paths Page Template -->
+<div class="page active" id="page-tracks" data-page="tracks" style="display:flex;flex-direction:column;">
+  <div class="tracks-layout">
+
+    <!-- Tracks List Sidebar -->
+    <div class="tracks-list">
+      <div style="margin-bottom:12px;">
+        <button class="btn btn-primary" style="width:100%;" onclick="showNewTrackModal()">+ New Track</button>
+      </div>
+
+      <div id="tracks-list-container">
+        <!-- Track items populated by JS -->
+      </div>
+    </div>
+
+    <!-- Track Detail Area -->
+    <div class="track-detail">
+      <div id="track-detail-container">
+        <!-- Track details populated by JS -->
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Template for Track Item -->
+<template id="track-item-template">
+  <div class="track-item" data-track-id="">
+    <div class="track-item-name"></div>
+    <div class="track-item-meta"></div>
+  </div>
+</template>
+
+<!-- Template for Track Detail -->
+<template id="track-detail-template">
+  <div class="track-detail-header">
+    <div>
+      <h2 style="font-size:18px;font-weight:500;color:#111;margin-bottom:4px;"></h2>
+      <p style="font-size:13px;color:#888;"></p>
+    </div>
+    <button class="btn btn-secondary" onclick="editTrack()">Edit</button>
+  </div>
+
+  <div id="track-tasks-container">
+    <!-- Tasks populated by JS -->
+  </div>
+</template>
+
+<!-- Template for Track Task Row -->
+<template id="track-task-template">
+  <div class="track-task-row">
+    <div class="track-task-name"></div>
+    <div class="track-task-meta"></div>
+    <div style="font-size:11px;color:#aaa;margin-left:auto;flex-shrink:0;">
+      <div class="track-task-owner"></div>
+    </div>
+  </div>
+</template>

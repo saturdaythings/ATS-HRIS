@@ -6,8 +6,10 @@
   "type": "module",
   "scripts": {
     "dev": "node server/index.js",
+    "start": "node server/index.js",
     "dev:frontend": "cd app && npm run dev",
     "build": "cd app && npm run build",
+    "build:all": "npm run build && npm run db:push",
     "test": "NODE_OPTIONS=--experimental-vm-modules jest --detectOpenHandles",
     "test:watch": "NODE_OPTIONS=--experimental-vm-modules jest --watch",
     "test:coverage": "NODE_OPTIONS=--experimental-vm-modules jest --coverage",

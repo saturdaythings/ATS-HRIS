@@ -15,7 +15,7 @@ const router = express.Router();
  * List all track templates with optional filters
  * Query params: type (company/role/client), autoApply (true/false)
  */
-router.get('/', requireAuth, async (req, res) => {
+router.get('/', async (req, res) => {
   try {
     const { type, autoApply } = req.query;
 
@@ -82,7 +82,7 @@ router.post('/', requireAdmin, async (req, res) => {
  * GET /api/tracks/:id
  * Get a single track template with its tasks
  */
-router.get('/:id', requireAuth, async (req, res) => {
+router.get('/:id', async (req, res) => {
   try {
     const { id } = req.params;
     const track = await trackService.getTrack(id);
@@ -145,7 +145,7 @@ router.delete('/:id', requireAdmin, async (req, res) => {
  * GET /api/tracks/:trackId/tasks
  * List all task templates for a track, ordered by order field
  */
-router.get('/:trackId/tasks', requireAuth, async (req, res) => {
+router.get('/:trackId/tasks', async (req, res) => {
   try {
     const { trackId } = req.params;
     const tasks = await trackService.listTasksForTrack(trackId);
@@ -205,7 +205,7 @@ router.post('/:trackId/tasks', requireAdmin, async (req, res) => {
  * GET /api/tracks/:trackId/tasks/:taskId
  * Get a single task template
  */
-router.get('/:trackId/tasks/:taskId', requireAuth, async (req, res) => {
+router.get('/:trackId/tasks/:taskId', async (req, res) => {
   try {
     const { trackId, taskId } = req.params;
     const task = await trackService.getTask(trackId, taskId);

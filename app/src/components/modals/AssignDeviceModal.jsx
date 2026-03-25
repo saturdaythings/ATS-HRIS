@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getApiBaseUrl } from '../../config';
 import DatePicker from '../common/DatePicker';
 
 /**
@@ -22,7 +23,7 @@ export default function AssignDeviceModal({ device, onSuccess, onCancel }) {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('http://localhost:3001/api/employees');
+      const response = await fetch(`${getApiBaseUrl()}/api/employees`);
       if (!response.ok) throw new Error('Failed to load employees');
       const data = await response.json();
       setEmployees(data.filter(emp => emp.status === 'active'));
@@ -48,7 +49,7 @@ export default function AssignDeviceModal({ device, onSuccess, onCancel }) {
       setSubmitting(true);
       setError(null);
       const response = await fetch(
-        `http://localhost:3001/api/devices/${device.id}/assign`,
+        `${getApiBaseUrl()}/api/devices/${device.id}/assign`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

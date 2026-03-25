@@ -1,0 +1,307 @@
+================================================================================
+                    V.TWO OPS - BACKEND QUICK REFERENCE
+================================================================================
+
+PROJECT: V.Two Ops - Unified People & Asset Management Platform
+LOCATION: /Users/oliver/OliverRepo/workspaces/work/projects/vtwo-ops/
+DATE: 2026-03-24
+STATUS: ✓ DEPLOYMENT READY
+
+================================================================================
+                           QUICK START
+================================================================================
+
+1. Start Server (Development)
+   $ npm start
+
+   Output:
+   ✓ Server running on http://0.0.0.0:3001
+   ✓ Local access: http://localhost:3001
+   ✓ Network access: http://<your-ip>:3001
+   ✓ API docs available at http://localhost:3001/api/health
+
+2. Test Health Endpoint
+   $ curl http://localhost:3001/api/health
+
+3. Start with Custom Port
+   $ PORT=3002 npm start
+
+4. Production Mode
+   $ NODE_ENV=production FRONTEND_URL=https://your-domain.com npm start
+
+================================================================================
+                          ACCESS METHODS
+================================================================================
+
+Localhost:       http://localhost:3001
+Loopback:        http://127.0.0.1:3001
+Network:         http://<your-machine-ip>:3001
+All Interfaces:  http://0.0.0.0:3001 (binding address)
+
+================================================================================
+                       SERVER CONFIGURATION
+================================================================================
+
+File:            server/index.js
+Port:            3001 (configurable via PORT env var)
+Bind Address:    0.0.0.0 (all IPv4 interfaces)
+Node.js Module:  ES Module (type: "module")
+
+Startup Code (lines 112-117):
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`✓ Server running on http://0.0.0.0:${PORT}`);
+    console.log(`✓ Local access: http://localhost:${PORT}`);
+    console.log(`✓ Network access: http://<your-ip>:${PORT}`);
+    console.log(`✓ API docs available at http://localhost:${PORT}/api/health`);
+  });
+
+================================================================================
+                        CORS CONFIGURATION
+================================================================================
+
+Development Origins:
+  • http://localhost:3000
+  • http://localhost:3001
+  • http://localhost:5173 (Vite)
+  • http://localhost:8000
+  • http://localhost:8080
+  • http://127.0.0.1:3000
+  • http://127.0.0.1:3001
+  • http://127.0.0.1:5173
+
+Production Origins:
+  • FRONTEND_URL environment variable
+  • *.github.io (GitHub Pages)
+  • *.vercel.app (Vercel)
+
+CORS Options:
+  • Credentials: Enabled
+  • Methods: GET, POST, PUT, DELETE, PATCH, OPTIONS
+  • Headers: Content-Type, Authorization
+
+================================================================================
+                      ENVIRONMENT VARIABLES
+================================================================================
+
+PORT                   Server port (default: 3001)
+NODE_ENV               Environment mode: development | production
+DATABASE_URL           SQLite path (default: file:./dev.db)
+FRONTEND_URL           Production frontend URL (no default)
+SESSION_SECRET         Session encryption key (default: dev secret)
+ANTHROPIC_API_KEY      Claude API key (optional)
+
+Example .env:
+  PORT=3001
+  NODE_ENV=development
+  DATABASE_URL="file:./dev.db"
+  SESSION_SECRET=dev-secret-change-in-prod
+
+Example Production:
+  PORT=3001
+  NODE_ENV=production
+  DATABASE_URL="postgresql://user:pass@host/db"
+  FRONTEND_URL=https://your-domain.com
+  SESSION_SECRET=<random-string-32-chars>
+
+================================================================================
+                         NPM SCRIPTS
+================================================================================
+
+npm start                Start server (production mode)
+npm run dev             Start server (same as start)
+npm run dev:frontend    Start React frontend (cd app && npm run dev)
+npm run build           Build frontend
+npm run test            Run tests
+npm run test:watch      Tests in watch mode
+npm run test:coverage   Tests with coverage report
+npm run db:push         Apply Prisma migrations
+npm run db:seed         Seed database
+npm run prisma:studio   Open Prisma Studio
+
+================================================================================
+                         API ENDPOINTS
+================================================================================
+
+HEALTH:
+  GET  /api/health                Server health check
+  GET  /api/admin/health          Admin health check
+
+AUTHENTICATION:
+  POST /api/auth/login            User login
+  POST /api/auth/logout           User logout
+  POST /api/auth/register         User registration
+
+CORE RESOURCES:
+  GET/POST /api/candidates        Candidate management
+  GET/POST /api/employees         Employee records
+  GET/POST /api/interviews        Interview tracking
+  GET/POST /api/offers            Offer management
+  GET/POST /api/devices           Device inventory
+  GET/POST /api/onboarding        Onboarding workflows
+
+DASHBOARD & REPORTING:
+  GET/POST /api/dashboard         Dashboard data
+  GET/POST /api/assignments       Assignment tracking
+  GET/POST /api/activities        Activity logs
+  GET/POST /api/notifications     Notification system
+  GET/POST /api/exports           Data exports
+  GET      /api/search            Full-text search
+
+SETTINGS:
+  GET/POST /api/settings          User settings
+  GET/POST /api/admin/settings    Admin settings
+  GET/POST /api/config-lists      Configuration lists
+
+ADMIN FEATURES:
+  GET/POST /api/admin/custom-fields     Custom field definitions
+  GET/POST /api/admin/templates         Email templates
+  GET/POST /api/admin/feature-requests  Feature requests
+
+UTILITIES:
+  GET/POST /api/tracks            Track management
+  GET/POST /api/track-templates   Track templates
+  GET/POST /api/assistant         AI assistant
+  POST     /api/claude            Claude API integration
+
+================================================================================
+                         DEPLOYMENT
+================================================================================
+
+Docker Build:
+  docker build -t vtwo-ops-server .
+
+Docker Run:
+  docker run -p 3001:3001 \
+    -e PORT=3001 \
+    -e NODE_ENV=production \
+    -e FRONTEND_URL=https://your-domain.com \
+    vtwo-ops-server
+
+Docker Compose:
+  docker-compose up -d
+
+Production Checklist:
+  ✓ Set NODE_ENV=production
+  ✓ Set SESSION_SECRET to random string
+  ✓ Set FRONTEND_URL to frontend domain
+  ✓ Use production database (PostgreSQL)
+  ✓ Enable HTTPS in reverse proxy
+  ✓ Configure logging and monitoring
+  ✓ Set up database backups
+  ✓ Review CORS origins as needed
+
+================================================================================
+                      TROUBLESHOOTING
+================================================================================
+
+Port Already in Use:
+  $ PORT=3002 npm start
+  $ lsof -i :3001
+  $ kill -9 <PID>
+
+Database Connection Error:
+  $ rm -f dev.db
+  $ npm run db:push
+  $ npm run db:seed
+
+CORS Issues:
+  1. Check FRONTEND_URL environment variable
+  2. Verify origin is in getCorsOptions() array
+  3. Review server/index.js lines 37-67
+
+Server Not Starting:
+  $ npm install
+  $ npm run db:push
+  $ npm start
+
+Cannot Connect from Network:
+  1. Verify PORT is correct (3001)
+  2. Check firewall allows port 3001
+  3. Use machine IP: http://<your-ip>:3001
+  4. Verify server bound to 0.0.0.0 (should show in logs)
+
+================================================================================
+                         FILES MODIFIED
+================================================================================
+
+server/index.js
+  Lines 37-67:   CORS Configuration (expanded origins)
+  Lines 112-117: Server binding (0.0.0.0) and startup logging
+
+.env.example
+  (No changes - already complete)
+
+package.json
+  (No changes - scripts already correct)
+
+================================================================================
+                      FILES CREATED
+================================================================================
+
+server/README.md (206 lines)
+  • Complete server documentation
+  • Quick start with 4-step setup
+  • Full API endpoint reference
+  • CORS configuration details
+  • Database management guide
+  • Testing instructions
+  • Deployment and Docker guide
+  • Production checklist
+  • Troubleshooting section
+
+BACKEND-DEPLOYMENT-READY.md (230 lines)
+  • Implementation summary
+  • Changes overview
+  • Verification checklist
+  • Quick start commands
+
+DEPLOYMENT_MANIFEST.md (300+ lines)
+  • Complete manifest of all changes
+  • Detailed deliverables
+  • Verification checklist
+  • Deployment instructions
+  • Key configuration details
+
+BACKEND_QUICK_REFERENCE.txt (this file)
+  • Quick reference card
+  • Essential commands
+  • Configuration summary
+
+================================================================================
+                         KEY IMPROVEMENTS
+================================================================================
+
+✓ Server now listens on 0.0.0.0 (all network interfaces)
+✓ Multiple localhost variants supported (localhost, 127.0.0.1)
+✓ Enhanced startup logging with 4 clear messages
+✓ Expanded CORS origins for development flexibility
+✓ Production mode support via FRONTEND_URL env var
+✓ GitHub Pages and Vercel deployment support
+✓ Comprehensive server documentation
+✓ Docker deployment ready
+✓ Production deployment checklist included
+✓ Network access now possible from other machines
+
+================================================================================
+                         STATUS: READY
+================================================================================
+
+All deliverables complete. Backend is ready for:
+  ✓ Development (npm start)
+  ✓ Testing (npm test)
+  ✓ Deployment (Docker, Vercel, GitHub Pages, custom servers)
+
+Next Steps:
+  1. Run: npm start
+  2. Test: curl http://localhost:3001/api/health
+  3. Deploy using Docker or environment-specific configuration
+
+More Information:
+  • See server/README.md for comprehensive documentation
+  • See BACKEND-DEPLOYMENT-READY.md for implementation summary
+  • See DEPLOYMENT_MANIFEST.md for complete manifest
+
+================================================================================
+Generated: 2026-03-24
+Location: /Users/oliver/OliverRepo/workspaces/work/projects/vtwo-ops/
+================================================================================

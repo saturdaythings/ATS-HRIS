@@ -16,4 +16,8 @@ export default defineConfig({
     outDir: '../dist',
     emptyOutDir: true,
   },
+  // Support environment variables in the frontend
+  define: {
+    'import.meta.env.VITE_API_URL': JSON.stringify(process.env.VITE_API_URL || ''),
+  },
 });

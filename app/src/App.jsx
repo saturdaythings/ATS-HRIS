@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getApiBaseUrl } from './config';
 
 export default function App() {
   const [page, setPage] = useState('dashboard');
@@ -17,7 +18,7 @@ export default function App() {
 
   const fetchMetrics = async () => {
     try {
-      const res = await fetch('http://localhost:3001/api/dashboard/metrics');
+      const res = await fetch(`${getApiBaseUrl()}/api/dashboard/metrics`);
       const data = await res.json();
       setMetrics(data.data);
     } catch (err) {
@@ -27,7 +28,7 @@ export default function App() {
 
   const fetchCandidates = async () => {
     try {
-      const res = await fetch('http://localhost:3001/api/candidates?limit=10');
+      const res = await fetch(`${getApiBaseUrl()}/api/candidates?limit=10`);
       const data = await res.json();
       setCandidates(data.data || []);
     } catch (err) {
@@ -37,7 +38,7 @@ export default function App() {
 
   const fetchDevices = async () => {
     try {
-      const res = await fetch('http://localhost:3001/api/devices?limit=10');
+      const res = await fetch(`${getApiBaseUrl()}/api/devices?limit=10`);
       const data = await res.json();
       setDevices(data.data || []);
     } catch (err) {
@@ -49,7 +50,7 @@ export default function App() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:3001/api/candidates', {
+      const res = await fetch(`${getApiBaseUrl()}/api/candidates`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),

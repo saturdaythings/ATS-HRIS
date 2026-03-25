@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getApiBaseUrl } from '../../config';
 import DatePicker from '../common/DatePicker';
 
 /**
@@ -26,7 +27,7 @@ export default function ReturnDeviceModal({ device, onSuccess, onCancel }) {
       setSubmitting(true);
       setError(null);
       const response = await fetch(
-        `http://localhost:3001/api/devices/${device.id}/return`,
+        `${getApiBaseUrl()}/api/devices/${device.id}/return`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },

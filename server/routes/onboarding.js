@@ -27,6 +27,19 @@ const templates = [
 const router = express.Router();
 
 /**
+ * GET /api/onboarding
+ * Get all onboarding runs with their tasks and employee names
+ */
+router.get('/', async (req, res, next) => {
+  try {
+    const runs = await getRuns();
+    res.json({ data: runs, error: null });
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * GET /api/onboarding/templates
  * Get all onboarding templates, optionally filtered by role
  */

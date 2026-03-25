@@ -11,6 +11,142 @@ import {
 
 const router = express.Router();
 
+// GET /api/dashboard - Get dashboard overview with all metrics
+router.get('/', async (req, res, next) => {
+  try {
+    // Get all the dashboard data
+    const [
+      activeCandidates,
+      interviewsThisWeek,
+      onboardingsInProgress,
+      unassignedDevices,
+      staleCandidates,
+      upcomingInterviews,
+      pendingOnboardingTasks,
+      activityRecords,
+    ] = await Promise.all([
+      // Active candidates count
+      getMetrics().then(m => m.candidatesInPipeline || 0),
+      // Interviews scheduled this week
+      getInterviewsThisWeek(),
+      // Onboardings in progress
+      getOnboardingsInProgress(),
+      // Unassigned device count
+      getUnassignedDevices(),
+      // Stale candidates (active, no activity in 14+ days)
+      getstaleCandidates(),
+      // Upcoming interviews next 7 days
+      getUpcomingInterviews(),
+      // Pending onboarding tasks due next 7 days
+      getPendingOnboardingTasks(),
+      // Last 20 activity records
+      getActivityFeed({ limit: 20, offset: 0 }),
+    ]);
+
+    res.json({
+      data: {
+        activeCandidateCount: activeCandidates,
+        interviewsScheduledThisWeek: interviewsThisWeek,
+        onboardingsInProgress,
+        unassignedDeviceCount: unassignedDevices,
+        staleCandidates,
+        upcomingInterviewsNext7Days: upcomingInterviews,
+        pendingOnboardingTasksNext7Days: pendingOnboardingTasks,
+        lastActivityRecords: activityRecords.data || [],
+      },
+      message: 'Dashboard overview retrieved successfully',
+    });
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Helper functions for dashboard overview
+async function getInterviewsThisWeek() {
+  const db = (await import('../db.js')).db;
+  const now = new Date();
+  const weekStart = new Date(now);
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+  const weekEnd = new Date(weekStart);
+  weekEnd.setDate(weekEnd.getDate() + 7);
+
+  const interviews = await db.interview.count({
+    where: {
+      scheduledAt: { gte: weekStart, lte: weekEnd },
+      status: 'scheduled',
+    },
+  });
+  return interviews;
+}
+
+async function getOnboardingsInProgress() {
+  const db = (await import('../db.js')).db;
+  const count = await db.onboardingRun.count({
+    where: { status: 'in_progress' },
+  });
+  return count;
+}
+
+async function getUnassignedDevices() {
+  const db = (await import('../db.js')).db;
+  const count = await db.device.count({
+    where: { status: 'available' },
+  });
+  return count;
+}
+
+async function gettaleCandidates() {
+  const db = (await import('../db.js')).db;
+  const fourteenDaysAgo = new Date();
+  fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+
+  const stale = await db.candidate.findMany({
+    where: {
+      status: 'active',
+      latestStageChangeAt: { lte: fourteenDaysAgo },
+    },
+    select: { id: true, name: true, email: true, latestStageChangeAt: true },
+  });
+  return stale;
+}
+
+async function getUpcomingInterviews() {
+  const db = (await import('../db.js')).db;
+  const now = new Date();
+  const sevenDaysFromNow = new Date(now);
+  sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+
+  const interviews = await db.interview.findMany({
+    where: {
+      scheduledAt: { gte: now, lte: sevenDaysFromNow },
+      status: 'scheduled',
+    },
+    include: { candidate: { select: { name: true, email: true } } },
+    orderBy: { scheduledAt: 'asc' },
+  });
+  return interviews;
+}
+
+async function getPendingOnboardingTasks() {
+  const db = (await import('../db.js')).db;
+  const now = new Date();
+  const sevenDaysFromNow = new Date(now);
+  sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+
+  const tasks = await db.taskInstance.findMany({
+    where: {
+      dueDate: { gte: now, lte: sevenDaysFromNow },
+      status: { in: ['pending', 'in_progress'] },
+    },
+    include: {
+      run: { include: { employee: { select: { name: true } } } },
+      taskTemplate: { select: { name: true } },
+    },
+    orderBy: { dueDate: 'asc' },
+  });
+  return tasks;
+}
+
 // GET /api/dashboard/metrics - Get dashboard metrics
 router.get('/metrics', async (req, res, next) => {
   try {

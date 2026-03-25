@@ -1,0 +1,85 @@
+<!-- Admin: System Health Page Template -->
+<div class="page active" id="page-admin-health" data-page="admin/health">
+  <div style="padding:24px;">
+
+    <!-- Header -->
+    <h1 style="font-size:24px;font-weight:500;color:#111;margin-bottom:8px;">System Health</h1>
+    <p style="font-size:13px;color:#888;margin-bottom:24px;">Monitor system status, performance, and metrics</p>
+
+    <!-- Health Overview -->
+    <div class="stat-row">
+      <div class="stat-card">
+        <div class="stat-lbl">API Status</div>
+        <div style="font-size:18px;font-weight:500;color:#16a34a;margin:8px 0;">Healthy</div>
+        <div class="stat-sub">All endpoints responsive</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-lbl">Database</div>
+        <div style="font-size:18px;font-weight:500;color:#16a34a;margin:8px 0;">Connected</div>
+        <div class="stat-sub">3.2 GB used</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-lbl">Uptime</div>
+        <div style="font-size:18px;font-weight:500;color:#111;margin:8px 0;">99.9%</div>
+        <div class="stat-sub">Last 30 days</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-lbl">Response Time</div>
+        <div style="font-size:18px;font-weight:500;color:#111;margin:8px 0;">145ms</div>
+        <div class="stat-sub">Average</div>
+      </div>
+    </div>
+
+    <!-- Service Status -->
+    <div class="widget" style="margin-top:20px;">
+      <div class="widget-title">Service Status</div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div style="padding:12px;border:0.5px solid #e8e8e8;border-radius:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div style="font-size:13px;font-weight:500;color:#111;">API Server</div>
+            <div style="width:8px;height:8px;border-radius:50%;background:#16a34a;"></div>
+          </div>
+          <div style="font-size:11px;color:#777;">Port 3000 • Responding</div>
+        </div>
+
+        <div style="padding:12px;border:0.5px solid #e8e8e8;border-radius:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div style="font-size:13px;font-weight:500;color:#111;">Database</div>
+            <div style="width:8px;height:8px;border-radius:50%;background:#16a34a;"></div>
+          </div>
+          <div style="font-size:11px;color:#777;">PostgreSQL • Connected</div>
+        </div>
+
+        <div style="padding:12px;border:0.5px solid #e8e8e8;border-radius:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div style="font-size:13px;font-weight:500;color:#111;">Cache</div>
+            <div style="width:8px;height:8px;border-radius:50%;background:#16a34a;"></div>
+          </div>
+          <div style="font-size:11px;color:#777;">Redis • Running</div>
+        </div>
+
+        <div style="padding:12px;border:0.5px solid #e8e8e8;border-radius:8px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <div style="font-size:13px;font-weight:500;color:#111;">Email Service</div>
+            <div style="width:8px;height:8px;border-radius:50%;background:#16a34a;"></div>
+          </div>
+          <div style="font-size:11px;color:#777;">SMTP • Operational</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Logs -->
+    <div class="widget" style="margin-top:20px;">
+      <div class="widget-title">Recent Logs</div>
+
+      <div id="system-logs" style="font-family:monospace;font-size:11px;color:#555;line-height:1.6;">
+        <div style="padding:8px;border-bottom:0.5px solid #f3f3f3;color:#16a34a;">2024-03-24 14:32:45 [INFO] API server started on port 3000</div>
+        <div style="padding:8px;border-bottom:0.5px solid #f3f3f3;color:#16a34a;">2024-03-24 14:32:46 [INFO] Database connection established</div>
+        <div style="padding:8px;border-bottom:0.5px solid #f3f3f3;color:#16a34a;">2024-03-24 14:32:47 [INFO] Cache layer initialized</div>
+        <div style="padding:8px;color:#777;">2024-03-24 14:33:12 [WARN] One slow query detected (2.3s)</div>
+      </div>
+    </div>
+
+  </div>
+</div>

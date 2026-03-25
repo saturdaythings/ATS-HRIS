@@ -1,0 +1,35 @@
+<!-- Admin: Templates Page Template -->
+<div class="page active" id="page-admin-templates" data-page="admin/templates">
+  <div class="settings-layout">
+
+    <!-- Navigation -->
+    <div class="settings-nav">
+      <div class="settings-nav-item active" data-section="email">Email Templates</div>
+      <div class="settings-nav-item" data-section="documents">Documents</div>
+      <div class="settings-nav-item" data-section="workflows">Workflows</div>
+    </div>
+
+    <!-- Content -->
+    <div class="settings-content">
+      <h2 class="settings-h">Email Templates</h2>
+      <p class="settings-sub">Create and manage email templates for automated communications</p>
+
+      <div style="display:flex;gap:12px;margin-bottom:20px;">
+        <select class="form-select" id="template-type-filter" style="flex:1;max-width:250px;">
+          <option value="onboarding">Onboarding</option>
+          <option value="offboarding">Offboarding</option>
+          <option value="hiring">Hiring</option>
+          <option value="device">Device Assignment</option>
+        </select>
+        <button class="btn btn-primary" onclick="showNewTemplateModal()">+ New Template</button>
+      </div>
+
+      <div class="list-items-panel">
+        <div id="templates-list">
+          <!-- Templates populated by JS -->
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
