@@ -4,6 +4,345 @@
  * Routes to all 16+ pages with their HTML templates and event bindings
  */
 
+// ── CONSTANTS & HELPERS ──────────────────────────────────────────────────────
+const CAND_STATUS = ['Active','On Hold','Nurturing','Closed'];
+const EMP_TYPES = ['FTE','Contract','Open to Both'];
+const SOURCES = ['LinkedIn','Referral','Indeed','Outbound','Website','Other'];
+const SENIORITIES = ['Junior','Mid','Senior','Staff','Principal'];
+const STAGES = ['sourced','screening','interview','offer','hired'];
+const SCORE_LABELS = {1:'No hire',2:'Lean no',3:'Maybe',4:'Lean yes',5:'Strong hire'};
+const SCORE_COLORS = {1:'#c0392b',2:'#e67e22',3:'#f1c40f',4:'#27ae60',5:'#1a9c6e'};
+const AVCOLORS = ['#f4d4e8','#d4e8f4','#d4f4e0','#f4ead4','#e0d4f4','#f4d4d4','#d4f4f0'];
+
+const initials = n => n.split(' ').map(x => x[0]).join('').slice(0, 2).toUpperCase();
+const daysAgo = d => Math.floor((Date.now() - new Date(d)) / 86400000);
+const relTime = d => {
+  const n = daysAgo(d);
+  if (n === 0) return 'Today';
+  if (n === 1) return 'Yesterday';
+  if (n < 7) return n + 'd ago';
+  if (n < 30) return Math.floor(n / 7) + 'w ago';
+  return Math.floor(n / 30) + 'mo ago';
+};
+const av = n => `background:${AVCOLORS[n.charCodeAt(0) % AVCOLORS.length]};color:#333`;
+const now = () => new Date().toISOString();
+
+function stagePill(s) {
+  const m = {sourced:'gray',screening:'blue',interview:'amber',offer:'purple',hired:'green'};
+  return `<span class="pill pill-${m[s]||'gray'}">${s}</span>`;
+}
+
+function candStatusPill(s) {
+  const m = {'Active':'green','On Hold':'amber','Nurturing':'blue','Closed':'red'};
+  return `<span class="pill pill-${m[s]||'gray'}">${s}</span>`;
+}
+
+function statusPill(s) {
+  if(['active','good','new','available'].includes(s)) return `<span class="pill pill-green">${s}</span>`;
+  if(s==='onboarding') return `<span class="pill pill-blue">onboarding</span>`;
+  if(s==='assigned') return `<span class="pill pill-purple">assigned</span>`;
+  if(s==='pending') return `<span class="pill pill-amber">pending</span>`;
+  return `<span class="pill pill-gray">${s}</span>`;
+}
+
+function personCell(name, sub='') {
+  return `<div class="person-cell"><div class="person-av" style="${av(name)}">${initials(name)}</div><div><div class="person-name">${name}</div>${sub?`<div class="person-sub">${sub}</div>`:''}</div></div>`;
+}
+
+function scoreDisplay(score) {
+  if(!score) return '<span style="color:var(--text3);font-size:12px">—</span>';
+  return `<span style="display:inline-flex;align-items:center;gap:4px;font-size:12px"><span class="score-dot" style="background:${SCORE_COLORS[score]}"></span>${SCORE_LABELS[score]}</span>`;
+}
+
+function compDisplay(c) {
+  if(!c.compAmount) return '—';
+  if(c.compType==='hourly') return `$${c.compAmount.toLocaleString()}/hr`;
+  return `$${c.compAmount.toLocaleString()}/yr`;
+}
+
+function renderEmpty(title, sub) {
+  return `<div class="empty-state"><div class="empty-title">${title}</div><div class="empty-sub">${sub}</div></div>`;
+}
+
+function touch(c) { c.updatedAt = now(); }
+function showToast(msg) {
+  const t = document.getElementById('toast') || document.createElement('div');
+  t.id = 'toast';
+  t.textContent = msg;
+  t.style.cssText = 'position:fixed;bottom:20px;right:20px;background:#333;color:#fff;padding:12px 16px;border-radius:6px;font-size:13px;z-index:1000;';
+  if (!t.parentElement) document.body.appendChild(t);
+  t.style.display = 'block';
+  setTimeout(() => t.style.display = 'none', 2200);
+}
+function closeModal() { document.getElementById('modal-root').innerHTML = ''; }
+function showModal(html) { document.getElementById('modal-root').innerHTML = `<div class="modal-overlay" onclick="if(event.target===this)closeModal()">${html}</div>`; }
+const today = () => new Date().toISOString().split('T')[0];
+
+// Global state for hiring page
+let selectedCandId = null;
+let kanbanFilter = '';
+let candidates = []; // Will be populated from API
+
+// Hiring page helper functions
+function filterKanbanStatus(v) {
+  kanbanFilter = v;
+  renderKanban(v ? candidates.filter(c => c.candStatus === v) : candidates);
+}
+
+function renderKanban(list) {
+  const k = document.getElementById('kanban');
+  if (!k) return;
+  k.innerHTML = STAGES.map(stage => {
+    const cols = (list || candidates).filter(c => c.stage === stage);
+    return `<div class="kanban-col">
+      <div class="kanban-col-header"><span class="kanban-col-name">${stage}</span><span class="kanban-count">${cols.length}</span></div>
+      ${cols.map(c => `
+        <div class="kanban-card${selectedCandId === c.id ? ' selected' : ''}" onclick="selectCandidate('${c.id}')">
+          <div class="kanban-name">${c.name}</div>
+          <div class="kanban-role">${c.role}</div>
+          <div class="kanban-meta">
+            ${candStatusPill(c.candStatus)}
+            ${c.interviews && c.interviews.length ? `<span style="font-size:11px;color:var(--text3)">${c.interviews.length} interview${c.interviews.length > 1 ? 's' : ''}</span>` : ''}
+          </div>
+          <div style="font-size:11px;color:var(--text3);margin-top:6px">${relTime(c.updatedAt)}</div>
+        </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function selectCandidate(id) {
+  selectedCandId = id;
+  renderKanban(kanbanFilter ? candidates.filter(c => c.candStatus === kanbanFilter) : candidates);
+  renderCandidateDetail(id);
+}
+
+function renderCandidateDetail(id) {
+  const c = candidates.find(x => x.id === id);
+  if (!c) return;
+  const d = document.getElementById('candidate-detail');
+  if (!d) return;
+  d.classList.add('open');
+  d.innerHTML = `
+    <div class="detail-header">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div class="person-av" style="${av(c.name)};width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600">${initials(c.name)}</div>
+          <div>
+            <div style="font-weight:600;font-size:15px">${c.name}</div>
+            <div style="font-size:12px;color:var(--text2)">${c.role}${c.seniority ? ' · ' + c.seniority : ''}</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">${stagePill(c.stage)}${candStatusPill(c.candStatus)}</div>
+      </div>
+      <div style="display:flex;gap:4px;align-items:flex-start">
+        <button class="btn btn-sm btn-secondary" onclick="showEditCandidateModal('${c.id}')">Edit</button>
+        <button class="detail-close" onclick="closeCandDetail()">×</button>
+      </div>
+    </div>
+    <div class="detail-body">
+      <div class="detail-section">
+        <div class="detail-section-title">Details</div>
+        <div class="detail-row"><span class="detail-key">Employment Type</span><span class="detail-val">${c.empType || '—'}</span></div>
+        <div class="detail-row"><span class="detail-key">Compensation</span><span class="detail-val">${compDisplay(c)}</span></div>
+        <div class="detail-row"><span class="detail-key">Source</span><span class="detail-val">${c.source}</span></div>
+        ${c.client ? `<div class="detail-row"><span class="detail-key">Client</span><span class="detail-val">${c.client}</span></div>` : ''}
+        <div class="detail-row"><span class="detail-key">Added</span><span class="detail-val">${relTime(c.addedAt)}</span></div>
+        <div class="detail-row"><span class="detail-key">Last Updated</span><span class="detail-val">${relTime(c.updatedAt)}</span></div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Resume</div>
+        ${c.resumeLink
+          ? `<a href="${c.resumeLink}" target="_blank" style="font-size:13px;color:var(--accent);display:flex;align-items:center;gap:6px">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1V9"/><path d="M10 2l4 4"/><path d="M14 2v4h-4"/></svg>
+              View on SharePoint
+            </a>`
+          : `<div style="display:flex;align-items:center;gap:8px"><span style="font-size:12px;color:var(--text3)">No resume linked</span><button class="btn-link btn-sm" onclick="showEditCandidateModal('${c.id}')">Add link</button></div>`}
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">
+          Notes
+          <button class="btn-link" style="font-size:11px" onclick="showEditCandidateModal('${c.id}')">Edit</button>
+        </div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.6">${c.notes || 'No notes yet.'}</p>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Move Stage</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${STAGES.map(s => `<button class="btn btn-sm ${s === c.stage ? 'btn-primary' : 'btn-secondary'}" onclick="moveStage('${c.id}','${s}')">${s}</button>`).join('')}
+        </div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">
+          Interviews (${c.interviews ? c.interviews.length : 0})
+          <button class="btn btn-sm btn-primary" onclick="showAddInterviewModal('${c.id}')">+ Add</button>
+        </div>
+        <div id="interviews-list-${c.id}">
+          ${renderInterviewsList(c)}
+        </div>
+      </div>
+      <div style="margin-top:8px;display:flex;gap:8px">
+        ${['offer', 'hired'].includes(c.stage) ? `<button class="btn btn-primary" style="flex:1" onclick="promoteCandidate('${c.id}')">Promote to Employee</button>` : ''}
+      </div>
+    </div>
+  `;
+}
+
+function renderInterviewsList(c) {
+  if (!c.interviews || !c.interviews.length) return `<div style="font-size:12px;color:var(--text3);padding:8px 0">No interviews logged yet</div>`;
+  return c.interviews.map((iv, i) => `
+    <div class="interview-card">
+      <div class="interview-header">
+        <div>
+          <div style="font-weight:500;font-size:13px">${iv.date}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:1px">${iv.interviewers || 'No interviewers listed'}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          ${scoreDisplay(iv.score)}
+          <button class="btn-ghost btn-sm" style="color:var(--red);padding:4px 6px" onclick="deleteInterview('${c.id}',${i})">✕</button>
+        </div>
+      </div>
+      ${iv.notes ? `<p style="font-size:12px;color:var(--text2);margin-top:6px;line-height:1.5">${iv.notes}</p>` : ''}
+    </div>`).join('');
+}
+
+function deleteInterview(candId, idx) {
+  const c = candidates.find(x => x.id === candId);
+  if (c && c.interviews) {
+    c.interviews.splice(idx, 1);
+    touch(c);
+    renderCandidateDetail(candId);
+    showToast('Interview removed');
+  }
+}
+
+function moveStage(id, stage) {
+  const c = candidates.find(x => x.id === id);
+  if (c) {
+    c.stage = stage;
+    touch(c);
+    showToast(`${c.name} → ${stage}`);
+    renderCandidateDetail(id);
+    renderKanban(kanbanFilter ? candidates.filter(x => x.candStatus === kanbanFilter) : candidates);
+  }
+}
+
+function closeCandDetail() {
+  selectedCandId = null;
+  const d = document.getElementById('candidate-detail');
+  if (d) d.classList.remove('open');
+  renderKanban(kanbanFilter ? candidates.filter(c => c.candStatus === kanbanFilter) : candidates);
+}
+
+function showAddInterviewModal(candId) {
+  const c = candidates.find(x => x.id === candId);
+  if (!c) return;
+  showModal(`
+    <div class="modal">
+      <div class="modal-header"><div class="modal-title">Log Interview — ${c.name}</div><button class="detail-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="iv-date" value="${today()}"/></div>
+          <div class="form-group"><label class="form-label">Score</label>
+            <select class="form-input form-select" id="iv-score">
+              <option value="">— No score —</option>
+              ${[1, 2, 3, 4, 5].map(n => `<option value="${n}">${n} — ${SCORE_LABELS[n]}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+        <div class="form-group"><label class="form-label">Interviewer(s)</label><input class="form-input" id="iv-interviewers" placeholder="e.g. Jordan Lee, Nina Patel"/></div>
+        <div class="form-group"><label class="form-label">Notes / Comments</label><textarea class="form-input" id="iv-notes" rows="4" placeholder="How did it go? Key observations, strengths, concerns..."></textarea></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addInterview('${candId}')">Save Interview</button></div>
+    </div>
+  `);
+}
+
+function addInterview(candId) {
+  const date = document.getElementById('iv-date').value;
+  if (!date) { showToast('Date required'); return; }
+  const c = candidates.find(x => x.id === candId);
+  if (!c) return;
+  const score = parseInt(document.getElementById('iv-score').value) || null;
+  if (!c.interviews) c.interviews = [];
+  c.interviews.push({ id: 'i' + Date.now(), date, interviewers: document.getElementById('iv-interviewers').value, score, notes: document.getElementById('iv-notes').value });
+  touch(c);
+  closeModal();
+  showToast('Interview saved');
+  renderCandidateDetail(candId);
+  renderKanban(kanbanFilter ? candidates.filter(x => x.candStatus === kanbanFilter) : candidates);
+}
+
+function showAddCandidateModal() {
+  showModal(`
+    <div class="modal modal-lg">
+      <div class="modal-header"><div class="modal-title">Add Candidate</div><button class="detail-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">First Name</label><input class="form-input" id="cfn" placeholder="Jane"/></div>
+          <div class="form-group"><label class="form-label">Last Name</label><input class="form-input" id="cln" placeholder="Smith"/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Role</label><input class="form-input" id="crole" placeholder="Software Engineer"/></div>
+          <div class="form-group"><label class="form-label">Seniority</label><select class="form-input form-select" id="csen">${SENIORITIES.map(s => `<option>${s}</option>`).join('')}</select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Source</label><select class="form-input form-select" id="csrc">${SOURCES.map(s => `<option>${s}</option>`).join('')}</select></div>
+          <div class="form-group"><label class="form-label">Status</label><select class="form-input form-select" id="cstat">${CAND_STATUS.map(s => `<option>${s}</option>`).join('')}</select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Employment Type</label><select class="form-input form-select" id="cetype">${EMP_TYPES.map(s => `<option>${s}</option>`).join('')}</select></div>
+          <div class="form-group"><label class="form-label">Compensation Type</label><select class="form-input form-select" id="cctype"><option value="salary">Salary (annual)</option><option value="hourly">Hourly</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Amount (\$)</label><input type="number" class="form-input" id="ccomp" placeholder="120000"/></div>
+          <div class="form-group"><label class="form-label">Client (optional)</label><input class="form-input" id="cclient" placeholder="Acme Corp"/></div>
+        </div>
+        <div class="form-group"><label class="form-label">Resume Link (SharePoint)</label><input class="form-input" id="cresume" placeholder="https://sharepoint.com/..."/></div>
+        <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="cnotes" rows="3" placeholder="Initial notes..."></textarea></div>
+      </div>
+      <div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addCandidate()">Add Candidate</button></div>
+    </div>
+  `);
+}
+
+function addCandidate() {
+  const fn = document.getElementById('cfn').value;
+  const ln = document.getElementById('cln').value;
+  if (!fn || !ln) { showToast('Name required'); return; }
+  const nc = {
+    id: 'c' + Date.now(),
+    name: fn + ' ' + ln,
+    role: document.getElementById('crole').value || 'TBD',
+    seniority: document.getElementById('csen').value,
+    source: document.getElementById('csrc').value,
+    candStatus: document.getElementById('cstat').value,
+    empType: document.getElementById('cetype').value,
+    compType: document.getElementById('cctype').value,
+    compAmount: parseInt(document.getElementById('ccomp').value) || null,
+    client: document.getElementById('cclient').value || null,
+    resumeLink: document.getElementById('cresume').value || '',
+    notes: document.getElementById('cnotes').value || '',
+    stage: 'sourced',
+    addedAt: today(),
+    updatedAt: today(),
+    interviews: []
+  };
+  candidates.push(nc);
+  closeModal();
+  showToast('Candidate added');
+  renderKanban(kanbanFilter ? candidates.filter(c => c.candStatus === kanbanFilter) : candidates);
+}
+
+function showEditCandidateModal(candId) {
+  // TODO: Implement edit modal
+  showToast('Edit modal not yet implemented');
+}
+
+function promoteCandidate(candId) {
+  // TODO: Implement promotion to employee
+  showToast('Promotion not yet implemented');
+}
+
 class Application {
   constructor() {
     this.initialized = false;
@@ -35,7 +374,7 @@ class Application {
     try {
       // Initialize core systems
       console.log('Step 1: Initializing router');
-      router.init('main-content');
+      router.init('page');
 
       console.log('Step 2: Registering routes');
       this.registerRoutes();
@@ -85,11 +424,11 @@ class Application {
       '/': () => this.renderDashboard(),
       '/dashboard': () => this.renderDashboard(),
       '/candidates': () => this.renderCandidates(),
-      '/candidates/:id': (params) => this.renderCandidateDetail(params.id),
       '/candidates/new': () => this.renderCandidateForm(),
+      '/candidates/:id': (params) => this.renderCandidateDetail(params.id),
       '/employees': () => this.renderEmployees(),
-      '/employees/:id': (params) => this.renderEmployeeDetail(params.id),
       '/employees/new': () => this.renderEmployeeForm(),
+      '/employees/:id': (params) => this.renderEmployeeDetail(params.id),
       '/devices': () => this.renderDevices(),
       '/devices/:id': (params) => this.renderDeviceDetail(params.id),
       '/assignments': () => this.renderAssignments(),
@@ -115,6 +454,11 @@ class Application {
     window.addEventListener('pageLoaded', (e) => {
       console.log('Page loaded:', e.detail.path);
       UI.initEvents();
+
+      // Initialize hiring page kanban
+      if (e.detail.path === '/candidates') {
+        renderKanban(kanbanFilter ? candidates.filter(c => c.candStatus === kanbanFilter) : candidates);
+      }
     });
 
     // Form submission
@@ -289,143 +633,111 @@ class Application {
 
   async renderDashboard() {
     try {
-      const data = await api.call('GET', '/dashboard');
-      const dashboard = data.data;
+      // Fetch data from API
+      const candidates = await api.getCandidates().catch(() => []);
+      const devices = await api.getDevices().catch(() => []);
+      const onboardingRuns = []; // Mock data - no API endpoint yet
+      const activities = []; // Mock data - no API endpoint yet
+
+      // Calculate stats
+      const activeC = candidates.filter(c => c.candStatus === 'Active').length;
+      const inInterviewStage = candidates.filter(c => c.stage === 'interview').length;
+      const onboardingCount = onboardingRuns.filter(r => r.status === 'active').length;
+      const availDev = devices.filter(d => d.status === 'available').length;
+
+      // Upcoming interviews: candidates in interview stage with latest interview in last 14d or future
+      const withInterviews = candidates
+        .filter(c => c.interviews && c.interviews.length > 0 && ['sourced','screening','interview','offer'].includes(c.stage))
+        .sort((a,b) => {
+          const la = a.interviews[a.interviews.length-1]?.date || '';
+          const lb = b.interviews[b.interviews.length-1]?.date || '';
+          return lb.localeCompare(la);
+        })
+        .slice(0, 5);
+
+      // Status breakdown
+      const statusGroups = {};
+      CAND_STATUS.forEach(s => {
+        statusGroups[s] = candidates.filter(c => c.candStatus === s).length;
+      });
 
       return `
-        <main style="padding:20px;">
-          <h1 style="font-size:24px;font-weight:500;margin-bottom:20px;">Dashboard</h1>
-
-          <div class="stat-row">
-            <div class="stat-card">
-              <div class="stat-lbl">Active Candidates</div>
-              <div class="stat-val">${dashboard.activeCandidateCount || 0}</div>
-              <div class="stat-sub">in pipeline</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-lbl">Interviews This Week</div>
-              <div class="stat-val">${dashboard.interviewsScheduledThisWeek || 0}</div>
-              <div class="stat-sub">scheduled</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-lbl">Onboardings in Progress</div>
-              <div class="stat-val">${dashboard.onboardingsInProgress || 0}</div>
-              <div class="stat-sub">active runs</div>
-            </div>
-            <div class="stat-card">
-              <div class="stat-lbl">Devices Unassigned</div>
-              <div class="stat-val">${dashboard.unassignedDeviceCount || 0}</div>
-              <div class="stat-sub">available</div>
-            </div>
+        <div class="page-header"><div><div class="page-title">Good morning, Kiana</div><div class="page-subtitle">Here's what's happening across V.Two</div></div></div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-label">Active Candidates</div><div class="stat-value">${activeC}</div><div class="stat-sub">in pipeline</div></div>
+          <div class="stat-card"><div class="stat-label">In Interview</div><div class="stat-value">${inInterviewStage}</div><div class="stat-sub">this stage</div></div>
+          <div class="stat-card"><div class="stat-label">Onboardings</div><div class="stat-value">${onboardingCount}</div><div class="stat-sub">in progress</div></div>
+          <div class="stat-card"><div class="stat-label">Devices Available</div><div class="stat-value">${availDev}</div><div class="stat-sub">unassigned</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div class="card">
+            <div style="font-weight:600;font-size:13px;margin-bottom:14px">Candidate Pipeline Status</div>
+            ${CAND_STATUS.map(s => `
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer">
+                <span>${candStatusPill(s)}</span>
+                <span style="font-weight:600;font-size:14px">${statusGroups[s]}</span>
+              </div>`).join('')}
           </div>
-
-          <div class="dash-grid">
-            <div class="widget">
-              <div class="widget-title">Stale Candidates</div>
-              ${(dashboard.staleCandidates || []).length > 0
-                ? (dashboard.staleCandidates || []).map(c => `
-                    <div class="stale-row">
-                      <div><div class="stale-name">${c.name}</div></div>
-                      <div class="stale-pill">${Math.floor((Date.now() - new Date(c.latestStageChangeAt)) / (1000*60*60*24))} days</div>
-                    </div>
-                  `).join('')
-                : '<p style="color:#aaa;">No stale candidates</p>'
-              }
-            </div>
-            <div class="widget">
-              <div class="widget-title">Upcoming Interviews</div>
-              ${(dashboard.upcomingInterviewsNext7Days || []).length > 0
-                ? (dashboard.upcomingInterviewsNext7Days || []).map(i => `
-                    <div class="int-row">
-                      <div><div class="int-name">${i.candidate?.name || 'Unknown'}</div></div>
-                    </div>
-                  `).join('')
-                : '<p style="color:#aaa;">No upcoming interviews</p>'
-              }
-            </div>
+          <div class="card">
+            <div style="font-weight:600;font-size:13px;margin-bottom:14px">Recent Interviews</div>
+            ${withInterviews.length ? withInterviews.map(c => {
+              const last = c.interviews[c.interviews.length-1];
+              return `<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+                ${personCell(c.name, c.role)}
+                <div style="text-align:right">${scoreDisplay(last.score)}<div style="font-size:11px;color:var(--text3);margin-top:2px">${relTime(last.date)}</div></div>
+              </div>`;
+            }).join('') : renderEmpty('No interviews logged', 'Interviews will appear here')}
           </div>
-
-          <div class="widget">
-            <div class="widget-title">Recent Activity</div>
-            ${(dashboard.lastActivityRecords || []).slice(0, 5).length > 0
-              ? (dashboard.lastActivityRecords || []).slice(0, 5).map(a => `
-                  <div class="act-row">
-                    <div><div class="act-text">${a.description || 'Activity'}</div></div>
-                  </div>
-                `).join('')
-              : '<p style="color:#aaa;">No recent activity</p>'
-            }
+        </div>
+        <div class="card">
+          <div style="font-weight:600;font-size:13px;margin-bottom:14px">Recent Activity</div>
+          <div class="timeline">
+            ${activities.slice(0, 5).map((a, i) => `
+              <div class="tl-item">
+                <div class="tl-dot-wrap"><div class="tl-dot"></div>${i < 4 ? '<div class="tl-line"></div>' : ''}</div>
+                <div style="flex:1;padding-bottom:4px"><div class="tl-desc">${a.desc}</div><div class="tl-time">${relTime(a.at)}</div></div>
+              </div>`).join('')}
           </div>
-        </main>
+        </div>
       `;
     } catch (error) {
-      return `<main style="padding:20px;"><p>Error loading dashboard: ${error.message}</p></main>`;
+      console.error('Dashboard error:', error);
+      return `<div style="padding:20px"><p>Error loading dashboard: ${error.message}</p></div>`;
     }
   }
 
   async renderCandidates() {
     try {
-      const candidates = await api.getCandidates();
+      // Fetch candidates from API and store in global variable for hiring functions
+      const fetchedCandidates = await api.getCandidates().catch(() => []);
+      candidates = fetchedCandidates;
+      selectedCandId = null;
+      kanbanFilter = '';
 
-      let html = `
-        <main>
-          <header>
-            <h1>Candidates</h1>
-            <button class="btn btn-primary" onclick="router.navigate('/candidates/new')">
-              + New Candidate
-            </button>
-          </header>
-
-          <section class="table-section">
-            <input type="search" placeholder="Filter by name..." data-filter="name" class="search-input">
-            <table>
-              <thead>
-                <tr>
-                  <th data-sort-by="name">Name</th>
-                  <th data-sort-by="email">Email</th>
-                  <th data-sort-by="status">Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-      `;
-
-      candidates.forEach(candidate => {
-        html += `
-          <tr>
-            <td data-column="name">
-              <a data-navigate="/candidates/${candidate.id}" href="#/candidates/${candidate.id}">
-                ${candidate.name || 'N/A'}
-              </a>
-            </td>
-            <td data-column="email">${candidate.email || 'N/A'}</td>
-            <td data-column="status">${candidate.status || 'N/A'}</td>
-            <td>
-              <button class="btn btn-sm" data-toggle-row="${candidate.id}">Details</button>
-              <button class="btn btn-danger btn-sm" data-delete-row="${candidate.id}">Delete</button>
-            </td>
-          </tr>
-          <tr class="detail-row">
-            <td colspan="4">
-              <div class="detail-content">
-                <p><strong>Phone:</strong> ${candidate.phone || 'N/A'}</p>
-                <p><strong>Location:</strong> ${candidate.location || 'N/A'}</p>
+      return `
+        <div class="split-layout" style="height:100%">
+          <div class="split-list" style="padding:24px;overflow-y:auto">
+            <div class="page-header">
+              <div>
+                <div class="page-title">Hiring Pipeline</div>
+                <div class="page-subtitle">${candidates.length} candidates</div>
               </div>
-            </td>
-          </tr>
-        `;
-      });
-
-      html += `
-              </tbody>
-            </table>
-          </section>
-        </main>
+              <div style="display:flex;gap:8px">
+                <select class="form-input form-select" style="width:auto" onchange="filterKanbanStatus(this.value)">
+                  <option value="">All statuses</option>
+                  ${CAND_STATUS.map(s => `<option>${s}</option>`).join('')}
+                </select>
+                <button class="btn btn-primary" onclick="showAddCandidateModal()">+ Add Candidate</button>
+              </div>
+            </div>
+            <div class="kanban" id="kanban"></div>
+          </div>
+          <div class="split-detail" id="candidate-detail"></div>
+        </div>
       `;
-
-      return html;
     } catch (error) {
-      return `<main><p>Error loading candidates: ${error.message}</p></main>`;
+      console.error('Hiring page error:', error);
+      return `<div style="padding:20px"><p>Error loading hiring: ${error.message}</p></div>`;
     }
   }
 
