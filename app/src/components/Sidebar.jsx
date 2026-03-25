@@ -32,6 +32,7 @@ export default function Sidebar({ isOpen }) {
       label: 'Workspace',
       items: [
         { label: 'Reports', path: '/reports', icon: '📈' },
+        { label: 'Tracks', path: '/tracks', icon: '🗂️' },
         { label: 'Settings', path: '/settings', icon: '⚙️' },
       ],
     },

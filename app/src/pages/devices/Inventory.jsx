@@ -36,7 +36,7 @@ export default function Inventory() {
     try {
       setLoading(true);
       setError(null);
-      const response = await fetch('http://localhost:3001/api/devices');
+      const response = await fetch('/api/devices');
       if (!response.ok) throw new Error('Failed to load devices');
       const data = await response.json();
       setDevices(data);

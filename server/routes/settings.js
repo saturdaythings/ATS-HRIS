@@ -1,11 +1,10 @@
 import express from 'express';
-import { requireAdmin } from '../middleware/auth.js';
 import { listUsers, inviteUser, updateUserRole, deleteUser, listLists, listItems, createItem, updateItem, deleteItem } from '../services/settingsService.js';
 
 const router = express.Router();
 
 // ===== USERS =====
-router.get('/users', requireAdmin, async (req, res, next) => {
+router.get('/users', async (req, res, next) => {
   try {
     const users = await listUsers();
     res.json({ data: users, error: null });
@@ -14,7 +13,7 @@ router.get('/users', requireAdmin, async (req, res, next) => {
   }
 });
 
-router.post('/users/invite', requireAdmin, async (req, res, next) => {
+router.post('/users/invite', async (req, res, next) => {
   try {
     const { email, role } = req.body;
     if (!email || !role) return res.status(400).json({ error: 'Missing email or role' });
@@ -25,7 +24,7 @@ router.post('/users/invite', requireAdmin, async (req, res, next) => {
   }
 });
 
-router.patch('/users/:id/role', requireAdmin, async (req, res, next) => {
+router.patch('/users/:id/role', async (req, res, next) => {
   try {
     const { role } = req.body;
     if (!role) return res.status(400).json({ error: 'Missing role' });
@@ -36,7 +35,7 @@ router.patch('/users/:id/role', requireAdmin, async (req, res, next) => {
   }
 });
 
-router.delete('/users/:id', requireAdmin, async (req, res, next) => {
+router.delete('/users/:id', async (req, res, next) => {
   try {
     if (req.session.userId === req.params.id) return res.status(400).json({ error: 'Cannot delete yourself' });
     await deleteUser(req.params.id);

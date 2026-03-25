@@ -5,7 +5,6 @@
 
 import express from 'express';
 import * as exportService from '../services/exportService.js';
-import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -16,7 +15,7 @@ const router = express.Router();
  *   - filters: JSON string with filter options
  *   - columns: comma-separated column names (optional)
  */
-router.post('/candidates', requireAuth, async (req, res) => {
+router.post('/candidates', async (req, res) => {
   try {
     const { filters = {}, columns } = req.body;
 
@@ -42,7 +41,7 @@ router.post('/candidates', requireAuth, async (req, res) => {
  *   - filters: JSON string with filter options
  *   - columns: comma-separated column names (optional)
  */
-router.post('/employees', requireAuth, async (req, res) => {
+router.post('/employees', async (req, res) => {
   try {
     const { filters = {}, columns } = req.body;
 
@@ -67,7 +66,7 @@ router.post('/employees', requireAuth, async (req, res) => {
  *   - filters: JSON string with filter options
  *   - columns: comma-separated column names (optional)
  */
-router.post('/devices', requireAuth, async (req, res) => {
+router.post('/devices', async (req, res) => {
   try {
     const { filters = {}, columns } = req.body;
 
@@ -92,7 +91,7 @@ router.post('/devices', requireAuth, async (req, res) => {
  *   - filters: JSON string with filter options
  *   - columns: comma-separated column names (optional)
  */
-router.post('/activity', requireAuth, async (req, res) => {
+router.post('/activity', async (req, res) => {
   try {
     const { filters = {}, columns } = req.body;
 
@@ -116,7 +115,7 @@ router.post('/activity', requireAuth, async (req, res) => {
  * Body:
  *   - types: array of entity types to export (candidates, employees, devices, activity)
  */
-router.post('/bulk', requireAuth, async (req, res) => {
+router.post('/bulk', async (req, res) => {
   try {
     const { types = ['candidates', 'employees', 'devices', 'activity'] } = req.body;
 

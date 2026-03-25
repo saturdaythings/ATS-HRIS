@@ -5,6 +5,7 @@ import useNotifications from '../hooks/useNotifications';
 
 export default function TopBar({ onMenuClick, employeeId = 'default-employee' }) {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const { notifications, loading, unreadCount, markAsRead } = useNotifications(
     employeeId
   );
@@ -59,8 +60,35 @@ export default function TopBar({ onMenuClick, employeeId = 'default-employee' })
 
       {/* Right: Assistant button and user avatar */}
       <div className="flex items-center gap-4">
-        {/* Assistant Panel */}
-        <AssistantPanel />
+        {/* AI Assistant toggle button */}
+        <button
+          onClick={() => setIsAssistantOpen(!isAssistantOpen)}
+          className="p-2 hover:bg-neutral-100 rounded-md transition-colors duration-fast focus-visible:outline-2 focus-visible:outline-primary-600"
+          aria-label="Toggle AI assistant"
+          aria-expanded={isAssistantOpen}
+          title="AI Operations Assistant"
+        >
+          <svg
+            className="w-5 h-5 text-neutral-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"
+            />
+          </svg>
+        </button>
+
+        {/* Assistant Panel (controlled) */}
+        <AssistantPanel
+          isOpen={isAssistantOpen}
+          onClose={() => setIsAssistantOpen(false)}
+        />
 
         {/* Notification bell with dropdown */}
         <div className="relative">
