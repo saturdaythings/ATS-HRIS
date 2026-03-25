@@ -1624,45 +1624,59 @@ class Application {
 
   async renderSettings() {
     try {
-      const settings = await api.getSettings();
+      const settings = await api.getSettings().catch(() => ({}));
 
       return `
-        <main>
-          <header>
-            <h1>System Settings</h1>
-          </header>
+        <div class="page-header">
+          <div>
+            <div class="page-title">Settings</div>
+            <div class="page-subtitle">System configuration and preferences</div>
+          </div>
+        </div>
+        <div class="card" style="max-width:600px">
+          <div style="font-weight:600;font-size:14px;margin-bottom:16px">Email Configuration</div>
+          <div class="form-group" style="margin-bottom:12px">
+            <label class="form-label">SMTP Host</label>
+            <input type="text" class="form-input" id="set-smtp-host" value="${settings.smtpHost || 'smtp.gmail.com'}" placeholder="smtp.gmail.com"/>
+          </div>
+          <div class="form-group" style="margin-bottom:16px">
+            <label class="form-label">SMTP Port</label>
+            <input type="number" class="form-input" id="set-smtp-port" value="${settings.smtpPort || 587}" placeholder="587"/>
+          </div>
 
-          <form data-form="settings-form">
-            <section class="form-section">
-              <h2>Email Configuration</h2>
-              <div class="form-group">
-                <label for="smtp-host">SMTP Host</label>
-                <input type="text" id="smtp-host" name="smtpHost" value="${settings.smtpHost || ''}">
-              </div>
-              <div class="form-group">
-                <label for="smtp-port">SMTP Port</label>
-                <input type="number" id="smtp-port" name="smtpPort" value="${settings.smtpPort || ''}">
-              </div>
-            </section>
+          <div style="font-weight:600;font-size:14px;margin:24px 0 16px 0">Onboarding Defaults</div>
+          <div class="form-group" style="margin-bottom:16px">
+            <label class="form-label">Default Workflow Template</label>
+            <select class="form-input form-select" id="set-workflow">
+              <option value="Standard" ${settings.defaultWorkflow === 'Standard' ? 'selected' : ''}>Standard</option>
+              <option value="Executive" ${settings.defaultWorkflow === 'Executive' ? 'selected' : ''}>Executive</option>
+              <option value="Contractor" ${settings.defaultWorkflow === 'Contractor' ? 'selected' : ''}>Contractor</option>
+            </select>
+          </div>
 
-            <section class="form-section">
-              <h2>Onboarding</h2>
-              <div class="form-group">
-                <label for="default-workflow">Default Workflow</label>
-                <select id="default-workflow" name="defaultWorkflow">
-                  <option>Standard</option>
-                  <option>Executive</option>
-                  <option>Contractor</option>
-                </select>
-              </div>
-            </section>
-
-            <button type="submit" class="btn btn-primary">Save Settings</button>
-          </form>
-        </main>
+          <div style="display:flex;gap:8px;margin-top:24px">
+            <button class="btn btn-primary" onclick="saveSettings()">Save Settings</button>
+            <button class="btn btn-secondary" onclick="showToast('Settings reset')">Reset</button>
+          </div>
+        </div>
+        <script>
+          window.saveSettings = async function() {
+            const updates = {
+              smtpHost: document.getElementById('set-smtp-host').value,
+              smtpPort: parseInt(document.getElementById('set-smtp-port').value),
+              defaultWorkflow: document.getElementById('set-workflow').value
+            };
+            try {
+              await api.updateSettings(updates);
+              showToast('Settings saved');
+            } catch(e) {
+              showToast('Error saving settings');
+            }
+          };
+        </script>
       `;
     } catch (error) {
-      return `<main><p>Error loading settings: ${error.message}</p></main>`;
+      return `<div style="padding:20px"><p>Error loading settings: ${error.message}</p></div>`;
     }
   }
 
@@ -1736,114 +1750,116 @@ class Application {
 
   async renderTracks() {
     try {
-      const tracksData = await api.call('GET', '/tracks');
+      const tracksData = await api.call('GET', '/tracks').catch(() => []);
       const tracks = Array.isArray(tracksData) ? tracksData : (tracksData.data || []);
 
       return `
-        <main style="padding:20px;">
-          <header style="margin-bottom:24px;">
-            <h1 style="font-size:24px;font-weight:500;color:#111;margin-bottom:8px;">Tracks</h1>
-            <p style="font-size:13px;color:#888;">Career development and progression tracking</p>
-          </header>
-          <section id="tracks-content">
-            ${tracks.length > 0
-              ? tracks.map(track => `
-                  <div class="run-card">
-                    <div class="run-header">
-                      <div class="run-name">${track.name || 'Track'}</div>
-                      <div class="run-sub" style="color:#888;">Type: ${track.type || 'standard'}</div>
-                    </div>
-                    ${track.description ? `<p style="font-size:13px;color:#666;margin:12px 0;">${track.description}</p>` : ''}
-                    <div style="margin-top:12px;">
-                      <h4 style="font-size:12px;font-weight:500;margin-bottom:8px;color:#888;">Tasks</h4>
-                      ${(track.tasks || []).length > 0
-                        ? (track.tasks || []).map(t => `
-                            <div class="run-task">
-                              <span style="color:#666;">•</span>
-                              <span style="margin-left:8px;">${t.name || 'Task'}</span>
-                            </div>
-                          `).join('')
-                        : '<p style="font-size:12px;color:#aaa;">No tasks</p>'
-                      }
-                    </div>
-                  </div>
-                `).join('')
-              : '<p style="color:#aaa;padding:20px;">No tracks found</p>'
-            }
-          </section>
-        </main>
+        <div class="page-header">
+          <div>
+            <div class="page-title">Career Tracks</div>
+            <div class="page-subtitle">Development pathways and progression</div>
+          </div>
+        </div>
+        ${tracks.length ? tracks.map(track => `
+          <div class="card" style="margin-bottom:16px">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+              <div>
+                <div style="font-weight:600;font-size:15px">${track.name || 'Track'}</div>
+                <div style="font-size:12px;color:var(--text2);margin-top:2px">${track.type || 'standard'}</div>
+              </div>
+            </div>
+            ${track.description ? `<p style="font-size:13px;color:var(--text2);margin-bottom:12px;line-height:1.5">${track.description}</p>` : ''}
+            ${(track.tasks || []).length ? `
+              <div style="font-size:12px;font-weight:500;color:var(--text3);margin-bottom:8px">Milestones:</div>
+              ${(track.tasks || []).map(t => `<div style="padding:6px 0;color:var(--text2);font-size:13px">✓ ${t.name || 'Task'}</div>`).join('')}
+            ` : ''}
+          </div>
+        `).join('') : renderEmpty('No tracks', 'Career development tracks will appear here')}
       `;
     } catch (error) {
-      return `<main style="padding:20px;"><p>Error loading tracks: ${error.message}</p></main>`;
+      return `<div style="padding:20px"><p>Error loading tracks: ${error.message}</p></div>`;
     }
   }
 
   async renderReports() {
     try {
-      const data = await api.call('GET', '/dashboard');
-      const dashboard = data.data || {};
+      // Fetch data from API
+      const cands = await api.getCandidates().catch(() => []);
+      const emps = await api.getEmployees().catch(() => []);
+      const devs = await api.getDevices().catch(() => []);
+      const onbs = await api.getOnboarding().catch(() => []);
+
+      // Calculate metrics
+      const activeCands = cands.filter(c => c.candStatus === 'Active').length;
+      const interviewStage = cands.filter(c => c.stage === 'interview').length;
+      const hiredCount = cands.filter(c => c.stage === 'hired').length;
+      const availDevs = devs.filter(d => d.status === 'available').length;
+      const assignedDevs = devs.filter(d => d.status === 'assigned').length;
+      const activeOnbs = onbs.filter(o => o.status === 'active' || o.type === 'onboarding').length;
+
+      // Stale candidates (no activity in 30+ days)
+      const staleCands = cands.filter(c => {
+        const lastUpdate = new Date(c.updatedAt);
+        const daysAgoNum = Math.floor((Date.now() - lastUpdate) / 86400000);
+        return daysAgoNum >= 30;
+      }).sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
       return `
-        <main style="padding:20px;">
-          <header style="margin-bottom:24px;">
-            <h1 style="font-size:24px;font-weight:500;color:#111;margin-bottom:8px;">Reports</h1>
-            <p style="font-size:13px;color:#888;">Analytics and HR insights</p>
-          </header>
-          <section id="reports-content">
-            <div class="stat-row">
-              <div class="stat-card">
-                <div class="stat-lbl">Active Candidates</div>
-                <div class="stat-val">${dashboard.activeCandidateCount || 0}</div>
-                <div class="stat-sub">in pipeline</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-lbl">Interviews This Week</div>
-                <div class="stat-val">${dashboard.interviewsScheduledThisWeek || 0}</div>
-                <div class="stat-sub">scheduled</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-lbl">Onboardings in Progress</div>
-                <div class="stat-val">${dashboard.onboardingsInProgress || 0}</div>
-                <div class="stat-sub">active runs</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-lbl">Devices Unassigned</div>
-                <div class="stat-val">${dashboard.unassignedDeviceCount || 0}</div>
-                <div class="stat-sub">available</div>
-              </div>
-            </div>
+        <div class="page-header">
+          <div>
+            <div class="page-title">Reports & Analytics</div>
+            <div class="page-subtitle">Key metrics and insights</div>
+          </div>
+        </div>
+        <div class="stat-grid">
+          <div class="stat-card"><div class="stat-label">Active Candidates</div><div class="stat-value">${activeCands}</div><div class="stat-sub">in pipeline</div></div>
+          <div class="stat-card"><div class="stat-label">In Interview</div><div class="stat-value">${interviewStage}</div><div class="stat-sub">this stage</div></div>
+          <div class="stat-card"><div class="stat-label">Hired This Year</div><div class="stat-value">${hiredCount}</div><div class="stat-sub">placements</div></div>
+          <div class="stat-card"><div class="stat-label">Total Employees</div><div class="stat-value">${emps.length}</div><div class="stat-sub">on roster</div></div>
+        </div>
 
-            <div class="widget" style="margin-top:24px;">
-              <div class="widget-title">Stale Candidates (${(dashboard.staleCandidates || []).length})</div>
-              ${(dashboard.staleCandidates || []).length > 0
-                ? (dashboard.staleCandidates || []).map(c => `
-                    <div class="stale-row">
-                      <div><div class="stale-name">${c.name}</div></div>
-                      <div class="stale-pill">${Math.floor((Date.now() - new Date(c.latestStageChangeAt)) / (1000*60*60*24))} days</div>
-                    </div>
-                  `).join('')
-                : '<p style="color:#aaa;padding:12px 0;">No stale candidates</p>'
-              }
-            </div>
+        <div class="card" style="margin-bottom:16px">
+          <div style="font-weight:600;font-size:13px;margin-bottom:14px">Device Inventory</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span>Total Devices</span>
+            <span style="font-weight:600;font-size:14px">${devs.length}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+            <span>Available</span>
+            <span style="font-weight:600;font-size:14px">${availDevs}</span>
+          </div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0">
+            <span>Assigned</span>
+            <span style="font-weight:600;font-size:14px">${assignedDevs}</span>
+          </div>
+        </div>
 
-            <div class="widget" style="margin-top:24px;">
-              <div class="widget-title">Pending Onboarding Tasks (${(dashboard.pendingOnboardingTasksNext7Days || []).length})</div>
-              ${(dashboard.pendingOnboardingTasksNext7Days || []).length > 0
-                ? (dashboard.pendingOnboardingTasksNext7Days || []).map(t => `
-                    <div class="run-task">
-                      <span>○</span>
-                      <span style="margin-left:8px;">${t.taskTemplate?.name || 'Task'}</span>
-                      <span style="font-size:11px;color:#999;margin-left:auto;">${t.employee?.name || 'Unknown'}</span>
-                    </div>
-                  `).join('')
-                : '<p style="color:#aaa;padding:12px 0;">No pending tasks</p>'
-              }
-            </div>
-          </section>
-        </main>
+        <div class="card" style="margin-bottom:16px">
+          <div style="font-weight:600;font-size:13px;margin-bottom:14px">Onboarding Status</div>
+          <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0">
+            <span>Active Runs</span>
+            <span style="font-weight:600;font-size:14px">${activeOnbs}</span>
+          </div>
+        </div>
+
+        ${staleCands.length ? `
+          <div class="card">
+            <div style="font-weight:600;font-size:13px;margin-bottom:14px">Stale Candidates (${staleCands.length})</div>
+            <div style="font-size:12px;color:var(--text3);margin-bottom:12px">No activity in 30+ days</div>
+            ${staleCands.slice(0, 5).map(c => `
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+                <div>
+                  <div style="font-size:13px;color:var(--text)">${c.name}</div>
+                  <div style="font-size:11px;color:var(--text3);margin-top:2px">${c.role} · ${c.stage}</div>
+                </div>
+                <span class="pill pill-amber" style="font-size:11px">${daysAgo(c.updatedAt)}d ago</span>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
       `;
     } catch (error) {
-      return `<main style="padding:20px;"><p>Error loading reports: ${error.message}</p></main>`;
+      return `<div style="padding:20px"><p>Error loading reports: ${error.message}</p></div>`;
     }
   }
 }
