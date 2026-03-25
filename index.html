@@ -607,7 +607,7 @@ function renderHiring(){
         <select class="filter-select" onchange="hiringFilters.stage=this.value;refreshHiringView()"><option value="">All stages</option>${STAGES.map(s=>`<option${s===hiringFilters.stage?' selected':''}>${s}</option>`).join('')}</select>
         <select class="filter-select" onchange="hiringFilters.specialty=this.value;refreshHiringView()"><option value="">All specialties</option>${specialties.map(s=>`<option${s===hiringFilters.specialty?' selected':''}>${s}</option>`).join('')}</select>
         <div class="filter-search" style="min-width:140px"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l3 1.5"/></svg><input placeholder="City, state..." value="${hiringFilters.location}" oninput="hiringFilters.location=this.value;refreshHiringView()"/></div>
-        <button id="archive-toggle" class="btn btn-sm ${hiringFilters.showArchived?'btn-active btn-secondary':'btn-secondary'}" onclick="hiringFilters.showArchived=!hiringFilters.showArchived;refreshHiringView()" title="Show/hide Hired & Closed in Kanban">${hiringFilters.showArchived?'Hiding Archived':'Show Archived'}</button>
+        <button id="archive-toggle" class="btn btn-sm ${hiringFilters.showArchived?'btn-active btn-secondary':'btn-secondary'}" style="${hiringFilters.showArchived?'':'border-color:var(--amber);color:var(--amber)'}" onclick="hiringFilters.showArchived=!hiringFilters.showArchived;refreshHiringView()" title="Show/hide Hired & Closed in Kanban">${hiringFilters.showArchived?'Hiding Archived':'Show Archived'}</button>
         <div class="view-toggle" style="margin-left:auto">
           <button class="view-btn" id="vbtn-kanban" onclick="hiringView='kanban';refreshHiringView()">
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="4" height="14" rx="1"/><rect x="6" y="1" width="4" height="14" rx="1"/><rect x="11" y="1" width="4" height="14" rx="1"/></svg>
@@ -639,7 +639,8 @@ function refreshHiringView(){
   if(tb)tb.classList.toggle('active',hiringView==='table');
   // Update archive toggle label
   const at=document.getElementById('archive-toggle');
-  if(at){at.textContent=hiringFilters.showArchived?'Hiding Archived':'Show Archived';at.className='btn btn-sm '+(hiringFilters.showArchived?'btn-active btn-secondary':'btn-secondary');}
+  const hiddenCount=DB.candidates.filter(c=>c.candStatus==='Hired'||c.candStatus==='Closed').length;
+  if(at){at.textContent=hiringFilters.showArchived?'Hiding Archived':`Show Archived${hiddenCount>0?' ('+hiddenCount+')':''}`;at.className='btn btn-sm '+(hiringFilters.showArchived?'btn-active btn-secondary':'btn-secondary');}
   const main=document.getElementById('hiring-main');
   if(!main)return;
   if(hiringView==='kanban')renderKanban(list,main);
@@ -905,7 +906,7 @@ async function doPromote(id){
       <p style="font-size:13px;color:var(--text2);margin-bottom:16px">${ne.name} has been added to the Directory with status <strong>onboarding</strong>. Would you like to start an onboarding run now?</p>
       <div class="form-group"><label class="form-label">Track Template</label><select class="form-input form-select" id="quick-track">${onboardingTracks.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}</select></div>
       <div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="quick-start" value="${ne.startDate}"/></div>
-    </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal();showToast('${ne.name} added to Directory')">Skip for now</button><button class="btn btn-primary" onclick="quickStartOnboarding('${ne.id}')">Start Onboarding</button></div></div>`);
+    </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal();showToast('${ne.name} in Directory — toggle Show Hired & Closed in Hiring to see them')">Skip for now</button><button class="btn btn-primary" onclick="quickStartOnboarding('${ne.id}')">Start Onboarding</button></div></div>`);
   } else {
     showToast(`${ne.name} promoted → now in Directory`);
   }
