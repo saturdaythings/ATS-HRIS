@@ -1539,41 +1539,37 @@ class Application {
 
   async renderOffboarding() {
     try {
-      const offboarding = await api.call('GET', '/onboarding?type=offboarding');
-      const runs = offboarding.data || [];
+      // Fetch offboarding runs from API
+      const runs = await api.getOnboarding ? await api.getOnboarding().catch(() => []) : [];
+      const offboardingRuns = runs.filter(r => r.type === 'offboarding');
 
       return `
-        <main style="padding:20px;">
-          <header style="margin-bottom:24px;">
-            <h1 style="font-size:24px;font-weight:500;color:#111;margin-bottom:8px;">Offboarding</h1>
-            <p style="font-size:13px;color:#888;">Manage employee separations and final tasks</p>
-          </header>
-          <section id="offboarding-runs">
-            ${runs.length > 0
-              ? runs.map(run => `
-                  <div class="run-card">
-                    <div class="run-header">
-                      <div class="run-name">${run.employee?.name || 'Employee'}</div>
-                      <div class="run-sub" style="color:#888;">Status: ${run.status}</div>
-                    </div>
-                    <div class="progress-bg">
-                      <div class="progress-fill" style="width: ${(run.tasks?.filter(t => t.status === 'completed').length || 0) / (run.tasks?.length || 1) * 100}%"></div>
-                    </div>
-                    ${(run.tasks || []).slice(0, 5).map(t => `
-                      <div class="run-task">
-                        <span>${t.status === 'completed' ? '✓' : '○'}</span>
-                        <span style="margin-left:8px;">${t.taskTemplate?.name || 'Task'}</span>
-                      </div>
-                    `).join('')}
-                  </div>
-                `).join('')
-              : '<p style="color:#aaa;padding:20px;">No offboarding runs</p>'
-            }
-          </section>
-        </main>
+        <div class="page-header">
+          <div>
+            <div class="page-title">Offboarding</div>
+            <div class="page-subtitle">${offboardingRuns.length ? offboardingRuns.length + ' run' + (offboardingRuns.length !== 1 ? 's' : '') : 'No active runs'}</div>
+          </div>
+          <button class="btn btn-primary" onclick="showToast('Start offboarding run')">+ Start Run</button>
+        </div>
+        ${offboardingRuns.length ? offboardingRuns.map(run => {
+          const e = employees.find(x => x.id === run.employeeId) || { name: 'Unknown' };
+          const done = run.tasks.filter(t => t.status === 'completed').length;
+          const pct = Math.round(done / run.tasks.length * 100);
+          return `<div class="run-card" onclick="openRunDetail('${run.id}')">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+              <div>${personCell(e.name, `Departing ${run.startDate}`)}</div>
+              <div style="text-align:right"><div style="font-size:12px;font-weight:600;color:var(--accent)">${pct}%</div><div style="font-size:11px;color:var(--text3)">${done}/${run.tasks.length}</div></div>
+            </div>
+            <div class="run-progress-wrap"><div class="run-progress-fill" style="width:${pct}%"></div></div>
+            <div style="display:flex;flex-direction:column;gap:5px">
+              ${run.tasks.slice(0, 4).map(t => `<div class="run-task"><div class="task-check${t.status === 'completed' ? ' done' : ''}">${t.status === 'completed' ? '✓' : ''}</div><span>${t.name}</span><span style="margin-left:auto;font-size:11px;color:var(--text3)">${t.dueDate}</span></div>`).join('')}
+            </div>
+          </div>`;
+        }).join('') : renderEmpty('No offboarding runs', 'Start a run when an employee is departing')}
       `;
     } catch (error) {
-      return `<main style="padding:20px;"><p>Error loading offboarding: ${error.message}</p></main>`;
+      console.error('Offboarding page error:', error);
+      return `<div style="padding:20px"><p>Error loading offboarding: ${error.message}</p></div>`;
     }
   }
 
