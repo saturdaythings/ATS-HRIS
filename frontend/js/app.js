@@ -19,6 +19,8 @@ class Application {
       'tracks': '/tracks',
       'reports': '/reports',
       'settings': '/admin/settings',
+      'lists': '/admin/lists',
+      'users': '/admin/users',
     };
   }
 
@@ -100,6 +102,8 @@ class Application {
       '/admin/workflows': () => this.renderWorkflows(),
       '/admin/templates': () => this.renderTemplates(),
       '/admin/settings': () => this.renderSettings(),
+      '/admin/lists': () => this.renderLists(),
+      '/admin/users': () => this.renderUsers(),
     });
   }
 
@@ -905,6 +909,38 @@ class Application {
       `;
     } catch (error) {
       return `<main><p>Error loading settings: ${error.message}</p></main>`;
+    }
+  }
+
+  async renderLists() {
+    try {
+      return `
+        <main style="padding:20px;">
+          <header style="margin-bottom:24px;">
+            <h1>Configuration Lists</h1>
+            <p style="color:#888;margin-top:4px;">Manage skill tags, seniority levels, and other configuration lists</p>
+          </header>
+          <p>Lists configuration page coming soon...</p>
+        </main>
+      `;
+    } catch (error) {
+      return `<main><p>Error loading lists: ${error.message}</p></main>`;
+    }
+  }
+
+  async renderUsers() {
+    try {
+      return `
+        <main style="padding:20px;">
+          <header style="margin-bottom:24px;">
+            <h1>Users</h1>
+            <p style="color:#888;margin-top:4px;">Manage user accounts and permissions</p>
+          </header>
+          <p>Users management page coming soon...</p>
+        </main>
+      `;
+    } catch (error) {
+      return `<main><p>Error loading users: ${error.message}</p></main>`;
     }
   }
 

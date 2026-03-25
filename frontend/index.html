@@ -295,22 +295,22 @@ tbody tr.selected td{background:#f5f5f5}
   <div class="sidebar">
     <div class="sb-logo"><div class="sb-wordmark">V.Two <span>Ops</span></div></div>
     <div class="sb-nav">
-      <div class="nav-item top active">Dashboard</div>
+      <div class="nav-item top active" data-page="dashboard">Dashboard</div>
       <div class="nav-group"><div class="nav-group-label">People</div>
-        <div class="nav-item">Candidates</div>
-        <div class="nav-item">Employees</div>
-        <div class="nav-item">Onboarding</div>
-        <div class="nav-item">Offboarding</div>
+        <div class="nav-item" data-page="hiring">Candidates</div>
+        <div class="nav-item" data-page="directory">Employees</div>
+        <div class="nav-item" data-page="onboarding">Onboarding</div>
+        <div class="nav-item" data-page="offboarding">Offboarding</div>
       </div>
       <div class="nav-group"><div class="nav-group-label">Devices</div>
-        <div class="nav-item">Inventory</div>
-        <div class="nav-item">Assignments</div>
+        <div class="nav-item" data-page="inventory">Inventory</div>
+        <div class="nav-item" data-page="assignments">Assignments</div>
       </div>
-      <div class="nav-item top">Tracks</div>
-      <div class="nav-item top">Reports</div>
+      <div class="nav-item top" data-page="tracks">Tracks</div>
+      <div class="nav-item top" data-page="reports">Reports</div>
       <div class="nav-group"><div class="nav-group-label">Settings</div>
-        <div class="nav-item">Lists</div>
-        <div class="nav-item">Users</div>
+        <div class="nav-item" data-page="lists">Lists</div>
+        <div class="nav-item" data-page="users">Users</div>
       </div>
     </div>
     <div class="sb-foot"><div class="avatar">OK</div><div><div class="sb-user-name">Oliver</div><div class="sb-user-role">Admin</div></div></div>
@@ -468,6 +468,22 @@ tbody tr.selected td{background:#f5f5f5}
   </div>
 </div>
 
+<script>
+// Global modal functions
+function showModal(id) {
+  const modal = document.getElementById(id);
+  if (modal) {
+    modal.style.display = 'flex';
+  }
+}
+
+function hideModal(id) {
+  const modal = document.getElementById(id);
+  if (modal) {
+    modal.style.display = 'none';
+  }
+}
+</script>
 <script src="app.js"></script>
 </body>
 </html>
