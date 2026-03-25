@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>V.Two Ops</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f6f3;--surface:#fff;--surface2:#f2f1ed;--border:#e5e3dc;--border2:#d4d2cb;
+  --text:#1a1a18;--text2:#6b6a65;--text3:#9e9d98;
+  --accent:#5b4ff5;--accent-light:#eeecfe;--accent-text:#3d33c7;
+  --green:#1a9c6e;--green-light:#e6f7f1;--amber:#b86c0a;--amber-light:#fef3e2;
+  --red:#c0392b;--red-light:#fdecea;--blue:#1a6fb5;--blue-light:#e8f2fc;
+  --sidebar-w:220px;--font:'DM Sans',sans-serif;--mono:'DM Mono',monospace;
+  --radius:8px;--radius-lg:12px;
+}
+html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--text);font-size:14px;line-height:1.5}
+button{font-family:var(--font);cursor:pointer;border:none;background:none}
+input,select,textarea{font-family:var(--font)}
+.app{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:var(--sidebar-w);min-width:var(--sidebar-w);background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;padding:0 0 16px}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:52px;min-height:52px;background:var(--surface);border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 24px;gap:12px}
+.page{flex:1;overflow-y:auto;padding:28px 28px 40px}
+.sidebar-logo{padding:18px 16px 12px;display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--border);margin-bottom:8px}
+.logo-mark{width:28px;height:28px;background:var(--accent);border-radius:7px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:13px}
+.logo-text{font-weight:600;font-size:14px}
+.nav-section{padding:0 8px;margin-bottom:4px}
+.nav-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.8px;text-transform:uppercase;padding:8px 8px 4px}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 8px;border-radius:var(--radius);cursor:pointer;color:var(--text2);font-size:13px;transition:all .12s}
+.nav-item:hover{background:var(--bg);color:var(--text)}
+.nav-item.active{background:var(--accent-light);color:var(--accent-text);font-weight:500}
+.nav-icon{width:16px;height:16px;opacity:.7;flex-shrink:0}
+.nav-item.active .nav-icon{opacity:1}
+.topbar-title{font-weight:500;font-size:14px;flex:1}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-light);color:var(--accent-text);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600}
+.sync-status{font-size:11px;color:var(--text3);display:flex;align-items:center;gap:5px}
+.sync-dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+.sync-dot.syncing{background:var(--amber);animation:pulse 1s infinite}
+.sync-dot.error{background:var(--red)}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:var(--radius);font-size:13px;font-weight:500;cursor:pointer;transition:all .12s;border:none}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#4a3ee0}
+.btn-secondary{background:var(--surface);color:var(--text);border:1px solid var(--border)}.btn-secondary:hover{background:var(--bg)}
+.btn-ghost{background:none;color:var(--text2);padding:6px 10px}.btn-ghost:hover{background:var(--bg)}
+.btn-sm{padding:5px 10px;font-size:12px}
+.btn-danger{background:var(--red-light);color:var(--red)}.btn-danger:hover{background:#f9d8d5}
+.btn-link{background:none;color:var(--accent);padding:0;font-size:13px;text-decoration:underline;cursor:pointer;border:none;font-family:var(--font)}
+.btn-active{background:var(--accent-light);color:var(--accent-text);border-color:var(--accent)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}
+.page-title{font-size:20px;font-weight:600;letter-spacing:-.4px}
+.page-subtitle{font-size:13px;color:var(--text2);margin-top:2px}
+.stat-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:24px}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px 20px}
+.stat-label{font-size:12px;color:var(--text2);font-weight:500;margin-bottom:6px}
+.stat-value{font-size:26px;font-weight:600;letter-spacing:-.8px;line-height:1}
+.stat-sub{font-size:12px;color:var(--text3);margin-top:4px}
+.filter-bar{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:12px 0;margin-bottom:16px;border-bottom:1px solid var(--border)}
+.filter-search{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:6px 12px;min-width:220px}
+.filter-search input{background:none;border:none;outline:none;font-size:13px;color:var(--text);width:100%}
+.filter-search input::placeholder{color:var(--text3)}
+.filter-select{padding:6px 28px 6px 10px;border:1px solid var(--border);border-radius:var(--radius);font-size:12px;font-family:var(--font);background:var(--surface);color:var(--text);outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b6a65' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;cursor:pointer}
+.filter-select:focus{border-color:var(--accent)}
+.view-toggle{display:flex;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-left:auto}
+.view-btn{padding:6px 10px;font-size:12px;color:var(--text2);cursor:pointer;background:var(--surface);border:none;font-family:var(--font);transition:all .12s}
+.view-btn.active{background:var(--accent-light);color:var(--accent-text)}
+.table-wrap{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden}
+.table-toolbar{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--border)}
+table{width:100%;border-collapse:collapse}
+th{font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;padding:10px 14px;text-align:left;border-bottom:1px solid var(--border);background:var(--bg);cursor:pointer;white-space:nowrap;user-select:none}
+th:hover{color:var(--text)}
+th .sort-arrow{margin-left:4px;opacity:.4;font-size:10px}
+th.sorted .sort-arrow{opacity:1;color:var(--accent)}
+td{padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px}
+tr:last-child td{border-bottom:none}
+tr.clickable{cursor:pointer}
+tr.clickable:hover td{background:var(--bg)}
+tr.selected td{background:var(--accent-light)}
+.pill{display:inline-flex;align-items:center;padding:3px 9px;border-radius:100px;font-size:11px;font-weight:500;white-space:nowrap}
+.pill-green{background:var(--green-light);color:var(--green)}
+.pill-amber{background:var(--amber-light);color:var(--amber)}
+.pill-red{background:var(--red-light);color:var(--red)}
+.pill-blue{background:var(--blue-light);color:var(--blue)}
+.pill-purple{background:var(--accent-light);color:var(--accent-text)}
+.pill-gray{background:var(--surface2);color:var(--text2)}
+.person-cell{display:flex;align-items:center;gap:10px}
+.person-av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0}
+.person-name{font-weight:500}
+.person-sub{font-size:12px;color:var(--text2)}
+.split-layout{display:flex;gap:0;overflow:hidden}
+.split-list{flex:1;overflow-y:auto}
+.split-detail{width:420px;min-width:420px;border-left:1px solid var(--border);overflow-y:auto;background:var(--surface);display:none;flex-direction:column}
+.split-detail.open{display:flex}
+.detail-header{padding:20px;border-bottom:1px solid var(--border);display:flex;align-items:flex-start;justify-content:space-between;flex-shrink:0}
+.detail-close{width:28px;height:28px;border-radius:var(--radius);display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text2);font-size:18px;line-height:1;background:none;border:none}
+.detail-close:hover{background:var(--bg)}
+.detail-body{padding:20px;overflow-y:auto;flex:1}
+.detail-section{margin-bottom:20px}
+.detail-section-title{font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between}
+.detail-row{display:flex;justify-content:space-between;align-items:flex-start;padding:7px 0;border-bottom:1px solid var(--border)}
+.detail-row:last-child{border-bottom:none}
+.detail-key{font-size:12px;color:var(--text2)}
+.detail-val{font-size:13px;font-weight:500;text-align:right;max-width:60%}
+.kanban{display:flex;gap:12px;overflow-x:auto;padding-bottom:12px}
+.kanban-col{min-width:205px;max-width:205px;background:var(--bg);border-radius:var(--radius-lg);padding:12px;display:flex;flex-direction:column;gap:8px}
+.kanban-col-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.kanban-col-name{font-size:11px;font-weight:600;color:var(--text2);letter-spacing:.4px;text-transform:uppercase}
+.kanban-count{background:var(--border);color:var(--text2);border-radius:100px;font-size:11px;font-weight:600;padding:1px 7px}
+.kanban-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:11px;cursor:pointer;transition:all .12s}
+.kanban-card:hover{border-color:var(--accent);box-shadow:0 2px 8px rgba(91,79,245,.1)}
+.kanban-card.selected{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-light)}
+.kanban-name{font-weight:500;font-size:13px;margin-bottom:2px}
+.kanban-role{font-size:12px;color:var(--text2);margin-bottom:6px}
+.kanban-meta{display:flex;align-items:center;flex-wrap:wrap;gap:4px;margin-bottom:4px}
+.kanban-footer{display:flex;align-items:center;justify-content:space-between;margin-top:4px}
+.run-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;margin-bottom:12px;cursor:pointer;transition:border-color .12s}
+.run-card:hover{border-color:var(--accent)}
+.run-progress-wrap{background:var(--bg);border-radius:100px;height:6px;margin-bottom:10px;overflow:hidden}
+.run-progress-fill{height:100%;background:var(--accent);border-radius:100px}
+.task-check{width:16px;height:16px;border-radius:4px;border:1.5px solid var(--border2);display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:9px}
+.task-check.done{background:var(--green);border-color:var(--green);color:#fff}
+.timeline{display:flex;flex-direction:column}
+.tl-item{display:flex;gap:12px;padding-bottom:16px}
+.tl-item:last-child{padding-bottom:0}
+.tl-dot-wrap{display:flex;flex-direction:column;align-items:center;width:20px;flex-shrink:0}
+.tl-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);margin-top:4px;flex-shrink:0}
+.tl-line{flex:1;width:1px;background:var(--border);margin-top:4px}
+.tl-item:last-child .tl-line{display:none}
+.tl-desc{font-size:13px;font-weight:500}
+.tl-time{font-size:11px;color:var(--text3);margin-top:2px}
+.device-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px}
+.device-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:16px;cursor:pointer;transition:border-color .12s}
+.device-card:hover{border-color:var(--accent)}
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:20px}
+.tab{padding:9px 14px;font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:color .12s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--accent-text);border-bottom-color:var(--accent)}
+.form-group{margin-bottom:14px}
+.form-label{font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px;display:block}
+.form-input{width:100%;padding:8px 12px;border:1px solid var(--border);border-radius:var(--radius);font-size:13px;font-family:var(--font);background:var(--surface);color:var(--text);outline:none;transition:border-color .12s}
+.form-input:focus{border-color:var(--accent)}
+.form-select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%236b6a65' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:28px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-row-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.4);display:flex;align-items:center;justify-content:center;z-index:100;padding:20px}
+.modal{background:var(--surface);border-radius:var(--radius-lg);width:100%;max-width:540px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.2)}
+.modal-lg{max-width:680px}
+.modal-header{padding:20px 20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--surface);z-index:1}
+.modal-title{font-weight:600;font-size:16px}
+.modal-body{padding:20px}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;position:sticky;bottom:0;background:var(--surface)}
+.toast{position:fixed;bottom:20px;right:20px;background:var(--text);color:#fff;padding:10px 16px;border-radius:var(--radius);font-size:13px;z-index:200;opacity:0;transform:translateY(8px);transition:all .2s;pointer-events:none}
+.toast.show{opacity:1;transform:translateY(0)}
+.empty-state{padding:48px 20px;text-align:center}
+.empty-title{font-weight:500;font-size:14px;margin-bottom:4px}
+.empty-sub{font-size:12px;color:var(--text3)}
+.interview-card{background:var(--bg);border-radius:var(--radius);padding:12px;margin-bottom:8px;border:1px solid var(--border)}
+.score-dot{width:10px;height:10px;border-radius:50%;display:inline-block;margin-right:4px}
+.tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:4px}
+.tag{display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:100px;padding:3px 10px;font-size:12px;color:var(--text2)}
+.tag button{background:none;border:none;cursor:pointer;color:var(--text3);font-size:14px;line-height:1;padding:0 0 0 2px}
+.tag button:hover{color:var(--red)}
+::-webkit-scrollbar{width:5px;height:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:10px}
+</style>
+</head>
+<body>
+<div class="app">
+<nav class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-mark">V2</div>
+    <span class="logo-text">V.Two Ops</span>
+  </div>
+  <div class="nav-section">
+    <div class="nav-item active" onclick="nav('dashboard')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg>
+      Dashboard
+    </div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">People</div>
+    <div class="nav-item" onclick="nav('hiring')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="5" r="3"/><path d="M2 13c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>
+      Hiring
+    </div>
+    <div class="nav-item" onclick="nav('directory')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 13v-1.5a3 3 0 00-3-3H5a3 3 0 00-3 3V13"/><circle cx="8" cy="5" r="2.5"/></svg>
+      Directory
+    </div>
+    <div class="nav-item" onclick="nav('onboarding')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 8H3M13 4H3M9 12H3"/></svg>
+      Onboarding
+    </div>
+    <div class="nav-item" onclick="nav('offboarding')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 3l3 3-3 3M3 6h10M6 13H3V3h3"/></svg>
+      Offboarding
+    </div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Devices</div>
+    <div class="nav-item" onclick="nav('inventory')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="3" width="14" height="9" rx="1.5"/><path d="M5 12v2M11 12v2M3 14h10"/></svg>
+      Inventory
+    </div>
+    <div class="nav-item" onclick="nav('assignments')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M6 2H3a1 1 0 00-1 1v10a1 1 0 001 1h10a1 1 0 001-1V9"/><path d="M10 2l4 4-6 6H4v-4l6-6z"/></svg>
+      Assignments
+    </div>
+  </div>
+  <div class="nav-section">
+    <div class="nav-label">Admin</div>
+    <div class="nav-item" onclick="nav('tracks')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/></svg>
+      Tracks
+    </div>
+
+    <div class="nav-item" onclick="nav('settings')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3 3l1.5 1.5M11.5 11.5L13 13M13 3l-1.5 1.5M4.5 11.5L3 13"/></svg>
+      Settings
+    </div>
+  </div>
+</nav>
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Dashboard</div>
+    <div style="flex:1"></div>
+    <div class="sync-status" id="sync-status"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Loading...</span></div>
+    <div class="avatar" style="margin-left:12px">KO</div>
+  </div>
+  <div class="page" id="page" style="display:flex;align-items:center;justify-content:center;color:var(--text3)">Loading...</div>
+</div>
+</div>
+<div id="modal-root"></div>
+<div class="toast" id="toast"></div>
+
+<script src="config.js"></script>
+<script>
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const SHEET_ID='1yw8uHotULPJnl0oDFG3AJ8Mcua7LU_InQUc7saiBd3A';
+const BASE=`https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}`;
+
+// Credentials loaded from config.js (gitignored)
+// See config.example.js for setup instructions
+const SA_EMAIL = window.__ENV__?.SA_EMAIL || '';
+const SA_KEY = window.__ENV__?.SA_KEY || '';
+
+// ── JWT / SERVICE ACCOUNT AUTH ────────────────────────────────────────────────
+let _tokenCache={token:null,exp:0};
+
+function b64url(buf){
+  return btoa(String.fromCharCode(...new Uint8Array(buf)))
+    .replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+
+function pemToBytes(pem){
+  const b64=pem.replace(/-----[^-]+-----/g,'').replace(/\s+/g,'');
+  const bin=atob(b64);
+  return Uint8Array.from(bin,c=>c.charCodeAt(0));
+}
+
+async function getAccessToken(){
+  const now=Math.floor(Date.now()/1000);
+  if(_tokenCache.token&&now<_tokenCache.exp-60)return _tokenCache.token;
+
+  const header=b64url(new TextEncoder().encode(JSON.stringify({alg:'RS256',typ:'JWT'})));
+  const claim=b64url(new TextEncoder().encode(JSON.stringify({
+    iss:SA_EMAIL,scope:'https://www.googleapis.com/auth/spreadsheets',
+    aud:'https://oauth2.googleapis.com/token',iat:now,exp:now+3600
+  })));
+  const sigInput=new TextEncoder().encode(`${header}.${claim}`);
+
+  const keyBytes=pemToBytes(SA_KEY);
+  const cryptoKey=await crypto.subtle.importKey(
+    'pkcs8',keyBytes,{name:'RSASSA-PKCS1-v1_5',hash:'SHA-256'},false,['sign']
+  );
+  const sigBuf=await crypto.subtle.sign('RSASSA-PKCS1-v1_5',cryptoKey,sigInput);
+  const jwt=`${header}.${claim}.${b64url(sigBuf)}`;
+
+  const res=await fetch('https://oauth2.googleapis.com/token',{
+    method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:`grant_type=urn%3Aietf%3Aparams%3Aoauth%3Agrant-type%3Ajwt-bearer&assertion=${jwt}`
+  });
+  if(!res.ok){const e=await res.json().catch(()=>({}));throw new Error(`Token error: ${e.error_description||res.status}`);}
+  const d=await res.json();
+  _tokenCache={token:d.access_token,exp:now+d.expires_in};
+  return d.access_token;
+}
+
+// ── GOOGLE SHEETS ─────────────────────────────────────────────────────────────
+async function sheetsGet(tab){
+  const token=await getAccessToken();
+  const r=await fetch(`${BASE}/values/${encodeURIComponent(tab)}`,{
+    headers:{Authorization:`Bearer ${token}`}
+  });
+  if(!r.ok)throw new Error(`Read ${tab}: ${r.status}`);
+  const d=await r.json();const rows=d.values||[];
+  if(rows.length<2)return[];
+  const h=rows[0];
+  return rows.slice(1).map(row=>{const o={};h.forEach((k,i)=>{o[k]=row[i]??'';});return o;});
+}
+
+async function sheetsSet(tab,data){
+  setSyncState('syncing');
+  try{
+    const token=await getAccessToken();
+    const authHeader={Authorization:`Bearer ${token}`,'Content-Type':'application/json'};
+    const clearR=await fetch(`${BASE}/values/${encodeURIComponent(tab)}:clear`,{
+      method:'POST',headers:authHeader,body:'{}'
+    });
+    if(!clearR.ok){const err=await clearR.json().catch(()=>({}));throw new Error(`Clear ${tab}: ${clearR.status} ${err?.error?.message||''}`);}
+    if(!data.length){setSyncState('ok');return;}
+    const headers=Object.keys(data[0]);
+    const values=[headers,...data.map(row=>headers.map(h=>{const v=row[h];if(v===null||v===undefined)return'';if(typeof v==='object')return JSON.stringify(v);return String(v);}))];
+    const writeR=await fetch(`${BASE}/values/${encodeURIComponent(tab)}?valueInputOption=RAW`,{
+      method:'PUT',headers:authHeader,body:JSON.stringify({values})
+    });
+    if(!writeR.ok){const err=await writeR.json().catch(()=>({}));throw new Error(`Write ${tab}: ${writeR.status} ${err?.error?.message||''}`);}
+    setSyncState('ok');
+  }catch(e){setSyncState('error');console.error('sheetsSet error:',e.message);throw e;}
+}
+
+function setSyncState(s){
+  const dot=document.getElementById('sync-dot'),txt=document.getElementById('sync-text');
+  if(!dot)return;
+  dot.className='sync-dot'+(s==='syncing'?' syncing':s==='error'?' error':'');
+  txt.textContent=s==='syncing'?'Saving...':s==='error'?'Error':'Synced';
+}
+
+// ── DB ────────────────────────────────────────────────────────────────────────
+let DB={candidates:[],employees:[],devices:[],assignments:[],tracks:[],tasks:[],onboardingRuns:[],runTasks:[],interviews:[],activities:[],lists:[]};
+
+// lists table stores editable dropdown values: {id, listKey, value, order}
+const DEFAULT_LISTS=[
+  {id:'ls1',listKey:'candStatus',value:'Active',order:'1'},
+  {id:'ls2',listKey:'candStatus',value:'On Hold',order:'2'},
+  {id:'ls3',listKey:'candStatus',value:'Nurturing',order:'3'},
+  {id:'ls4',listKey:'candStatus',value:'Hired',order:'4'},
+  {id:'ls5',listKey:'candStatus',value:'Closed',order:'5'},
+  {id:'ls6',listKey:'empType',value:'FTE',order:'1'},
+  {id:'ls7',listKey:'empType',value:'Contract',order:'2'},
+  {id:'ls8',listKey:'empType',value:'Open to Both',order:'3'},
+  {id:'ls9',listKey:'source',value:'LinkedIn',order:'1'},
+  {id:'ls10',listKey:'source',value:'Referral',order:'2'},
+  {id:'ls11',listKey:'source',value:'Indeed',order:'3'},
+  {id:'ls12',listKey:'source',value:'Outbound',order:'4'},
+  {id:'ls13',listKey:'source',value:'Website',order:'5'},
+  {id:'ls14',listKey:'source',value:'Other',order:'6'},
+  {id:'ls15',listKey:'seniority',value:'Junior',order:'1'},
+  {id:'ls16',listKey:'seniority',value:'Mid',order:'2'},
+  {id:'ls17',listKey:'seniority',value:'Senior',order:'3'},
+  {id:'ls18',listKey:'seniority',value:'Staff',order:'4'},
+  {id:'ls19',listKey:'seniority',value:'Principal',order:'5'},
+  {id:'ls20',listKey:'specialty',value:'Engineering',order:'1'},
+  {id:'ls21',listKey:'specialty',value:'Product',order:'2'},
+  {id:'ls22',listKey:'specialty',value:'Design',order:'3'},
+  {id:'ls23',listKey:'specialty',value:'Data',order:'4'},
+  {id:'ls24',listKey:'specialty',value:'Quality Assurance',order:'5'},
+  {id:'ls25',listKey:'specialty',value:'Operations',order:'6'},
+  {id:'ls26',listKey:'specialty',value:'Other',order:'7'},
+];
+
+const SEED={
+  candidates:[
+    {id:'c1',name:'Priya Nair',role:'Senior Engineer',seniority:'Senior',specialty:'Engineering',source:'LinkedIn',stage:'sourced',candStatus:'Active',empType:'FTE',compType:'salary',compAmount:'160000',resumeLink:'',client:'',city:'San Francisco',state:'CA',country:'US',addedAt:'2026-03-10T00:00:00Z',updatedAt:'2026-03-22T00:00:00Z',notes:'Strong Python background, referred by Anita'},
+    {id:'c2',name:'Marcus Webb',role:'Product Designer',seniority:'Mid',specialty:'Design',source:'Referral',stage:'screening',candStatus:'Active',empType:'FTE',compType:'salary',compAmount:'120000',resumeLink:'',client:'',city:'New York',state:'NY',country:'US',addedAt:'2026-03-05T00:00:00Z',updatedAt:'2026-03-23T00:00:00Z',notes:'Portfolio looks great'},
+    {id:'c3',name:'Sophie Tremblay',role:'Engineering Manager',seniority:'Staff',specialty:'Engineering',source:'Outbound',stage:'interview',candStatus:'Active',empType:'Open to Both',compType:'salary',compAmount:'180000',resumeLink:'',client:'',city:'Austin',state:'TX',country:'US',addedAt:'2026-02-28T00:00:00Z',updatedAt:'2026-03-20T00:00:00Z',notes:'2nd round done, panel next week'},
+    {id:'c4',name:'Jin Park',role:'Backend Engineer',seniority:'Mid',specialty:'Engineering',source:'LinkedIn',stage:'offer',candStatus:'Active',empType:'FTE',compType:'salary',compAmount:'145000',resumeLink:'',client:'',city:'Remote',state:'',country:'US',addedAt:'2026-02-15T00:00:00Z',updatedAt:'2026-03-24T00:00:00Z',notes:'Offer extended $145k'},
+    {id:'c5',name:'Tom Eriksson',role:'DevOps Engineer',seniority:'Mid',specialty:'Engineering',source:'LinkedIn',stage:'sourced',candStatus:'Nurturing',empType:'FTE',compType:'salary',compAmount:'140000',resumeLink:'',client:'',city:'Chicago',state:'IL',country:'US',addedAt:'2026-03-18T00:00:00Z',updatedAt:'2026-03-18T00:00:00Z',notes:'Not ready for 3 months'},
+    {id:'c6',name:'Daria Ivanova',role:'Data Scientist',seniority:'Senior',specialty:'Data',source:'Website',stage:'screening',candStatus:'Active',empType:'FTE',compType:'salary',compAmount:'155000',resumeLink:'',client:'',city:'Seattle',state:'WA',country:'US',addedAt:'2026-03-15T00:00:00Z',updatedAt:'2026-03-24T00:00:00Z',notes:'PhD, very strong ML background'},
+  ],
+  employees:[
+    {id:'e1',name:'Jordan Lee',role:'Engineering Lead',dept:'Engineering',status:'active',location:'Remote',city:'Remote',state:'',country:'US',manager:'Dana Kim',startDate:'2024-01-15',email:'jordan@vtwo.co',phone:'555-0101'},
+    {id:'e2',name:'Nina Patel',role:'Product Manager',dept:'Product',status:'active',location:'SF',city:'San Francisco',state:'CA',country:'US',manager:'Dana Kim',startDate:'2023-09-12',email:'nina@vtwo.co',phone:'555-0104'},
+    {id:'e3',name:'Rafael Santos',role:'Backend Engineer',dept:'Engineering',status:'active',location:'Remote',city:'Remote',state:'',country:'US',manager:'Jordan Lee',startDate:'2023-06-01',email:'rafael@vtwo.co',phone:'555-0103'},
+  ],
+  devices:[
+    {id:'d1',name:'MacBook Pro 16"',type:'laptop',make:'Apple',model:'MBP M3 Pro',serial:'MBP24001',status:'assigned',assignedTo:'e1',condition:'good',purchaseDate:'2024-01-10'},
+    {id:'d2',name:'MacBook Air 13"',type:'laptop',make:'Apple',model:'MBA M2',serial:'MBA23042',status:'available',assignedTo:'',condition:'good',purchaseDate:'2023-06-01'},
+    {id:'d3',name:'MacBook Pro 14"',type:'laptop',make:'Apple',model:'MBP M3',serial:'MBP24033',status:'available',assignedTo:'',condition:'good',purchaseDate:'2024-06-15'},
+  ],
+  assignments:[{id:'a1',employeeId:'e1',deviceId:'d1',assignedAt:'2024-01-15T00:00:00Z',status:'active'}],
+  tracks:[
+    {id:'t1',name:'Engineering Onboarding',type:'role',autoApply:'true'},
+    {id:'t2',name:'Company General Onboarding',type:'company',autoApply:'true'},
+    {id:'t3',name:'Engineering Offboarding',type:'role',autoApply:'false'},
+  ],
+  tasks:[
+    {id:'tt1',trackId:'t1',name:'Complete I-9 and W-4 paperwork',ownerRole:'HR',dueDaysOffset:'-7'},
+    {id:'tt2',trackId:'t1',name:'Set up dev environment',ownerRole:'IT',dueDaysOffset:'1'},
+    {id:'tt3',trackId:'t1',name:'Access to repos and tools',ownerRole:'IT',dueDaysOffset:'1'},
+    {id:'tt4',trackId:'t1',name:'Meet team and manager 1:1',ownerRole:'Manager',dueDaysOffset:'3'},
+    {id:'tt5',trackId:'t1',name:'Complete security training',ownerRole:'HR',dueDaysOffset:'7'},
+    {id:'tt6',trackId:'t2',name:'Welcome email and Slack invite',ownerRole:'HR',dueDaysOffset:'-1'},
+    {id:'tt7',trackId:'t2',name:'Benefits enrollment',ownerRole:'HR',dueDaysOffset:'3'},
+    {id:'tt8',trackId:'t3',name:'Return devices',ownerRole:'IT',dueDaysOffset:'-3'},
+    {id:'tt9',trackId:'t3',name:'Revoke system access',ownerRole:'IT',dueDaysOffset:'0'},
+  ],
+  onboardingRuns:[],runTasks:[],
+  interviews:[
+    {id:'i1',candidateId:'c3',date:'2026-03-10',interviewers:'Dana Kim',score:'3',notes:'Solid, scheduling panel.'},
+    {id:'i2',candidateId:'c3',date:'2026-03-20',interviewers:'Dana Kim, Jordan Lee',score:'4',notes:'Panel went well.'},
+    {id:'i3',candidateId:'c4',date:'2026-03-15',interviewers:'Jordan Lee',score:'5',notes:'Exceptional candidate.'},
+  ],
+  activities:[
+    {id:'ac1',type:'add',desc:'Jordan Lee added to directory',at:'2024-01-15T10:30:00Z'},
+    {id:'ac2',type:'stage',desc:'Jin Park moved to Offer stage',at:'2026-03-24T09:15:00Z'},
+    {id:'ac3',type:'add',desc:'Priya Nair added to pipeline',at:'2026-03-10T09:00:00Z'},
+  ],
+  lists:DEFAULT_LISTS,
+};
+
+const SHEET_KEYS=['candidates','employees','devices','assignments','tracks','tasks','onboardingRuns','runTasks','interviews','activities','lists'];
+const SHEET_NAMES={candidates:'Candidates',employees:'Employees',devices:'Devices',assignments:'Assignments',tracks:'Tracks',tasks:'TrackTasks',onboardingRuns:'OnboardingRuns',runTasks:'RunTasks',interviews:'Interviews',activities:'Activities',lists:'Lists'};
+
+async function loadAll(){
+  setSyncState('syncing');
+  await Promise.all(SHEET_KEYS.map(async key=>{
+    try{
+      const rows=await sheetsGet(SHEET_NAMES[key]);
+      if(rows.length>0){DB[key]=rows;}
+      else{DB[key]=SEED[key]||[];if(DB[key].length)await sheetsSet(SHEET_NAMES[key],DB[key]);}
+    }catch(e){console.warn(key,e);DB[key]=SEED[key]||[];}
+  }));
+  setSyncState('ok');
+}
+
+async function save(key){
+  try{await sheetsSet(SHEET_NAMES[key],DB[key]);}
+  catch(e){setSyncState('error');showToast('Save failed');console.error(e);}
+}
+
+// ── LIST HELPERS ──────────────────────────────────────────────────────────────
+const getList=key=>DB.lists.filter(l=>l.listKey===key).sort((a,b)=>parseInt(a.order)-parseInt(b.order)).map(l=>l.value);
+const STAGES=['sourced','screening','interview','offer','hired'];
+
+// ── UTILS ─────────────────────────────────────────────────────────────────────
+const AVCOLORS=['#f4d4e8','#d4e8f4','#d4f4e0','#f4ead4','#e0d4f4','#f4d4d4','#d4f4f0'];
+const av=n=>`background:${AVCOLORS[n.charCodeAt(0)%AVCOLORS.length]};color:#333`;
+const initials=n=>n.split(' ').map(x=>x[0]).join('').slice(0,2).toUpperCase();
+const daysAgo=d=>Math.floor((Date.now()-new Date(d))/86400000);
+const relTime=d=>{const n=daysAgo(d);if(n===0)return'Today';if(n===1)return'Yesterday';if(n<7)return n+'d ago';if(n<30)return Math.floor(n/7)+'w ago';return Math.floor(n/30)+'mo ago'};
+const now=()=>new Date().toISOString();
+const today=()=>new Date().toISOString().split('T')[0];
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
+const getEmp=id=>DB.employees.find(e=>e.id===id)||{name:'Unknown'};
+const getDev=id=>DB.devices.find(d=>d.id===id)||{name:'Unknown'};
+const getCandIvs=id=>DB.interviews.filter(i=>i.candidateId===id);
+const getTrackTasks=id=>DB.tasks.filter(t=>t.trackId===id);
+const getRunTasks=id=>DB.runTasks.filter(t=>t.runId===id);
+
+const SCORE_LABELS={1:'No hire',2:'Lean no',3:'Maybe',4:'Lean yes',5:'Strong hire'};
+const SCORE_COLORS={1:'#c0392b',2:'#e67e22',3:'#f1c40f',4:'#27ae60',5:'#1a9c6e'};
+
+function stagePill(s){const m={sourced:'gray',screening:'blue',interview:'amber',offer:'purple',hired:'green'};return`<span class="pill pill-${m[s]||'gray'}">${s}</span>`;}
+function candStatusPill(s){const m={'Active':'green','On Hold':'amber','Nurturing':'blue','Hired':'purple','Closed':'red'};return`<span class="pill pill-${m[s]||'gray'}">${s}</span>`;}
+function statusPill(s){if(['active','good','new','available'].includes(s))return`<span class="pill pill-green">${s}</span>`;if(s==='onboarding')return`<span class="pill pill-blue">onboarding</span>`;if(s==='assigned')return`<span class="pill pill-purple">assigned</span>`;if(s==='pending')return`<span class="pill pill-amber">pending</span>`;return`<span class="pill pill-gray">${s||'—'}</span>`;}
+function personCell(name,sub=''){return`<div class="person-cell"><div class="person-av" style="${av(name)}">${initials(name)}</div><div><div class="person-name">${name}</div>${sub?`<div class="person-sub">${sub}</div>`:''}</div></div>`;}
+function scoreDisplay(score){if(!score)return'<span style="color:var(--text3);font-size:12px">—</span>';const s=parseInt(score);return`<span style="display:inline-flex;align-items:center;gap:4px;font-size:12px"><span class="score-dot" style="background:${SCORE_COLORS[s]||'#999'}"></span>${SCORE_LABELS[s]||score}</span>`;}
+function compDisplay(c){if(!c.compAmount)return'—';return c.compType==='hourly'?`$${parseInt(c.compAmount).toLocaleString()}/hr`:`$${parseInt(c.compAmount).toLocaleString()}/yr`;}
+function locDisplay(c){return[c.city,c.state,c.country].filter(Boolean).join(', ')||'—';}
+function touch(c){c.updatedAt=now();}
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2400);}
+function closeModal(){document.getElementById('modal-root').innerHTML='';}
+function showModal(html){document.getElementById('modal-root').innerHTML=`<div class="modal-overlay" onclick="if(event.target===this)closeModal()">${html}</div>`;}
+function renderEmpty(title,sub=''){return`<div class="empty-state"><div class="empty-title">${title}</div><div class="empty-sub">${sub}</div></div>`;}
+function fmtSelect(opts,val,id,cls='form-input form-select'){return`<select class="${cls}" id="${id}">${opts.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join('')}</select>`;}
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+const TITLES={dashboard:'Dashboard',hiring:'Hiring',directory:'Directory',onboarding:'Onboarding',offboarding:'Offboarding',inventory:'Inventory',assignments:'Assignments',tracks:'Tracks',settings:'Settings'};
+let currentPage='';
+
+function nav(page){
+  currentPage=page;
+  document.querySelectorAll('.nav-item').forEach(el=>{el.classList.toggle('active',el.getAttribute('onclick')===`nav('${page}')`)});
+  document.getElementById('topbar-title').textContent=TITLES[page]||page;
+  const p=document.getElementById('page');
+  p.style.cssText='flex:1;overflow-y:auto;padding:28px 28px 40px';
+  p.innerHTML='';
+  ({dashboard:renderDashboard,hiring:renderHiring,directory:renderDirectory,onboarding:renderOnboarding,offboarding:renderOffboarding,inventory:renderInventory,assignments:renderAssignments,tracks:renderTracks,settings:renderSettings}[page]||function(){})();
+}
+
+// ── DASHBOARD ─────────────────────────────────────────────────────────────────
+function renderDashboard(){
+  const p=document.getElementById('page');
+  const activeC=DB.candidates.filter(c=>c.candStatus==='Active').length;
+  const inIv=DB.candidates.filter(c=>c.stage==='interview').length;
+  const onbCount=DB.onboardingRuns.filter(r=>r.status==='active').length;
+  const availDev=DB.devices.filter(d=>d.status==='available').length;
+  const statusGroups={};
+  getList('candStatus').forEach(s=>{statusGroups[s]=DB.candidates.filter(c=>c.candStatus===s).length;});
+  const recentIvs=DB.candidates.filter(c=>getCandIvs(c.id).length>0).sort((a,b)=>{
+    const la=getCandIvs(a.id).slice(-1)[0]?.date||'';const lb=getCandIvs(b.id).slice(-1)[0]?.date||'';return lb.localeCompare(la);
+  }).slice(0,5);
+  p.innerHTML=`
+    <div class="page-header"><div><div class="page-title">Good morning, Kiana</div><div class="page-subtitle">Here's what's happening across V.Two</div></div></div>
+    <div class="stat-grid">
+      <div class="stat-card"><div class="stat-label">Active Candidates</div><div class="stat-value">${activeC}</div><div class="stat-sub">in pipeline</div></div>
+      <div class="stat-card"><div class="stat-label">In Interview</div><div class="stat-value">${inIv}</div><div class="stat-sub">this stage</div></div>
+      <div class="stat-card"><div class="stat-label">Onboardings</div><div class="stat-value">${onbCount}</div><div class="stat-sub">in progress</div></div>
+      <div class="stat-card"><div class="stat-label">Devices Available</div><div class="stat-value">${availDev}</div><div class="stat-sub">unassigned</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+      <div class="card">
+        <div style="font-weight:600;font-size:13px;margin-bottom:14px">Pipeline by Status</div>
+        ${Object.entries(statusGroups).map(([s,n])=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="nav('hiring')">${candStatusPill(s)}<span style="font-weight:600;font-size:14px">${n}</span></div>`).join('')}
+      </div>
+      <div class="card">
+        <div style="font-weight:600;font-size:13px;margin-bottom:14px">Recent Interviews</div>
+        ${recentIvs.length?recentIvs.map(c=>{const last=getCandIvs(c.id).slice(-1)[0];return`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="nav('hiring')">${personCell(c.name,c.role)}<div style="text-align:right">${scoreDisplay(last.score)}<div style="font-size:11px;color:var(--text3);margin-top:2px">${relTime(last.date)}</div></div></div>`;}).join(''):renderEmpty('No interviews yet','')}
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">
+      <div class="card">
+        <div style="font-weight:600;font-size:13px;margin-bottom:12px">By Stage</div>
+        ${STAGES.map(s=>{const n=DB.candidates.filter(c=>c.stage===s).length;const pct=DB.candidates.length?Math.round(n/DB.candidates.length*100):0;return`<div style="margin-bottom:9px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span style="text-transform:capitalize;color:var(--text2)">${s}</span><span style="font-weight:600">${n}</span></div><div style="background:var(--bg);border-radius:100px;height:5px;overflow:hidden"><div style="width:${pct}%;height:100%;background:var(--accent);border-radius:100px"></div></div></div>`;}).join('')}
+      </div>
+      <div class="card">
+        <div style="font-weight:600;font-size:13px;margin-bottom:12px">By Specialty</div>
+        ${[...new Set(DB.candidates.map(c=>c.specialty).filter(Boolean))].map(sp=>{const n=DB.candidates.filter(c=>c.specialty===sp).length;return`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px;color:var(--text2)">${sp}</span><span style="font-weight:600;font-size:13px">${n}</span></div>`;}).join('')||'<div style="font-size:12px;color:var(--text3)">No data</div>'}
+      </div>
+      <div class="card">
+        <div style="font-weight:600;font-size:13px;margin-bottom:12px">By Source</div>
+        ${[...new Set(DB.candidates.map(c=>c.source).filter(Boolean))].map(src=>{const n=DB.candidates.filter(c=>c.source===src).length;return`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border)"><span style="font-size:12px;color:var(--text2)">${src}</span><span style="font-weight:600;font-size:13px">${n}</span></div>`;}).join('')||'<div style="font-size:12px;color:var(--text3)">No data</div>'}
+      </div>
+    </div>
+    <div class="card">
+      <div style="font-weight:600;font-size:13px;margin-bottom:14px">Recent Activity</div>
+      <div class="timeline">${DB.activities.slice(0,6).map((a,i)=>`<div class="tl-item"><div class="tl-dot-wrap"><div class="tl-dot"></div>${i<5?'<div class="tl-line"></div>':''}</div><div style="flex:1;padding-bottom:4px"><div class="tl-desc">${a.desc}</div><div class="tl-time">${relTime(a.at)}</div></div></div>`).join('')}</div>
+    </div>`;
+}
+
+// ── HIRING ────────────────────────────────────────────────────────────────────
+let selectedCandId=null;
+let hiringView='kanban'; // 'kanban' | 'table'
+let hiringFilters={q:'',status:'',stage:'',specialty:'',location:'',showArchived:false};
+let sortCol='updatedAt';let sortDir=-1;
+
+function getFilteredCands(){
+  let list=[...DB.candidates];
+  const f=hiringFilters;
+  // In kanban view, hide Hired/Closed by default unless a status filter is explicitly set or showArchived is on
+  if(hiringView==='kanban'&&!f.status&&!f.showArchived){
+    list=list.filter(c=>c.candStatus!=='Hired'&&c.candStatus!=='Closed');
+  }
+  if(f.q){const q=f.q.toLowerCase();list=list.filter(c=>c.name.toLowerCase().includes(q)||c.role.toLowerCase().includes(q)||(c.city||'').toLowerCase().includes(q));}
+  if(f.status)list=list.filter(c=>c.candStatus===f.status);
+  if(f.stage)list=list.filter(c=>c.stage===f.stage);
+  if(f.specialty)list=list.filter(c=>c.specialty===f.specialty);
+  if(f.location)list=list.filter(c=>(c.city||'').toLowerCase().includes(f.location.toLowerCase())||(c.state||'').toLowerCase().includes(f.location.toLowerCase()));
+  return list;
+}
+
+function renderHiring(){
+  const p=document.getElementById('page');
+  p.style.cssText='flex:1;overflow:hidden;display:flex;flex-direction:column;padding:0';
+  const statuses=getList('candStatus');
+  const specialties=getList('specialty');
+  p.innerHTML=`
+    <div style="padding:20px 24px 0;background:var(--surface);border-bottom:1px solid var(--border)">
+      <div class="page-header" style="margin-bottom:12px">
+        <div><div class="page-title">Hiring Pipeline</div><div class="page-subtitle" id="cand-count">${DB.candidates.length} candidates</div></div>
+        <button class="btn btn-primary" onclick="showAddCandModal()">+ Add Candidate</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-bottom:12px">
+        <div class="filter-search"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input placeholder="Search name, role, city..." value="${hiringFilters.q}" oninput="hiringFilters.q=this.value;refreshHiringView()"/></div>
+        <select class="filter-select" onchange="hiringFilters.status=this.value;refreshHiringView()"><option value="">All statuses</option>${statuses.map(s=>`<option${s===hiringFilters.status?' selected':''}>${s}</option>`).join('')}</select>
+        <select class="filter-select" onchange="hiringFilters.stage=this.value;refreshHiringView()"><option value="">All stages</option>${STAGES.map(s=>`<option${s===hiringFilters.stage?' selected':''}>${s}</option>`).join('')}</select>
+        <select class="filter-select" onchange="hiringFilters.specialty=this.value;refreshHiringView()"><option value="">All specialties</option>${specialties.map(s=>`<option${s===hiringFilters.specialty?' selected':''}>${s}</option>`).join('')}</select>
+        <div class="filter-search" style="min-width:140px"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l3 1.5"/></svg><input placeholder="City, state..." value="${hiringFilters.location}" oninput="hiringFilters.location=this.value;refreshHiringView()"/></div>
+        <button id="archive-toggle" class="btn btn-sm ${hiringFilters.showArchived?'btn-active btn-secondary':'btn-secondary'}" onclick="hiringFilters.showArchived=!hiringFilters.showArchived;refreshHiringView()" title="Show/hide Hired & Closed in Kanban">${hiringFilters.showArchived?'Hiding Archived':'Show Archived'}</button>
+        <div class="view-toggle" style="margin-left:auto">
+          <button class="view-btn" id="vbtn-kanban" onclick="hiringView='kanban';refreshHiringView()">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="4" height="14" rx="1"/><rect x="6" y="1" width="4" height="14" rx="1"/><rect x="11" y="1" width="4" height="14" rx="1"/></svg>
+            Kanban
+          </button>
+          <button class="view-btn" id="vbtn-table" onclick="hiringView='table';refreshHiringView()">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="14" height="14" rx="1.5"/><path d="M1 5h14M1 9h14M5 5v9M11 5v9"/></svg>
+            Table
+          </button>
+        </div>
+      </div>
+    </div>
+    <div style="flex:1;display:flex;overflow:hidden">
+      <div class="split-list" style="flex:1;overflow:auto;padding:20px 24px" id="hiring-main"></div>
+      <div class="split-detail" id="cand-detail"></div>
+    </div>`;
+  refreshHiringView();
+}
+
+function refreshHiringView(){
+  const list=getFilteredCands();
+  const cnt=document.getElementById('cand-count');
+  const total=DB.candidates.length;
+  const archived=DB.candidates.filter(c=>c.candStatus==='Hired'||c.candStatus==='Closed').length;
+  if(cnt)cnt.textContent=`${list.length} of ${total} candidates${archived&&hiringView==='kanban'&&!hiringFilters.showArchived&&!hiringFilters.status?` (${archived} archived hidden)`:''}`;
+  // Update view toggle buttons
+  const kb=document.getElementById('vbtn-kanban');const tb=document.getElementById('vbtn-table');
+  if(kb)kb.classList.toggle('active',hiringView==='kanban');
+  if(tb)tb.classList.toggle('active',hiringView==='table');
+  // Update archive toggle label
+  const at=document.getElementById('archive-toggle');
+  if(at){at.textContent=hiringFilters.showArchived?'Hiding Archived':'Show Archived';at.className='btn btn-sm '+(hiringFilters.showArchived?'btn-active btn-secondary':'btn-secondary');}
+  const main=document.getElementById('hiring-main');
+  if(!main)return;
+  if(hiringView==='kanban')renderKanban(list,main);
+  else renderCandTable(list,main);
+}
+
+function renderKanban(list,container){
+  container.innerHTML=`<div class="kanban">${STAGES.map(stage=>{
+    const cols=list.filter(c=>c.stage===stage);
+    return`<div class="kanban-col">
+      <div class="kanban-col-header"><span class="kanban-col-name">${stage}</span><span class="kanban-count">${cols.length}</span></div>
+      ${cols.map(c=>{
+        const ivCount=getCandIvs(c.id).length;
+        return`<div class="kanban-card${selectedCandId===c.id?' selected':''}" onclick="selectCand('${c.id}')">
+          <div class="kanban-name">${c.name}</div>
+          <div class="kanban-role">${c.role}</div>
+          <div class="kanban-meta">${candStatusPill(c.candStatus)}${c.specialty?`<span class="pill pill-gray" style="font-size:10px">${c.specialty}</span>`:''}</div>
+          <div class="kanban-footer">
+            <span style="font-size:11px;color:var(--text3)">${locDisplay(c)}</span>
+            ${ivCount?`<span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:3px"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 1"/></svg>${ivCount}</span>`:''}
+          </div>
+          <div style="font-size:10px;color:var(--text3);margin-top:4px">${relTime(c.updatedAt)}</div>
+        </div>`;
+      }).join('')}
+    </div>`;
+  }).join('')}</div>`;
+}
+
+function renderCandTable(list,container){
+  const sortedList=[...list].sort((a,b)=>{
+    const av=a[sortCol]||'',bv=b[sortCol]||'';
+    return av.localeCompare(bv)*sortDir;
+  });
+  const arrow=d=>`<span class="sort-arrow">${d===1?'↑':'↓'}</span>`;
+  const th=(col,label)=>`<th onclick="tableSortBy('${col}')" class="${sortCol===col?'sorted':''}">${label}${sortCol===col?arrow(sortDir):''}</th>`;
+  container.innerHTML=`<div class="table-wrap"><table>
+    <thead><tr>
+      ${th('name','Name')}${th('role','Role')}${th('seniority','Seniority')}${th('specialty','Specialty')}${th('stage','Stage')}${th('candStatus','Status')}${th('empType','Type')}${th('compAmount','Comp')}${th('source','Source')}${th('city','Location')}
+      <th>Interviews</th>${th('updatedAt','Updated')}
+    </tr></thead>
+    <tbody>${sortedList.map(c=>{
+      const ivCount=getCandIvs(c.id).length;
+      return`<tr class="clickable${selectedCandId===c.id?' selected':''}" onclick="selectCand('${c.id}')">
+        <td>${personCell(c.name)}</td>
+        <td>${c.role}</td><td>${c.seniority||'—'}</td><td>${c.specialty||'—'}</td>
+        <td>${stagePill(c.stage)}</td><td>${candStatusPill(c.candStatus)}</td>
+        <td>${c.empType||'—'}</td><td style="font-size:12px">${compDisplay(c)}</td>
+        <td>${c.source||'—'}</td><td style="font-size:12px">${locDisplay(c)}</td>
+        <td style="text-align:center">${ivCount||'—'}</td>
+        <td style="font-size:12px;color:var(--text3)">${relTime(c.updatedAt)}</td>
+      </tr>`;
+    }).join('')}</tbody>
+  </table></div>`;
+}
+
+function tableSortBy(col){
+  if(sortCol===col)sortDir*=-1;else{sortCol=col;sortDir=-1;}
+  refreshHiringView();
+}
+
+function selectCand(id){
+  selectedCandId=id;
+  renderCandDetail(id);
+  refreshHiringView();
+}
+
+function renderCandDetail(id){
+  const c=DB.candidates.find(x=>x.id===id);if(!c)return;
+  const d=document.getElementById('cand-detail');if(!d)return;
+  const ivs=getCandIvs(id);
+  d.classList.add('open');
+  d.innerHTML=`
+    <div class="detail-header">
+      <div style="flex:1">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
+          <div class="person-av" style="${av(c.name)};width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600">${initials(c.name)}</div>
+          <div><div style="font-weight:600;font-size:15px">${c.name}</div><div style="font-size:12px;color:var(--text2)">${c.role}${c.seniority?` · ${c.seniority}`:''}</div></div>
+        </div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">${stagePill(c.stage)}${candStatusPill(c.candStatus)}${c.specialty?`<span class="pill pill-gray">${c.specialty}</span>`:''}</div>
+      </div>
+      <div style="display:flex;gap:4px;align-items:flex-start">
+        <button class="btn btn-sm btn-secondary" onclick="showEditCandModal('${c.id}')">Edit</button>
+        <button class="detail-close" onclick="closeCandDetail()">×</button>
+      </div>
+    </div>
+    <div class="detail-body">
+      <div class="detail-section">
+        <div class="detail-section-title">Details</div>
+        <div class="detail-row"><span class="detail-key">Employment Type</span><span class="detail-val">${c.empType||'—'}</span></div>
+        <div class="detail-row"><span class="detail-key">Compensation</span><span class="detail-val">${compDisplay(c)}</span></div>
+        <div class="detail-row"><span class="detail-key">Source</span><span class="detail-val">${c.source||'—'}</span></div>
+        ${c.client?`<div class="detail-row"><span class="detail-key">Client</span><span class="detail-val">${c.client}</span></div>`:''}
+        <div class="detail-row"><span class="detail-key">Location</span><span class="detail-val">${locDisplay(c)}</span></div>
+        <div class="detail-row"><span class="detail-key">Added</span><span class="detail-val">${relTime(c.addedAt)}</span></div>
+        <div class="detail-row"><span class="detail-key">Last Updated</span><span class="detail-val">${relTime(c.updatedAt)}</span></div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Resume</div>
+        ${c.resumeLink?`<a href="${c.resumeLink}" target="_blank" style="font-size:13px;color:var(--accent)">View on SharePoint ↗</a>`:`<div style="display:flex;gap:8px;align-items:center"><span style="font-size:12px;color:var(--text3)">No resume linked</span><button class="btn-link" style="font-size:12px" onclick="showEditCandModal('${c.id}')">Add link</button></div>`}
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Notes <button class="btn-link" style="font-size:11px" onclick="showEditCandModal('${c.id}')">Edit</button></div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.6">${c.notes||'No notes yet.'}</p>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Stage</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">${STAGES.map(s=>`<button class="btn btn-sm ${s===c.stage?'btn-primary':'btn-secondary'}" onclick="moveStage('${c.id}','${s}')">${s}</button>`).join('')}</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Status</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">${getList('candStatus').map(s=>`<button class="btn btn-sm ${s===c.candStatus?'btn-primary':'btn-secondary'}" onclick="setCandStatus('${c.id}','${s}')">${s}</button>`).join('')}</div>
+      </div>
+      <div class="detail-section">
+        <div class="detail-section-title">Interviews (${ivs.length}) <button class="btn btn-sm btn-primary" onclick="showAddIvModal('${c.id}')">+ Add</button></div>
+        ${ivs.length?ivs.map(iv=>`<div class="interview-card">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+            <div><div style="font-weight:500;font-size:13px">${iv.date}</div><div style="font-size:12px;color:var(--text2)">${iv.interviewers||'—'}</div></div>
+            <div style="display:flex;align-items:center;gap:8px">${scoreDisplay(iv.score)}<button class="btn-ghost btn-sm" style="color:var(--red);padding:4px 6px" onclick="deleteIv('${iv.id}','${c.id}')">✕</button></div>
+          </div>
+          ${iv.notes?`<p style="font-size:12px;color:var(--text2);line-height:1.5">${iv.notes}</p>`:''}</div>`).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">No interviews logged yet</div>'}
+      </div>
+    </div>`;
+}
+
+function closeCandDetail(){selectedCandId=null;const d=document.getElementById('cand-detail');if(d)d.classList.remove('open');refreshHiringView();}
+
+async function moveStage(id,stage){
+  const c=DB.candidates.find(x=>x.id===id);if(!c)return;
+  if(stage==='hired'){
+    // Only show promote form if they haven't already been promoted to an employee
+    const alreadyEmployee=DB.employees.find(e=>e.name===c.name);
+    if(!alreadyEmployee){promoteCandidate(id);return;}
+    // Already promoted — just update stage/status silently
+    c.stage=stage;c.candStatus='Hired';touch(c);
+    await save('candidates');showToast(`${c.name} → hired`);renderCandDetail(id);refreshHiringView();
+    return;
+  }
+  c.stage=stage;touch(c);
+  DB.activities.unshift({id:uid(),type:'stage',desc:`${c.name} moved to ${stage}`,at:now()});
+  await save('candidates');await save('activities');
+  showToast(`${c.name} → ${stage}`);renderCandDetail(id);refreshHiringView();
+}
+
+async function setCandStatus(id,status){
+  const c=DB.candidates.find(x=>x.id===id);if(!c)return;
+  if(status==='Hired'){promoteCandidate(id);return;}
+  c.candStatus=status;touch(c);
+  await save('candidates');
+  showToast(`Status → ${status}`);renderCandDetail(id);refreshHiringView();
+}
+
+function showAddIvModal(candId){
+  const c=DB.candidates.find(x=>x.id===candId);
+  showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Log Interview — ${c.name}</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
+    <div class="form-row"><div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="iv-date" value="${today()}"/></div><div class="form-group"><label class="form-label">Score</label><select class="form-input form-select" id="iv-score"><option value="">— No score —</option>${[1,2,3,4,5].map(n=>`<option value="${n}">${n} — ${SCORE_LABELS[n]}</option>`).join('')}</select></div></div>
+    <div class="form-group"><label class="form-label">Interviewer(s)</label><input class="form-input" id="iv-int" placeholder="Jordan Lee, Nina Patel"/></div>
+    <div class="form-group"><label class="form-label">Notes / Comments</label><textarea class="form-input" id="iv-notes" rows="4" placeholder="Key observations, strengths, concerns..."></textarea></div>
+  </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addIv('${candId}')">Save Interview</button></div></div>`);
+}
+
+async function addIv(candId){
+  const date=document.getElementById('iv-date').value;if(!date){showToast('Date required');return;}
+  const c=DB.candidates.find(x=>x.id===candId);
+  const iv={id:uid(),candidateId:candId,date,interviewers:document.getElementById('iv-int').value,score:document.getElementById('iv-score').value,notes:document.getElementById('iv-notes').value};
+  DB.interviews.push(iv);touch(c);
+  DB.activities.unshift({id:uid(),type:'interview',desc:`Interview logged for ${c.name}`,at:now()});
+  await save('interviews');await save('candidates');await save('activities');
+  closeModal();showToast('Interview saved');renderCandDetail(candId);refreshHiringView();
+}
+
+async function deleteIv(ivId,candId){
+  DB.interviews=DB.interviews.filter(x=>x.id!==ivId);
+  await save('interviews');showToast('Removed');renderCandDetail(candId);
+}
+
+function showAddCandModal(){
+  const statuses=getList('candStatus');const specs=getList('specialty');const sources=getList('source');const sens=getList('seniority');const etypes=getList('empType');
+  showModal(`<div class="modal modal-lg"><div class="modal-header"><div class="modal-title">Add Candidate</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
+    <div class="form-row"><div class="form-group"><label class="form-label">First Name</label><input class="form-input" id="cfn" placeholder="Jane"/></div><div class="form-group"><label class="form-label">Last Name</label><input class="form-input" id="cln" placeholder="Smith"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Role</label><input class="form-input" id="crole" placeholder="Software Engineer"/></div><div class="form-group"><label class="form-label">Seniority</label>${fmtSelect(sens,'Mid','csen')}</div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Specialty</label>${fmtSelect(specs,'Engineering','cspec')}</div><div class="form-group"><label class="form-label">Source</label>${fmtSelect(sources,'LinkedIn','csrc')}</div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Status</label>${fmtSelect(statuses,'Active','cstat')}</div><div class="form-group"><label class="form-label">Employment Type</label>${fmtSelect(etypes,'FTE','cetype')}</div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Comp Type</label><select class="form-input form-select" id="cctype"><option value="salary">Salary (annual)</option><option value="hourly">Hourly</option></select></div><div class="form-group"><label class="form-label">Amount ($)</label><input type="number" class="form-input" id="ccomp" placeholder="120000"/></div></div>
+    <div class="form-row-3"><div class="form-group"><label class="form-label">City</label><input class="form-input" id="ccity" placeholder="San Francisco"/></div><div class="form-group"><label class="form-label">State</label><input class="form-input" id="cstate" placeholder="CA"/></div><div class="form-group"><label class="form-label">Country</label><input class="form-input" id="ccountry" value="US"/></div></div>
+    <div class="form-group"><label class="form-label">Client (optional)</label><input class="form-input" id="cclient"/></div>
+    <div class="form-group"><label class="form-label">Resume Link (SharePoint)</label><input class="form-input" id="cresume" placeholder="https://..."/></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="cnotes" rows="3"></textarea></div>
+  </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addCand()">Add Candidate</button></div></div>`);
+}
+
+async function addCand(){
+  const fn=document.getElementById('cfn').value.trim(),ln=document.getElementById('cln').value.trim();
+  if(!fn||!ln){showToast('Name required');return;}
+  const nc={id:uid(),name:`${fn} ${ln}`,role:document.getElementById('crole').value||'TBD',seniority:document.getElementById('csen').value,specialty:document.getElementById('cspec').value,source:document.getElementById('csrc').value,stage:'sourced',candStatus:document.getElementById('cstat').value,empType:document.getElementById('cetype').value,compType:document.getElementById('cctype').value,compAmount:document.getElementById('ccomp').value,city:document.getElementById('ccity').value,state:document.getElementById('cstate').value,country:document.getElementById('ccountry').value,client:document.getElementById('cclient').value,resumeLink:document.getElementById('cresume').value,addedAt:now(),updatedAt:now(),notes:document.getElementById('cnotes').value};
+  DB.candidates.push(nc);
+  DB.activities.unshift({id:uid(),type:'add',desc:`${nc.name} added to pipeline`,at:now()});
+  await save('candidates');await save('activities');
+  closeModal();showToast(`${nc.name} added`);refreshHiringView();
+}
+
+function showEditCandModal(id){
+  const c=DB.candidates.find(x=>x.id===id);
+  const statuses=getList('candStatus');const specs=getList('specialty');const sources=getList('source');const sens=getList('seniority');const etypes=getList('empType');
+  showModal(`<div class="modal modal-lg"><div class="modal-header"><div class="modal-title">Edit — ${c.name}</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
+    <div class="form-row"><div class="form-group"><label class="form-label">Role</label><input class="form-input" id="er" value="${c.role}"/></div><div class="form-group"><label class="form-label">Seniority</label>${fmtSelect(sens,c.seniority,'esen')}</div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Specialty</label>${fmtSelect(specs,c.specialty,'espec')}</div><div class="form-group"><label class="form-label">Source</label>${fmtSelect(sources,c.source,'esrc')}</div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Status</label>${fmtSelect(statuses,c.candStatus,'estat')}</div><div class="form-group"><label class="form-label">Employment Type</label>${fmtSelect(etypes,c.empType,'eetype')}</div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Comp Type</label><select class="form-input form-select" id="ectype"><option value="salary"${c.compType==='salary'?' selected':''}>Salary</option><option value="hourly"${c.compType==='hourly'?' selected':''}>Hourly</option></select></div><div class="form-group"><label class="form-label">Amount ($)</label><input type="number" class="form-input" id="ecomp" value="${c.compAmount||''}"/></div></div>
+    <div class="form-row-3"><div class="form-group"><label class="form-label">City</label><input class="form-input" id="ecity" value="${c.city||''}"/></div><div class="form-group"><label class="form-label">State</label><input class="form-input" id="estate" value="${c.state||''}"/></div><div class="form-group"><label class="form-label">Country</label><input class="form-input" id="ecountry" value="${c.country||'US'}"/></div></div>
+    <div class="form-group"><label class="form-label">Client</label><input class="form-input" id="eclient" value="${c.client||''}"/></div>
+    <div class="form-group"><label class="form-label">Resume Link</label><input class="form-input" id="eresume" value="${c.resumeLink||''}"/></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="enotes" rows="4">${c.notes||''}</textarea></div>
+  </div><div class="modal-footer"><button class="btn btn-danger btn-sm" style="margin-right:auto" onclick="deleteCand('${c.id}')">Delete</button><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEditCand('${c.id}')">Save Changes</button></div></div>`);
+}
+
+async function saveEditCand(id){
+  const c=DB.candidates.find(x=>x.id===id);
+  c.role=document.getElementById('er').value;c.seniority=document.getElementById('esen').value;
+  c.specialty=document.getElementById('espec').value;c.source=document.getElementById('esrc').value;
+  c.candStatus=document.getElementById('estat').value;c.empType=document.getElementById('eetype').value;
+  c.compType=document.getElementById('ectype').value;c.compAmount=document.getElementById('ecomp').value;
+  c.city=document.getElementById('ecity').value;c.state=document.getElementById('estate').value;c.country=document.getElementById('ecountry').value;
+  c.client=document.getElementById('eclient').value;c.resumeLink=document.getElementById('eresume').value;c.notes=document.getElementById('enotes').value;
+  touch(c);await save('candidates');closeModal();showToast('Saved');renderCandDetail(id);refreshHiringView();
+}
+
+async function deleteCand(id){
+  if(!confirm('Delete this candidate?'))return;
+  DB.candidates=DB.candidates.filter(x=>x.id!==id);DB.interviews=DB.interviews.filter(x=>x.candidateId!==id);
+  await save('candidates');await save('interviews');
+  closeModal();closeCandDetail();showToast('Candidate deleted');refreshHiringView();
+}
+
+function promoteCandidate(id){
+  const c=DB.candidates.find(x=>x.id===id);
+  const autoEmail=c.name.split(' ')[0].toLowerCase()+'@vtwo.co';
+  showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Promote to Employee</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Promoting <strong>${c.name}</strong> to employee. They will appear in the Directory and be marked Hired in Hiring.</p>
+    <div class="form-row"><div class="form-group"><label class="form-label">Department</label><select class="form-input form-select" id="pdept"><option>Engineering</option><option>Design</option><option>Product</option><option>Data</option><option>Operations</option></select></div><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="pstart" value="${new Date(Date.now()+7*86400000).toISOString().split('T')[0]}"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Manager</label><select class="form-input form-select" id="pmgr"><option value="">(none)</option>${DB.employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Work Location</label><input class="form-input" id="ploc" value="${c.city||'Remote'}"/></div></div>
+    <div class="form-group"><label class="form-label">Work Email</label><input class="form-input" id="pemail" value="${autoEmail}" placeholder="${autoEmail}"/></div>
+  </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="doPromote('${id}')">Confirm & Promote</button></div></div>`);
+}
+
+async function doPromote(id){
+  const c=DB.candidates.find(x=>x.id===id);
+  c.candStatus='Hired';c.stage='hired';touch(c);
+  const mgrId=document.getElementById('pmgr').value;
+  const mgr=DB.employees.find(x=>x.id===mgrId);
+  const email=document.getElementById('pemail').value.trim()||c.name.split(' ')[0].toLowerCase()+'@vtwo.co';
+  const ne={id:uid(),name:c.name,role:c.role,dept:document.getElementById('pdept').value,status:'onboarding',location:document.getElementById('ploc').value,city:c.city||'',state:c.state||'',country:c.country||'US',manager:mgr?mgr.name:'TBD',startDate:document.getElementById('pstart').value,email,phone:'—'};
+  DB.employees.push(ne);
+  DB.activities.unshift({id:uid(),type:'hire',desc:`${c.name} promoted to employee`,at:now()});
+  await save('candidates');await save('employees');await save('activities');
+  closeModal();showToast(`${c.name} promoted — now in Directory`);renderCandDetail(id);refreshHiringView();
+}
+
+// ── DIRECTORY ─────────────────────────────────────────────────────────────────
+let selectedEmpId=null;
+let empSort={col:'name',dir:1};
+
+function renderDirectory(){
+  const p=document.getElementById('page');p.style.cssText='flex:1;overflow:hidden;display:flex;flex-direction:column;padding:0';
+  p.innerHTML=`
+    <div style="padding:20px 24px 0;background:var(--surface);border-bottom:1px solid var(--border)">
+      <div class="page-header" style="margin-bottom:12px">
+        <div><div class="page-title">Directory</div><div class="page-subtitle">${DB.employees.length} employees</div></div>
+        <button class="btn btn-primary" onclick="showAddEmpModal()">+ Add Employee</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;padding-bottom:12px">
+        <div class="filter-search"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input placeholder="Search name, role, city..." oninput="filterEmps(this.value)" id="emp-search"/></div>
+        <select class="filter-select" onchange="filterEmpStatus(this.value)"><option value="">All statuses</option><option>active</option><option>onboarding</option><option>offboarding</option></select>
+        <select class="filter-select" onchange="filterEmpDept(this.value)" id="dept-filter"><option value="">All departments</option>${[...new Set(DB.employees.map(e=>e.dept))].filter(Boolean).map(d=>`<option>${d}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div style="flex:1;display:flex;overflow:hidden">
+      <div style="flex:1;overflow-y:auto" id="emp-list">
+        <div class="table-wrap" style="border-radius:0;border-left:0;border-right:0">
+          <table><thead><tr>
+            ${['name','role','dept','status','location','startDate','manager'].map(col=>`<th onclick="empSortBy('${col}')" class="${empSort.col===col?'sorted':''}">${{name:'Employee',role:'Role',dept:'Dept',status:'Status',location:'Location',startDate:'Start Date',manager:'Manager'}[col]}${empSort.col===col?`<span class="sort-arrow">${empSort.dir===1?'↑':'↓'}</span>`:''}</th>`).join('')}
+          </tr></thead>
+          <tbody id="emp-tbody">${empRows(DB.employees)}</tbody></table>
+        </div>
+      </div>
+      <div class="split-detail" id="emp-detail"></div>
+    </div>`;
+}
+
+let empFilterQ='',empFilterStatus='',empFilterDept='';
+function filterEmps(q){empFilterQ=q;refreshEmpTable();}
+function filterEmpStatus(v){empFilterStatus=v;refreshEmpTable();}
+function filterEmpDept(v){empFilterDept=v;refreshEmpTable();}
+function empSortBy(col){if(empSort.col===col)empSort.dir*=-1;else{empSort.col=col;empSort.dir=1;}refreshEmpTable();}
+
+function refreshEmpTable(){
+  let list=[...DB.employees];
+  if(empFilterQ){const q=empFilterQ.toLowerCase();list=list.filter(e=>e.name.toLowerCase().includes(q)||e.role.toLowerCase().includes(q)||(e.city||e.location||'').toLowerCase().includes(q));}
+  if(empFilterStatus)list=list.filter(e=>e.status===empFilterStatus);
+  if(empFilterDept)list=list.filter(e=>e.dept===empFilterDept);
+  list.sort((a,b)=>(a[empSort.col]||'').localeCompare(b[empSort.col]||'')*empSort.dir);
+  const tb=document.getElementById('emp-tbody');if(tb)tb.innerHTML=empRows(list);
+}
+
+function empRows(list){
+  return list.map(e=>`<tr class="clickable${selectedEmpId===e.id?' selected':''}" onclick="selectEmp('${e.id}')">
+    <td>${personCell(e.name,e.email)}</td><td>${e.role}</td><td>${e.dept||'—'}</td>
+    <td>${statusPill(e.status)}</td><td>${e.city||e.location||'—'}</td><td>${e.startDate||'—'}</td><td>${e.manager||'—'}</td>
+  </tr>`).join('');
+}
+
+function selectEmp(id){
+  selectedEmpId=id;refreshEmpTable();
+  const e=DB.employees.find(x=>x.id===id);const d=document.getElementById('emp-detail');if(!d||!e)return;
+  d.classList.add('open');
+  const empDevs=DB.assignments.filter(a=>a.employeeId===id&&a.status==='active').map(a=>getDev(a.deviceId));
+  d.innerHTML=`<div class="detail-header">
+    <div style="display:flex;align-items:center;gap:10px">
+      <div class="person-av" style="${av(e.name)};width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600">${initials(e.name)}</div>
+      <div><div style="font-weight:600;font-size:15px">${e.name}</div><div style="font-size:12px;color:var(--text2)">${e.role} · ${e.dept||''}</div></div>
+    </div>
+    <div style="display:flex;gap:4px"><button class="btn btn-sm btn-secondary" onclick="showEditEmpModal('${e.id}')">Edit</button><button class="detail-close" onclick="closeEmpDetail()">×</button></div>
+  </div>
+  <div class="detail-body">
+    <div class="detail-section"><div class="detail-section-title">Info</div>
+      <div class="detail-row"><span class="detail-key">Status</span>${statusPill(e.status)}</div>
+      <div class="detail-row"><span class="detail-key">Manager</span><span class="detail-val">${e.manager||'—'}</span></div>
+      <div class="detail-row"><span class="detail-key">Location</span><span class="detail-val">${[e.city,e.state,e.country].filter(Boolean).join(', ')||e.location||'—'}</span></div>
+      <div class="detail-row"><span class="detail-key">Email</span><span class="detail-val" style="font-size:12px">${e.email||'—'}</span></div>
+      <div class="detail-row"><span class="detail-key">Phone</span><span class="detail-val">${e.phone||'—'}</span></div>
+      <div class="detail-row"><span class="detail-key">Start Date</span><span class="detail-val">${e.startDate||'—'}</span></div>
+    </div>
+    <div class="detail-section"><div class="detail-section-title">Devices (${empDevs.length})</div>
+      ${empDevs.length?empDevs.map(dv=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)"><span>${dv.name}</span><span class="pill pill-gray" style="font-size:10px;font-family:var(--mono)">${dv.serial}</span></div>`).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">No devices assigned</div>'}
+    </div>
+  </div>`;
+}
+
+function closeEmpDetail(){selectedEmpId=null;const d=document.getElementById('emp-detail');if(d)d.classList.remove('open');}
+
+function showAddEmpModal(){
+  showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Add Employee</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
+    <div class="form-row"><div class="form-group"><label class="form-label">First Name</label><input class="form-input" id="efn"/></div><div class="form-group"><label class="form-label">Last Name</label><input class="form-input" id="eln"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Role</label><input class="form-input" id="erole"/></div><div class="form-group"><label class="form-label">Department</label><select class="form-input form-select" id="edept"><option>Engineering</option><option>Design</option><option>Product</option><option>Data</option><option>Operations</option></select></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="estart"/></div><div class="form-group"><label class="form-label">Manager</label><select class="form-input form-select" id="emgr"><option value="">(none)</option>${DB.employees.map(e=>`<option value="${e.name}">${e.name}</option>`).join('')}</select></div></div>
+    <div class="form-row-3"><div class="form-group"><label class="form-label">City</label><input class="form-input" id="ecity2"/></div><div class="form-group"><label class="form-label">State</label><input class="form-input" id="estate2"/></div><div class="form-group"><label class="form-label">Country</label><input class="form-input" id="ecountry2" value="US"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Email</label><input class="form-input" id="eemail"/></div><div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="ephone"/></div></div>
+  </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addEmp()">Add Employee</button></div></div>`);
+}
+
+async function addEmp(){
+  const fn=document.getElementById('efn').value.trim(),ln=document.getElementById('eln').value.trim();
+  if(!fn||!ln){showToast('Name required');return;}
+  const city=document.getElementById('ecity2').value;
+  const ne={id:uid(),name:`${fn} ${ln}`,role:document.getElementById('erole').value||'TBD',dept:document.getElementById('edept').value,status:'active',location:city||'Remote',city,state:document.getElementById('estate2').value,country:document.getElementById('ecountry2').value,manager:document.getElementById('emgr').value,startDate:document.getElementById('estart').value||'TBD',email:document.getElementById('eemail').value||fn.toLowerCase()+'@vtwo.co',phone:document.getElementById('ephone').value||'—'};
+  DB.employees.push(ne);
+  DB.activities.unshift({id:uid(),type:'hire',desc:`${ne.name} added to directory`,at:now()});
+  await save('employees');await save('activities');closeModal();showToast(`${ne.name} added`);renderDirectory();
+}
+
+function showEditEmpModal(id){
+  const e=DB.employees.find(x=>x.id===id);
+  showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Edit — ${e.name}</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
+    <div class="form-row"><div class="form-group"><label class="form-label">Role</label><input class="form-input" id="eer" value="${e.role}"/></div><div class="form-group"><label class="form-label">Department</label><select class="form-input form-select" id="eedept"><option${e.dept==='Engineering'?' selected':''}>Engineering</option><option${e.dept==='Design'?' selected':''}>Design</option><option${e.dept==='Product'?' selected':''}>Product</option><option${e.dept==='Data'?' selected':''}>Data</option><option${e.dept==='Operations'?' selected':''}>Operations</option></select></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Status</label><select class="form-input form-select" id="eestat"><option${e.status==='active'?' selected':''}>active</option><option${e.status==='onboarding'?' selected':''}>onboarding</option><option${e.status==='offboarding'?' selected':''}>offboarding</option></select></div><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="eestart" value="${e.startDate||''}"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Manager</label><input class="form-input" id="eemgr" value="${e.manager||''}"/></div><div class="form-group"><label class="form-label">Email</label><input class="form-input" id="eeemail" value="${e.email||''}"/></div></div>
+    <div class="form-row-3"><div class="form-group"><label class="form-label">City</label><input class="form-input" id="eecity" value="${e.city||''}"/></div><div class="form-group"><label class="form-label">State</label><input class="form-input" id="eestate" value="${e.state||''}"/></div><div class="form-group"><label class="form-label">Country</label><input class="form-input" id="eecountry" value="${e.country||'US'}"/></div></div>
+  </div><div class="modal-footer"><button class="btn btn-danger btn-sm" style="margin-right:auto" onclick="deleteEmp('${e.id}')">Delete</button><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEditEmp('${e.id}')">Save</button></div></div>`);
+}
+
+async function saveEditEmp(id){
+  const e=DB.employees.find(x=>x.id===id);
+  e.role=document.getElementById('eer').value;e.dept=document.getElementById('eedept').value;
+  e.status=document.getElementById('eestat').value;e.startDate=document.getElementById('eestart').value;
+  e.manager=document.getElementById('eemgr').value;e.email=document.getElementById('eeemail').value;
+  e.city=document.getElementById('eecity').value;e.state=document.getElementById('eestate').value;e.country=document.getElementById('eecountry').value;
+  e.location=e.city||'Remote';
+  await save('employees');closeModal();showToast('Saved');selectEmp(id);refreshEmpTable();
+}
+
+async function deleteEmp(id){
+  if(!confirm('Delete this employee? Their device assignments and onboarding runs will also be removed.'))return;
+  DB.employees=DB.employees.filter(x=>x.id!==id);
+  // Clean up device assignments — return devices to available
+  DB.assignments.filter(a=>a.employeeId===id&&a.status==='active').forEach(a=>{
+    const d=DB.devices.find(x=>x.id===a.deviceId);if(d){d.status='available';d.assignedTo='';}
+    a.status='returned';
+  });
+  // Clean up onboarding runs
+  const runIds=DB.onboardingRuns.filter(r=>r.employeeId===id).map(r=>r.id);
+  DB.onboardingRuns=DB.onboardingRuns.filter(r=>r.employeeId!==id);
+  DB.runTasks=DB.runTasks.filter(t=>!runIds.includes(t.runId));
+  await save('employees');await save('assignments');await save('devices');await save('onboardingRuns');await save('runTasks');
+  closeModal();closeEmpDetail();showToast('Employee deleted');renderDirectory();
+}
+
+// ── ONBOARDING ────────────────────────────────────────────────────────────────
+function renderOnboarding(){
+  const p=document.getElementById('page');
+  const active=DB.onboardingRuns.filter(r=>r.type==='onboarding'&&r.status==='active');
+  p.innerHTML=`<div class="page-header"><div><div class="page-title">Onboarding</div><div class="page-subtitle">${active.length} run${active.length!==1?'s':''} active</div></div><button class="btn btn-primary" onclick="showStartRunModal('onboarding')">+ Start Run</button></div>
+  ${active.length?active.map(run=>{
+    const e=getEmp(run.employeeId);const rt=getRunTasks(run.id);
+    const done=rt.filter(t=>t.status==='completed').length;const pct=rt.length?Math.round(done/rt.length*100):0;
+    return`<div class="run-card" onclick="openRunDetail('${run.id}')">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">${personCell(e.name,`Starts ${run.startDate}`)}<div style="text-align:right"><div style="font-size:12px;font-weight:600;color:var(--accent)">${pct}%</div><div style="font-size:11px;color:var(--text3)">${done}/${rt.length} tasks</div></div></div>
+      <div class="run-progress-wrap"><div class="run-progress-fill" style="width:${pct}%"></div></div>
+      <div style="display:flex;flex-direction:column;gap:5px">${rt.slice(0,4).map(t=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--text2)"><div class="task-check${t.status==='completed'?' done':''}">${t.status==='completed'?'✓':''}</div><span>${t.name}</span><span style="margin-left:auto;font-size:11px;color:var(--text3)">${t.dueDate}</span></div>`).join('')}</div>
+    </div>`;
+  }).join(''):renderEmpty('No onboarding runs','Start a run when a new hire is confirmed')}`;
+}
+
+function showStartRunModal(type){
+  showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Start ${type} Run</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
+    <div class="form-group"><label class="form-label">Employee</label><select class="form-input form-select" id="run-emp">${DB.employees.map(e=>`<option value="${e.id}">${e.name} — ${e.role}</option>`).join('')}</select></div>
+    <div class="form-group"><label class="form-label">Track Template</label><select class="form-input form-select" id="run-track">${DB.tracks.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}</select></div>
+    <div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="run-start" value="${today()}"/></div>
+  </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="startRun('${type}')">Start Run</button></div></div>`);
+}
+
+async function startRun(type){
+  const empId=document.getElementById('run-emp').value;const trackId=document.getElementById('run-track').value;const startDate=document.getElementById('run-start').value;
+  const runId=uid();
+  DB.onboardingRuns.push({id:runId,employeeId:empId,trackId,type,status:'active',startDate});
+  const newTasks=getTrackTasks(trackId).map(tt=>{const due=new Date(startDate);due.setDate(due.getDate()+parseInt(tt.dueDaysOffset||0));return{id:uid(),runId,name:tt.name,ownerRole:tt.ownerRole,status:'pending',dueDate:due.toISOString().split('T')[0]};});
+  DB.runTasks.push(...newTasks);
+  await save('onboardingRuns');await save('runTasks');
+  closeModal();showToast('Run started');renderOnboarding();
+}
+
+function openRunDetail(id){
+  const run=DB.onboardingRuns.find(r=>r.id===id);const e=getEmp(run.employeeId);const rt=getRunTasks(id);const done=rt.filter(t=>t.status==='completed').length;
+  showModal(`<div class="modal" style="max-width:560px"><div class="modal-header"><div class="modal-title">${e.name} — ${run.type}</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Start: ${run.startDate} · ${done}/${rt.length} complete</p>
+    ${rt.map(t=>`<div style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;cursor:pointer" onclick="toggleRunTask('${run.id}','${t.id}')">
+      <div class="task-check${t.status==='completed'?' done':''}">${t.status==='completed'?'✓':''}</div>
+      <div style="flex:1"><div style="font-size:13px;font-weight:${t.status==='completed'?'400':'500'};text-decoration:${t.status==='completed'?'line-through':''};color:${t.status==='completed'?'var(--text3)':'var(--text)'}">${t.name}</div><div style="font-size:11px;color:var(--text3)">${t.ownerRole} · Due ${t.dueDate}</div></div>
+      ${statusPill(t.status)}
+    </div>`).join('')}
+  </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Close</button></div></div>`);
+}
+
+async function toggleRunTask(runId,taskId){
+  const t=DB.runTasks.find(x=>x.id===taskId);if(!t)return;
+  t.status=t.status==='completed'?'pending':'completed';
+  await save('runTasks');showToast(t.status==='completed'?'Complete ✓':'Reopened');openRunDetail(runId);
+  if(currentPage==='onboarding')renderOnboarding();
+}
+
+// ── OFFBOARDING ───────────────────────────────────────────────────────────────
+function renderOffboarding(){
+  const p=document.getElementById('page');
+  const active=DB.onboardingRuns.filter(r=>r.type==='offboarding'&&r.status==='active');
+  p.innerHTML=`<div class="page-header"><div><div class="page-title">Offboarding</div><div class="page-subtitle">${active.length} active</div></div><button class="btn btn-primary" onclick="showStartRunModal('offboarding')">+ Start Run</button></div>
+  ${active.length?active.map(run=>{
+    const e=getEmp(run.employeeId);const rt=getRunTasks(run.id);const done=rt.filter(t=>t.status==='completed').length;const pct=rt.length?Math.round(done/rt.length*100):0;
+    return`<div class="run-card" onclick="openRunDetail('${run.id}')">${personCell(e.name)}<div class="run-progress-wrap" style="margin-top:10px"><div class="run-progress-fill" style="width:${pct}%"></div></div><div style="font-size:12px;color:var(--text3)">${done}/${rt.length} tasks</div></div>`;
+  }).join(''):renderEmpty('No offboarding runs','Start a run when an employee is departing')}`;
+}
+
+// ── INVENTORY ─────────────────────────────────────────────────────────────────
+function renderInventory(){
+  const p=document.getElementById('page');const avail=DB.devices.filter(d=>d.status==='available').length;
+  p.innerHTML=`<div class="page-header"><div><div class="page-title">Device Inventory</div><div class="page-subtitle">${DB.devices.length} devices · ${avail} available</div></div><button class="btn btn-primary" onclick="showAddDeviceModal()">+ Add Device</button></div>
+  <div style="display:flex;gap:8px;margin-bottom:20px">
+    <button class="btn btn-secondary btn-sm" onclick="filterDevs('')">All (${DB.devices.length})</button>
+    <button class="btn btn-secondary btn-sm" onclick="filterDevs('available')">Available (${avail})</button>
+    <button class="btn btn-secondary btn-sm" onclick="filterDevs('assigned')">Assigned (${DB.devices.filter(d=>d.status==='assigned').length})</button>
+  </div>
+  <div class="device-grid" id="device-grid">${devCards(DB.devices)}</div>`;
+}
+
+const typeEmoji={laptop:'💻',monitor:'🖥️',phone:'📱',keyboard:'⌨️',mouse:'🖱️'};
+function devCards(list){return list.map(d=>`<div class="device-card" onclick="showDevDetail('${d.id}')"><div style="font-size:24px;margin-bottom:10px">${typeEmoji[d.type]||'📦'}</div><div style="font-weight:600;font-size:14px;margin-bottom:2px">${d.name}</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:8px">${d.serial}</div><div style="display:flex;align-items:center;justify-content:space-between">${statusPill(d.status)}${d.assignedTo?`<span style="font-size:12px;color:var(--text2)">${getEmp(d.assignedTo).name.split(' ')[0]}</span>`:''}</div></div>`).join('');}
+function filterDevs(s){const list=s?DB.devices.filter(d=>d.status===s):DB.devices;const g=document.getElementById('device-grid');if(g)g.innerHTML=devCards(list);}
+
+function showDevDetail(id){
+  const d=DB.devices.find(x=>x.id===id);const a=d.assignedTo?getEmp(d.assignedTo):null;
+  showModal(`<div class="modal"><div class="modal-header"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:24px">${typeEmoji[d.type]||'📦'}</span><div><div class="modal-title">${d.name}</div><div style="font-size:12px;color:var(--text2);font-family:var(--mono)">${d.serial}</div></div></div><button class="detail-close" onclick="closeModal()">×</button></div>
+  <div class="modal-body">
+    <div class="detail-row"><span class="detail-key">Make / Model</span><span class="detail-val">${d.make} ${d.model}</span></div>
+    <div class="detail-row"><span class="detail-key">Status</span>${statusPill(d.status)}</div>
+    <div class="detail-row"><span class="detail-key">Condition</span><span class="detail-val">${d.condition}</span></div>
+    <div class="detail-row"><span class="detail-key">Purchased</span><span class="detail-val">${d.purchaseDate}</span></div>
+    ${a?`<div class="detail-row"><span class="detail-key">Assigned To</span><span class="detail-val">${a.name}</span></div>`:''}
+  </div>
+  <div class="modal-footer">${d.status==='available'?`<button class="btn btn-primary" onclick="showAssignModal('${d.id}')">Assign to Employee</button>`:`<button class="btn btn-danger" onclick="returnDevice('${d.id}')">Return Device</button>`}<button class="btn btn-secondary" onclick="closeModal()">Close</button></div></div>`);
+}
+
+function showAssignModal(devId){
+  closeModal();
+  const d=DB.devices.find(x=>x.id===devId);
+  // Show all employees; flag ones who already have a device of same type
+  const empOptions=DB.employees.map(e=>{
+    const hasType=DB.assignments.filter(a=>a.employeeId===e.id&&a.status==='active').some(a=>{const dv=getDev(a.deviceId);return dv.type===d.type;});
+    return`<option value="${e.id}">${e.name} — ${e.role}${hasType?' (already has '+d.type+')':''}</option>`;
+  }).join('');
+  showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Assign ${d.name}</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body"><div class="form-group"><label class="form-label">Employee</label><select class="form-input form-select" id="ae">${empOptions}</select></div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="assignDev('${devId}')">Assign</button></div></div>`);
+}
+
+async function assignDev(devId){
+  const empId=document.getElementById('ae').value;const d=DB.devices.find(x=>x.id===devId);const e=DB.employees.find(x=>x.id===empId);
+  d.status='assigned';d.assignedTo=empId;
+  DB.assignments.push({id:uid(),employeeId:empId,deviceId:devId,assignedAt:now(),status:'active'});
+  DB.activities.unshift({id:uid(),type:'device',desc:`${d.name} assigned to ${e.name}`,at:now()});
+  await save('devices');await save('assignments');await save('activities');
+  closeModal();showToast(`${d.name} → ${e.name}`);renderInventory();
+}
+
+async function returnDevice(devId){
+  const d=DB.devices.find(x=>x.id===devId);d.status='available';d.assignedTo='';
+  const i=DB.assignments.findIndex(a=>a.deviceId===devId&&a.status==='active');if(i>=0)DB.assignments[i].status='returned';
+  await save('devices');await save('assignments');closeModal();showToast('Device returned');renderInventory();
+}
+
+function showAddDeviceModal(){
+  showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Add Device</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
+    <div class="form-row"><div class="form-group"><label class="form-label">Make</label><input class="form-input" id="dmk" placeholder="Apple"/></div><div class="form-group"><label class="form-label">Model</label><input class="form-input" id="dml" placeholder='MacBook Pro 14"'/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="dtp"><option value="laptop">Laptop</option><option value="monitor">Monitor</option><option value="phone">Phone</option><option value="keyboard">Keyboard</option><option value="mouse">Mouse</option></select></div><div class="form-group"><label class="form-label">Serial #</label><input class="form-input" id="dsr" placeholder="ABC123"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Condition</label><select class="form-input form-select" id="dcond"><option>new</option><option>good</option><option>fair</option><option>poor</option></select></div><div class="form-group"><label class="form-label">Purchase Date</label><input type="date" class="form-input" id="dpurch" value="${today()}"/></div></div>
+  </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addDevice()">Add Device</button></div></div>`);
+}
+
+async function addDevice(){
+  const mk=document.getElementById('dmk').value.trim(),ml=document.getElementById('dml').value.trim();
+  if(!mk||!ml){showToast('Make and model required');return;}
+  const nd={id:uid(),name:`${mk} ${ml}`,type:document.getElementById('dtp').value,make:mk,model:ml,serial:document.getElementById('dsr').value||'N/A',status:'available',assignedTo:'',condition:document.getElementById('dcond').value,purchaseDate:document.getElementById('dpurch').value};
+  DB.devices.push(nd);await save('devices');closeModal();showToast(`${nd.name} added`);renderInventory();
+}
+
+// ── ASSIGNMENTS ───────────────────────────────────────────────────────────────
+function renderAssignments(){
+  const active=DB.assignments.filter(a=>a.status==='active');
+  document.getElementById('page').innerHTML=`<div class="page-header"><div><div class="page-title">Assignments</div><div class="page-subtitle">${active.length} active</div></div></div>
+  <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Device</th><th>Serial</th><th>Assigned</th><th>Status</th></tr></thead>
+  <tbody>${active.map(a=>{const e=getEmp(a.employeeId),d=getDev(a.deviceId);return`<tr><td>${personCell(e.name)}</td><td>${d.name}</td><td style="font-family:var(--mono);font-size:12px">${d.serial||'—'}</td><td>${relTime(a.assignedAt)}</td><td>${statusPill(a.status)}</td></tr>`;}).join('')}</tbody></table></div>`;
+}
+
+// ── TRACKS ────────────────────────────────────────────────────────────────────
+let selectedTrackId=null;
+
+function renderTracks(){
+  const p=document.getElementById('page');p.style.cssText='flex:1;overflow:hidden;display:flex;flex-direction:column;padding:0';
+  if(!selectedTrackId&&DB.tracks.length)selectedTrackId=DB.tracks[0].id;
+  p.innerHTML=`<div style="display:flex;height:100%">
+    <div style="width:260px;border-right:1px solid var(--border);overflow-y:auto;padding:16px;flex-shrink:0">
+      <div style="font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.8px;text-transform:uppercase;margin-bottom:12px;padding:0 4px">Track Templates</div>
+      <div id="track-list">${trackListHTML()}</div>
+      <button class="btn btn-secondary" style="width:100%;margin-top:8px;font-size:12px" onclick="showAddTrackModal()">+ New Track</button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:28px" id="track-detail"></div>
+  </div>`;
+  if(selectedTrackId)renderTrackDetail(selectedTrackId);
+}
+
+function trackListHTML(){return DB.tracks.map(t=>`<div style="padding:10px 12px;border-radius:var(--radius);cursor:pointer;margin-bottom:4px;border:1px solid ${selectedTrackId===t.id?'var(--accent)':'transparent'};background:${selectedTrackId===t.id?'var(--accent-light)':'transparent'}" onclick="selectTrack('${t.id}')"><div style="font-weight:500;font-size:13px;color:${selectedTrackId===t.id?'var(--accent-text)':'var(--text)'}">${t.name}</div><div style="font-size:11px;color:var(--text3);margin-top:2px">${t.type} · ${getTrackTasks(t.id).length} tasks</div></div>`).join('');}
+
+function selectTrack(id){selectedTrackId=id;const tl=document.getElementById('track-list');if(tl)tl.innerHTML=trackListHTML();renderTrackDetail(id);}
+
+function renderTrackDetail(id){
+  const t=DB.tracks.find(x=>x.id===id);const d=document.getElementById('track-detail');if(!d||!t)return;
+  const tasks=getTrackTasks(id);
+  d.innerHTML=`<div class="page-header"><div><div class="page-title">${t.name}</div><div class="page-subtitle">Type: ${t.type} · Auto-apply: ${t.autoApply==='true'||t.autoApply===true?'Yes':'No'}</div></div>
+  <div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm" onclick="showEditTrackModal('${t.id}')">Edit Track</button><button class="btn btn-primary btn-sm" onclick="showStartRunModal('onboarding')">Apply Track</button></div></div>
+  <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px">Tasks (${tasks.length})</div><button class="btn btn-sm btn-secondary" onclick="showAddTaskModal('${t.id}')">+ Add Task</button></div>
+  <div id="task-list">${taskListHTML(t,tasks)}</div></div>`;
+}
+
+function taskListHTML(t,tasks){
+  if(!tasks.length)return`<div style="font-size:12px;color:var(--text3);padding:8px 0">No tasks yet — add one above</div>`;
+  return tasks.map((task,i)=>`<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:${i<tasks.length-1?'1px solid var(--border)':'none'}">
+    <div style="width:22px;height:22px;border-radius:50%;background:var(--accent-light);color:var(--accent-text);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0">${i+1}</div>
+    <div style="flex:1"><div style="font-size:13px;font-weight:500">${task.name}</div><div style="font-size:11px;color:var(--text3)">Owner: ${task.ownerRole}</div></div>
+    <div style="font-size:12px;color:var(--text2)">${parseInt(task.dueDaysOffset)===0?'Day 0':parseInt(task.dueDaysOffset)>0?`+${task.dueDaysOffset}d`:`${task.dueDaysOffset}d`}</div>
+    <button class="btn-ghost btn-sm" style="color:var(--red);padding:4px 6px" onclick="deleteTask('${task.id}','${t.id}')">✕</button>
+  </div>`).join('');
+}
+
+async function deleteTask(taskId,trackId){DB.tasks=DB.tasks.filter(x=>x.id!==taskId);await save('tasks');showToast('Removed');renderTrackDetail(trackId);const tl=document.getElementById('track-list');if(tl)tl.innerHTML=trackListHTML();}
+
+function showAddTaskModal(trackId){
+  showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Add Task</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
+    <div class="form-group"><label class="form-label">Task Name</label><input class="form-input" id="tname" placeholder="e.g. Complete I-9 paperwork"/></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Owner Role</label><select class="form-input form-select" id="towner"><option>HR</option><option>IT</option><option>Manager</option><option>Finance</option><option>Employee</option></select></div><div class="form-group"><label class="form-label">Due (days from start date)</label><input type="number" class="form-input" id="tdays" value="1" placeholder="1"/></div></div>
+  </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addTask('${trackId}')">Add Task</button></div></div>`);
+}
+
+async function addTask(trackId){
+  const name=document.getElementById('tname').value.trim();if(!name){showToast('Name required');return;}
+  DB.tasks.push({id:uid(),trackId,name,ownerRole:document.getElementById('towner').value,dueDaysOffset:document.getElementById('tdays').value||'0'});
+  await save('tasks');closeModal();showToast('Task added');renderTrackDetail(trackId);const tl=document.getElementById('track-list');if(tl)tl.innerHTML=trackListHTML();
+}
+
+function showEditTrackModal(id){
+  const t=DB.tracks.find(x=>x.id===id);
+  showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Edit Track</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
+    <div class="form-group"><label class="form-label">Track Name</label><input class="form-input" id="etname" value="${t.name}"/></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="ettype"><option${t.type==='company'?' selected':''}>company</option><option${t.type==='role'?' selected':''}>role</option><option${t.type==='client'?' selected':''}>client</option></select></div><div class="form-group"><label class="form-label">Auto-apply</label><select class="form-input form-select" id="etauto"><option value="true"${t.autoApply==='true'||t.autoApply===true?' selected':''}>Yes</option><option value="false"${t.autoApply!=='true'&&t.autoApply!==true?' selected':''}>No</option></select></div></div>
+  </div><div class="modal-footer"><button class="btn btn-danger btn-sm" style="margin-right:auto" onclick="deleteTrack('${t.id}')">Delete Track</button><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveTrack('${t.id}')">Save</button></div></div>`);
+}
+
+async function saveTrack(id){const t=DB.tracks.find(x=>x.id===id);t.name=document.getElementById('etname').value;t.type=document.getElementById('ettype').value;t.autoApply=document.getElementById('etauto').value;await save('tracks');closeModal();showToast('Track saved');renderTracks();}
+async function deleteTrack(id){if(!confirm('Delete this track and all its tasks?'))return;DB.tracks=DB.tracks.filter(x=>x.id!==id);DB.tasks=DB.tasks.filter(x=>x.trackId!==id);selectedTrackId=DB.tracks[0]?.id||null;await save('tracks');await save('tasks');closeModal();showToast('Deleted');renderTracks();}
+
+function showAddTrackModal(){
+  showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">New Track</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
+    <div class="form-group"><label class="form-label">Track Name</label><input class="form-input" id="ntname" placeholder="e.g. Design Onboarding"/></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="nttype"><option>company</option><option>role</option><option>client</option></select></div><div class="form-group"><label class="form-label">Auto-apply</label><select class="form-input form-select" id="ntauto"><option value="false">No</option><option value="true">Yes</option></select></div></div>
+  </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addTrack()">Create</button></div></div>`);
+}
+
+async function addTrack(){const name=document.getElementById('ntname').value.trim();if(!name){showToast('Name required');return;}const nt={id:uid(),name,type:document.getElementById('nttype').value,autoApply:document.getElementById('ntauto').value};DB.tracks.push(nt);selectedTrackId=nt.id;await save('tracks');closeModal();showToast('Track created');renderTracks();}
+
+// ── REPORTS ───────────────────────────────────────────────────────────────────
+function renderReports(){
+  const p=document.getElementById('page');
+  const hired=DB.candidates.filter(c=>c.candStatus==='Hired').length;
+  const active=DB.candidates.filter(c=>c.candStatus==='Active').length;
+  const sources=[...new Set(DB.candidates.map(c=>c.source))].filter(Boolean);
+  const specs=[...new Set(DB.candidates.map(c=>c.specialty))].filter(Boolean);
+  const totalIv=DB.interviews.length;
+  const avgScore=totalIv?Math.round(DB.interviews.filter(i=>i.score).reduce((s,i)=>s+parseInt(i.score),0)/DB.interviews.filter(i=>i.score).length*10)/10:0;
+  p.innerHTML=`<div class="page-header"><div><div class="page-title">Reports</div><div class="page-subtitle">Pipeline analytics</div></div></div>
+  <div class="stat-grid">
+    <div class="stat-card"><div class="stat-label">Total Candidates</div><div class="stat-value">${DB.candidates.length}</div></div>
+    <div class="stat-card"><div class="stat-label">Hired</div><div class="stat-value" style="color:var(--green)">${hired}</div></div>
+    <div class="stat-card"><div class="stat-label">Active Pipeline</div><div class="stat-value">${active}</div></div>
+    <div class="stat-card"><div class="stat-label">Interviews Logged</div><div class="stat-value">${totalIv}${avgScore?`<span style="font-size:14px;color:var(--text3);font-weight:400;margin-left:8px">avg ${avgScore}</span>`:''}</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
+    <div class="card"><div style="font-weight:600;font-size:13px;margin-bottom:14px">By Stage</div>
+      ${STAGES.map(s=>{const n=DB.candidates.filter(c=>c.stage===s).length;const pct=DB.candidates.length?Math.round(n/DB.candidates.length*100):0;return`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="text-transform:capitalize">${s}</span><span style="color:var(--text2)">${n}</span></div><div style="background:var(--bg);border-radius:100px;height:6px;overflow:hidden"><div style="width:${pct}%;height:100%;background:var(--accent);border-radius:100px"></div></div></div>`;}).join('')}
+    </div>
+    <div class="card"><div style="font-weight:600;font-size:13px;margin-bottom:14px">By Status</div>
+      ${getList('candStatus').map(s=>{const n=DB.candidates.filter(c=>c.candStatus===s).length;return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">${candStatusPill(s)}<span style="font-weight:600">${n}</span></div>`;}).join('')}
+    </div>
+    <div class="card"><div style="font-weight:600;font-size:13px;margin-bottom:14px">By Source</div>
+      ${sources.map(src=>{const n=DB.candidates.filter(c=>c.source===src).length;return`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)"><span style="font-size:13px">${src}</span><span style="font-weight:600">${n}</span></div>`;}).join('')||'<div style="font-size:12px;color:var(--text3)">No data</div>'}
+    </div>
+  </div>
+  ${specs.length?`<div class="card" style="margin-top:16px"><div style="font-weight:600;font-size:13px;margin-bottom:14px">By Specialty</div><div style="display:flex;flex-wrap:wrap;gap:10px">${specs.map(sp=>{const n=DB.candidates.filter(c=>c.specialty===sp).length;return`<div style="background:var(--bg);border-radius:var(--radius);padding:10px 16px;text-align:center"><div style="font-size:20px;font-weight:600">${n}</div><div style="font-size:12px;color:var(--text2);margin-top:2px">${sp}</div></div>`;}).join('')}</div></div>`:''}`;
+}
+
+// ── SETTINGS ──────────────────────────────────────────────────────────────────
+function renderSettings(){
+  document.getElementById('page').innerHTML=`<div class="page-header"><div><div class="page-title">Settings</div></div></div>
+  <div class="tabs"><div class="tab active" onclick="settingsTab(this,'dropdowns')">Dropdowns</div><div class="tab" onclick="settingsTab(this,'data')">Data & Export</div></div>
+  <div id="settings-content"></div>`;
+  renderDropdownsTab();
+}
+
+function settingsTab(el,tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
+  if(tab==='dropdowns')renderDropdownsTab();else renderDataTab();
+}
+
+const LIST_KEYS=[{key:'candStatus',label:'Candidate Status'},{key:'empType',label:'Employment Type'},{key:'source',label:'Source'},{key:'seniority',label:'Seniority'},{key:'specialty',label:'Specialty'}];
+
+function renderDropdownsTab(){
+  const c=document.getElementById('settings-content');
+  c.innerHTML=`<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">${LIST_KEYS.map(lk=>`
+    <div class="card">
+      <div style="font-weight:600;font-size:13px;margin-bottom:12px">${lk.label}</div>
+      <div class="tag-list" id="tags-${lk.key}">${renderTags(lk.key)}</div>
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <input class="form-input" id="new-${lk.key}" placeholder="Add value..." style="flex:1;padding:6px 10px;font-size:12px"/>
+        <button class="btn btn-primary btn-sm" onclick="addListItem('${lk.key}')">Add</button>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function renderTags(listKey){
+  return getList(listKey).map(v=>`<span class="tag">${v}<button onclick="removeListItem('${listKey}','${v}')">×</button></span>`).join('');
+}
+
+async function addListItem(listKey){
+  const input=document.getElementById(`new-${listKey}`);const val=input.value.trim();
+  if(!val){showToast('Enter a value');return;}
+  if(DB.lists.find(l=>l.listKey===listKey&&l.value===val)){showToast('Already exists');return;}
+  const maxOrder=DB.lists.filter(l=>l.listKey===listKey).reduce((m,l)=>Math.max(m,parseInt(l.order)||0),0);
+  DB.lists.push({id:uid(),listKey,value:val,order:String(maxOrder+1)});
+  await save('lists');input.value='';
+  const tags=document.getElementById(`tags-${listKey}`);if(tags)tags.innerHTML=renderTags(listKey);
+  showToast(`"${val}" added`);
+}
+
+async function removeListItem(listKey,val){
+  if(!confirm(`Remove "${val}" from ${listKey}?`))return;
+  DB.lists=DB.lists.filter(l=>!(l.listKey===listKey&&l.value===val));
+  await save('lists');
+  const tags=document.getElementById(`tags-${listKey}`);if(tags)tags.innerHTML=renderTags(listKey);
+  showToast(`"${val}" removed`);
+}
+
+function renderDataTab(){
+  const c=document.getElementById('settings-content');
+  c.innerHTML=`<div class="card" style="max-width:520px">
+    <div style="font-weight:600;font-size:13px;margin-bottom:6px">Google Sheet</div>
+    <p style="font-size:13px;color:var(--text2);margin-bottom:14px">All data is stored live in your Google Sheet. View or edit it directly there.</p>
+    <a href="https://docs.google.com/spreadsheets/d/${SHEET_ID}" target="_blank" class="btn btn-secondary" style="display:inline-flex;margin-bottom:24px">Open Google Sheet ↗</a>
+    <div style="border-top:1px solid var(--border);padding-top:20px">
+      <div style="font-weight:600;font-size:13px;margin-bottom:6px">Export JSON Backup</div>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:12px">Download a full backup of all your data.</p>
+      <button class="btn btn-secondary" onclick="exportData()">Export JSON</button>
+    </div>
+  </div>`;
+}
+
+function exportData(){
+  const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`vtwo-ops-${today()}.json`;a.click();showToast('Exported');
+}
+
+// ── BOOT ──────────────────────────────────────────────────────────────────────
+(async()=>{
+  await loadAll();
+  nav('dashboard');
+})();
+</script>
+</body>
+</html>
