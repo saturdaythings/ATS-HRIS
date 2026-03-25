@@ -3,12 +3,13 @@
  * Modal for promoting a candidate to employee
  */
 import { useState } from 'react';
+import DatePicker from '../common/DatePicker';
 
 export default function PromoteModal({ candidate, onConfirm, onCancel }) {
   const [formData, setFormData] = useState({
     title: '',
     department: '',
-    startDate: new Date().toISOString().split('T')[0],
+    startDate: new Date(),
   });
 
   const [errors, setErrors] = useState({});
@@ -103,25 +104,18 @@ export default function PromoteModal({ candidate, onConfirm, onCancel }) {
           </div>
 
           {/* Start Date */}
-          <div>
-            <label className="block text-sm font-medium text-slate-900 mb-1">
-              Start Date
-            </label>
-            <input
-              type="date"
-              name="startDate"
-              value={formData.startDate}
-              onChange={handleChange}
-              className={`
-                w-full px-3 py-2 rounded-lg border transition-colors
-                ${errors.startDate ? 'border-red-500 bg-red-50' : 'border-slate-300 bg-white'}
-                focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500
-              `}
-            />
-            {errors.startDate && (
-              <p className="text-xs text-red-600 mt-1">{errors.startDate}</p>
-            )}
-          </div>
+          <DatePicker
+            label="Start Date"
+            value={formData.startDate}
+            onChange={(date) => {
+              setFormData(prev => ({ ...prev, startDate: date }));
+              if (errors.startDate) {
+                setErrors(prev => ({ ...prev, startDate: '' }));
+              }
+            }}
+            error={errors.startDate}
+            required
+          />
 
           {/* Actions */}
           <div className="flex gap-3 pt-4">

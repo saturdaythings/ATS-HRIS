@@ -201,61 +201,76 @@ export default function DeviceDetailPanel({
             </div>
           ) : (
             <div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">
+              <h3 className="text-sm font-semibold text-gray-900 mb-4">
                 Assignment History
               </h3>
-              <div className="space-y-3">
-                {history.map((assignment, idx) => (
-                  <div
-                    key={assignment.id}
-                    className="border border-gray-200 rounded-lg p-3"
-                  >
-                    <div className="flex justify-between items-start mb-2">
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
+              <div className="space-y-4">
+                {history.map((assignment, idx) => {
+                  const assignedDateStr = formatDate(assignment.assignedDate);
+                  const returnedDateStr = assignment.returnedDate
+                    ? formatDate(assignment.returnedDate)
+                    : 'present';
+
+                  // Format: "Name    Mar 24 – present    In: New"
+                  const dateRange = assignment.returnedDate
+                    ? `${assignedDateStr} – ${returnedDateStr}`
+                    : `${assignedDateStr} – present`;
+
+                  return (
+                    <div key={assignment.id} className="space-y-1">
+                      {/* Employee name and date range */}
+                      <div className="flex justify-between items-start">
+                        <span className="text-sm font-medium text-gray-900">
                           {assignment.employee?.name || 'Unknown'}
-                        </p>
-                        <p className="text-xs text-gray-600">
-                          {assignment.employee?.email}
-                        </p>
-                      </div>
-                      {assignment.returnedDate && (
-                        <span className="text-xs bg-gray-100 text-gray-800 px-2 py-1 rounded">
-                          Returned
                         </span>
-                      )}
-                    </div>
-                    <div className="text-xs text-gray-600 space-y-1">
-                      <div>
-                        <span>Assigned: </span>
-                        <span className="font-medium">
-                          {formatDate(assignment.assignedDate)}
+                        <span className="text-sm text-gray-600">
+                          {dateRange}
                         </span>
                       </div>
-                      {assignment.returnedDate && (
-                        <div>
-                          <span>Returned: </span>
-                          <span className="font-medium">
-                            {formatDate(assignment.returnedDate)}
-                          </span>
-                        </div>
-                      )}
-                      {assignment.condition && (
-                        <div>
-                          <span>Condition: </span>
+
+                      {/* Condition badges and notes */}
+                      <div className="flex items-start gap-2 flex-wrap">
+                        <div className="flex gap-1 items-center text-xs">
+                          <span className="text-gray-600">In:</span>
                           <span
-                            className={`font-medium px-1 rounded text-xs ${
-                              conditionColors[assignment.condition]
+                            className={`px-2 py-1 rounded font-medium ${
+                              conditionColors[assignment.device?.condition || 'good']
                             }`}
                           >
-                            {assignment.condition.charAt(0).toUpperCase() +
-                              assignment.condition.slice(1)}
+                            {(assignment.device?.condition || 'good')
+                              .charAt(0)
+                              .toUpperCase() +
+                              (assignment.device?.condition || 'good').slice(1)}
                           </span>
                         </div>
+                        {assignment.returnedDate && assignment.condition && (
+                          <>
+                            <span className="text-gray-600">·</span>
+                            <div className="flex gap-1 items-center text-xs">
+                              <span className="text-gray-600">Out:</span>
+                              <span
+                                className={`px-2 py-1 rounded font-medium ${
+                                  conditionColors[assignment.condition]
+                                }`}
+                              >
+                                {assignment.condition
+                                  .charAt(0)
+                                  .toUpperCase() + assignment.condition.slice(1)}
+                              </span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Notes if present */}
+                      {assignment.notes && (
+                        <p className="text-xs text-gray-600 mt-1">
+                          Notes: {assignment.notes}
+                        </p>
                       )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           )}

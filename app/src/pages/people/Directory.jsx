@@ -1,6 +1,11 @@
 import { useState, useEffect } from 'react';
 import useEmployees from '../../hooks/useEmployees';
 import EmployeeDetailPanel from '../../components/panels/EmployeeDetailPanel';
+import { useTableState } from '../../hooks/useTableState';
+import FilterChip from '../../components/common/FilterChip';
+import ColumnVisibilityToggle from '../../components/common/ColumnVisibilityToggle';
+
+const ALL_COLUMNS = ['name', 'email', 'title', 'department', 'status', 'startDate'];
 
 export default function Directory() {
   const {
@@ -15,11 +20,11 @@ export default function Directory() {
     getCountByDepartment,
   } = useEmployees();
 
+  const tableState = useTableState('employees', ALL_COLUMNS, 'name', 'asc');
+
   const [selectedEmployee, setSelectedEmployee] = useState(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedDepartment, setSelectedDepartment] = useState('');
-  const [selectedStatus, setSelectedStatus] = useState('');
   const [displayedEmployees, setDisplayedEmployees] = useState([]);
 
   // Fetch employees on mount
@@ -27,7 +32,7 @@ export default function Directory() {
     fetchEmployees();
   }, [fetchEmployees]);
 
-  // Update displayed employees when filters change
+  // Update displayed employees when filters or sort changes
   useEffect(() => {
     let filtered = employees;
 
@@ -36,18 +41,14 @@ export default function Directory() {
       filtered = searchEmployees(searchTerm);
     }
 
-    // Apply department filter
-    if (selectedDepartment) {
-      filtered = filtered.filter(e => e.department === selectedDepartment);
-    }
+    // Apply filter chips
+    filtered = tableState.applyFilters(filtered);
 
-    // Apply status filter
-    if (selectedStatus) {
-      filtered = filtered.filter(e => e.status === selectedStatus);
-    }
+    // Apply sort
+    filtered = tableState.applySort(filtered);
 
     setDisplayedEmployees(filtered);
-  }, [employees, searchTerm, selectedDepartment, selectedStatus, searchEmployees]);
+  }, [employees, searchTerm, tableState, searchEmployees]);
 
   const handleEmployeeClick = (employee) => {
     setSelectedEmployee(employee);
@@ -82,58 +83,56 @@ export default function Directory() {
         </div>
       </div>
 
-      {/* Filters Section */}
+      {/* Filters & Controls Section */}
       <div className="bg-white rounded-lg border border-gray-200 p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Search */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Search
-            </label>
-            <input
-              type="text"
-              placeholder="Search by name or email..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
-            />
-          </div>
+        {/* Search bar */}
+        <div className="mb-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            Search
+          </label>
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+          />
+        </div>
 
-          {/* Department Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Department
-            </label>
-            <select
-              value={selectedDepartment}
-              onChange={(e) => setSelectedDepartment(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
-            >
-              <option value="">All departments</option>
-              {departments.map(dept => (
-                <option key={dept} value={dept}>
-                  {dept} ({departmentCounts[dept] || 0})
-                </option>
-              ))}
-            </select>
-          </div>
+        {/* Filter chips row */}
+        <div className="flex flex-wrap gap-3 items-center">
+          <span className="text-sm font-medium text-gray-600">Filters:</span>
 
-          {/* Status Filter */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Status
-            </label>
-            <select
-              value={selectedStatus}
-              onChange={(e) => setSelectedStatus(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-purple-500 focus:ring-1 focus:ring-purple-500"
+          <FilterChip
+            label="Department"
+            options={departments}
+            selected={tableState.filters.department || []}
+            onChange={(value) => tableState.updateFilter('department', value)}
+          />
+
+          <FilterChip
+            label="Status"
+            options={['active', 'inactive', 'onboarding']}
+            selected={tableState.filters.status || []}
+            onChange={(value) => tableState.updateFilter('status', value)}
+          />
+
+          {tableState.getActiveFilterCount() > 0 && (
+            <button
+              onClick={() => tableState.clearFilters()}
+              className="ml-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 font-medium"
             >
-              <option value="">All statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="onboarding">Onboarding</option>
-            </select>
-          </div>
+              Clear all
+            </button>
+          )}
+
+          <div className="flex-grow" />
+
+          <ColumnVisibilityToggle
+            allColumns={ALL_COLUMNS}
+            visibleColumns={tableState.visibleColumns}
+            onToggle={(col) => tableState.toggleColumnVisibility(col)}
+          />
         </div>
       </div>
 
@@ -162,12 +161,84 @@ export default function Directory() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-gray-200 bg-gray-50">
-                  <th className="text-left py-3 px-6 font-semibold text-gray-700">Name</th>
-                  <th className="text-left py-3 px-6 font-semibold text-gray-700">Email</th>
-                  <th className="text-left py-3 px-6 font-semibold text-gray-700">Title</th>
-                  <th className="text-left py-3 px-6 font-semibold text-gray-700">Department</th>
-                  <th className="text-left py-3 px-6 font-semibold text-gray-700">Status</th>
-                  <th className="text-left py-3 px-6 font-semibold text-gray-700">Start Date</th>
+                  {tableState.visibleColumns.includes('name') && (
+                    <th
+                      onClick={() => tableState.handleSortClick('name')}
+                      className="text-left py-3 px-6 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        Name
+                        {tableState.sortColumn === 'name' && (
+                          <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </div>
+                    </th>
+                  )}
+                  {tableState.visibleColumns.includes('email') && (
+                    <th
+                      onClick={() => tableState.handleSortClick('email')}
+                      className="text-left py-3 px-6 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        Email
+                        {tableState.sortColumn === 'email' && (
+                          <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </div>
+                    </th>
+                  )}
+                  {tableState.visibleColumns.includes('title') && (
+                    <th
+                      onClick={() => tableState.handleSortClick('title')}
+                      className="text-left py-3 px-6 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        Title
+                        {tableState.sortColumn === 'title' && (
+                          <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </div>
+                    </th>
+                  )}
+                  {tableState.visibleColumns.includes('department') && (
+                    <th
+                      onClick={() => tableState.handleSortClick('department')}
+                      className="text-left py-3 px-6 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        Department
+                        {tableState.sortColumn === 'department' && (
+                          <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </div>
+                    </th>
+                  )}
+                  {tableState.visibleColumns.includes('status') && (
+                    <th
+                      onClick={() => tableState.handleSortClick('status')}
+                      className="text-left py-3 px-6 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        Status
+                        {tableState.sortColumn === 'status' && (
+                          <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </div>
+                    </th>
+                  )}
+                  {tableState.visibleColumns.includes('startDate') && (
+                    <th
+                      onClick={() => tableState.handleSortClick('startDate')}
+                      className="text-left py-3 px-6 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="flex items-center gap-2">
+                        Start Date
+                        {tableState.sortColumn === 'startDate' && (
+                          <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                        )}
+                      </div>
+                    </th>
+                  )}
                 </tr>
               </thead>
               <tbody>
@@ -177,44 +248,56 @@ export default function Directory() {
                     onClick={() => handleEmployeeClick(employee)}
                     className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer transition-colors"
                   >
-                    <td className="py-4 px-6">
-                      <span className="font-medium text-gray-900">
-                        {employee.name || '-'}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="text-gray-600 text-sm">
-                        {employee.email || '-'}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="text-gray-700">
-                        {employee.title || '-'}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="text-gray-700">
-                        {employee.department || '-'}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
-                        employee.status === 'active'
-                          ? 'bg-green-100 text-green-700'
-                          : employee.status === 'inactive'
-                          ? 'bg-gray-100 text-gray-700'
-                          : 'bg-blue-100 text-blue-700'
-                      }`}>
-                        {employee.status
-                          ? employee.status.charAt(0).toUpperCase() + employee.status.slice(1)
-                          : '-'}
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      <span className="text-gray-600 text-sm">
-                        {formatDate(employee.startDate)}
-                      </span>
-                    </td>
+                    {tableState.visibleColumns.includes('name') && (
+                      <td className="py-4 px-6">
+                        <span className="font-medium text-gray-900">
+                          {employee.name || '-'}
+                        </span>
+                      </td>
+                    )}
+                    {tableState.visibleColumns.includes('email') && (
+                      <td className="py-4 px-6">
+                        <span className="text-gray-600 text-sm">
+                          {employee.email || '-'}
+                        </span>
+                      </td>
+                    )}
+                    {tableState.visibleColumns.includes('title') && (
+                      <td className="py-4 px-6">
+                        <span className="text-gray-700">
+                          {employee.title || '-'}
+                        </span>
+                      </td>
+                    )}
+                    {tableState.visibleColumns.includes('department') && (
+                      <td className="py-4 px-6">
+                        <span className="text-gray-700">
+                          {employee.department || '-'}
+                        </span>
+                      </td>
+                    )}
+                    {tableState.visibleColumns.includes('status') && (
+                      <td className="py-4 px-6">
+                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium ${
+                          employee.status === 'active'
+                            ? 'bg-green-100 text-green-700'
+                            : employee.status === 'inactive'
+                            ? 'bg-gray-100 text-gray-700'
+                            : 'bg-blue-100 text-blue-700'
+                        }`}>
+                          {employee.status
+                            ? employee.status.charAt(0).toUpperCase() + employee.status.slice(1)
+                            : '-'}
+                        </span>
+                      </td>
+                    )}
+                    {tableState.visibleColumns.includes('startDate') && (
+                      <td className="py-4 px-6">
+                        <span className="text-gray-600 text-sm">
+                          {formatDate(employee.startDate)}
+                        </span>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>

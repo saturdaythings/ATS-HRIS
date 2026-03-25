@@ -3,19 +3,21 @@ import DeviceDetailPanel from '../../components/panels/DeviceDetailPanel';
 import AssignDeviceModal from '../../components/modals/AssignDeviceModal';
 import ReturnDeviceModal from '../../components/modals/ReturnDeviceModal';
 import ConfirmDialog from '../../components/modals/ConfirmDialog';
+import { useTableState } from '../../hooks/useTableState';
+import FilterChip from '../../components/common/FilterChip';
+import ColumnVisibilityToggle from '../../components/common/ColumnVisibilityToggle';
+
+const ALL_COLUMNS = ['serial', 'type', 'make', 'condition', 'status'];
+const DEVICE_TYPES = ['laptop', 'monitor', 'phone', 'peripheral'];
+const STATUSES = ['available', 'assigned', 'retired'];
+const CONDITIONS = ['new', 'good', 'fair', 'poor'];
 
 export default function Inventory() {
   const [devices, setDevices] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Filters and sorting
-  const [filters, setFilters] = useState({
-    type: '',
-    status: '',
-    condition: '',
-  });
-  const [sortBy, setSortBy] = useState('serial'); // serial, type, status, condition
+  const tableState = useTableState('inventory', ALL_COLUMNS, 'serial', 'asc');
 
   // UI state
   const [selectedDevice, setSelectedDevice] = useState(null);
@@ -46,36 +48,10 @@ export default function Inventory() {
     }
   }
 
-  // Filter and sort devices
+  // Filter and sort devices using table state
   function getFilteredDevices() {
-    let filtered = devices;
-
-    if (filters.type) {
-      filtered = filtered.filter(d => d.type === filters.type);
-    }
-    if (filters.status) {
-      filtered = filtered.filter(d => d.status === filters.status);
-    }
-    if (filters.condition) {
-      filtered = filtered.filter(d => d.condition === filters.condition);
-    }
-
-    // Sort
-    filtered.sort((a, b) => {
-      switch (sortBy) {
-        case 'type':
-          return a.type.localeCompare(b.type);
-        case 'status':
-          return a.status.localeCompare(b.status);
-        case 'condition':
-          return a.condition.localeCompare(b.condition);
-        case 'serial':
-        default:
-          return a.serial.localeCompare(b.serial);
-      }
-    });
-
-    return filtered;
+    let filtered = tableState.applyFilters(devices);
+    return tableState.applySort(filtered);
   }
 
   function handleDeviceClick(device) {
@@ -109,9 +85,6 @@ export default function Inventory() {
   }
 
   const filteredDevices = getFilteredDevices();
-  const deviceTypes = ['laptop', 'monitor', 'phone', 'peripheral'];
-  const statuses = ['available', 'assigned', 'retired'];
-  const conditions = ['new', 'good', 'fair', 'poor'];
 
   if (loading) {
     return (
@@ -131,76 +104,48 @@ export default function Inventory() {
         {filteredDevices.length} of {devices.length} devices
       </p>
 
-      {/* Filters */}
-      <div className="mt-6 bg-white rounded-lg border border-gray-200 p-4 grid grid-cols-4 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Type
-          </label>
-          <select
-            value={filters.type}
-            onChange={e => setFilters({ ...filters, type: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-          >
-            <option value="">All Types</option>
-            {deviceTypes.map(type => (
-              <option key={type} value={type}>
-                {type.charAt(0).toUpperCase() + type.slice(1)}
-              </option>
-            ))}
-          </select>
-        </div>
+      {/* Filters & Controls */}
+      <div className="mt-6 bg-white rounded-lg border border-gray-200 p-4">
+        <div className="flex flex-wrap gap-3 items-center">
+          <span className="text-sm font-medium text-gray-600">Filters:</span>
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Status
-          </label>
-          <select
-            value={filters.status}
-            onChange={e => setFilters({ ...filters, status: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-          >
-            <option value="">All Statuses</option>
-            {statuses.map(status => (
-              <option key={status} value={status}>
-                {status.charAt(0).toUpperCase() + status.slice(1)}
-              </option>
-            ))}
-          </select>
-        </div>
+          <FilterChip
+            label="Type"
+            options={DEVICE_TYPES}
+            selected={tableState.filters.type || []}
+            onChange={(value) => tableState.updateFilter('type', value)}
+          />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Condition
-          </label>
-          <select
-            value={filters.condition}
-            onChange={e => setFilters({ ...filters, condition: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-          >
-            <option value="">All Conditions</option>
-            {conditions.map(condition => (
-              <option key={condition} value={condition}>
-                {condition.charAt(0).toUpperCase() + condition.slice(1)}
-              </option>
-            ))}
-          </select>
-        </div>
+          <FilterChip
+            label="Status"
+            options={STATUSES}
+            selected={tableState.filters.status || []}
+            onChange={(value) => tableState.updateFilter('status', value)}
+          />
 
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
-            Sort By
-          </label>
-          <select
-            value={sortBy}
-            onChange={e => setSortBy(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm"
-          >
-            <option value="serial">Serial</option>
-            <option value="type">Type</option>
-            <option value="status">Status</option>
-            <option value="condition">Condition</option>
-          </select>
+          <FilterChip
+            label="Condition"
+            options={CONDITIONS}
+            selected={tableState.filters.condition || []}
+            onChange={(value) => tableState.updateFilter('condition', value)}
+          />
+
+          {tableState.getActiveFilterCount() > 0 && (
+            <button
+              onClick={() => tableState.clearFilters()}
+              className="ml-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 font-medium"
+            >
+              Clear all
+            </button>
+          )}
+
+          <div className="flex-grow" />
+
+          <ColumnVisibilityToggle
+            allColumns={ALL_COLUMNS}
+            visibleColumns={tableState.visibleColumns}
+            onToggle={(col) => tableState.toggleColumnVisibility(col)}
+          />
         </div>
       </div>
 
@@ -209,11 +154,71 @@ export default function Inventory() {
         <table className="w-full">
           <thead>
             <tr className="border-b border-gray-200 bg-gray-50">
-              <th className="text-left py-3 px-4 font-semibold text-gray-700">Serial</th>
-              <th className="text-left py-3 px-4 font-semibold text-gray-700">Type</th>
-              <th className="text-left py-3 px-4 font-semibold text-gray-700">Make / Model</th>
-              <th className="text-left py-3 px-4 font-semibold text-gray-700">Condition</th>
-              <th className="text-left py-3 px-4 font-semibold text-gray-700">Status</th>
+              {tableState.visibleColumns.includes('serial') && (
+                <th
+                  onClick={() => tableState.handleSortClick('serial')}
+                  className="text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    Serial
+                    {tableState.sortColumn === 'serial' && (
+                      <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </div>
+                </th>
+              )}
+              {tableState.visibleColumns.includes('type') && (
+                <th
+                  onClick={() => tableState.handleSortClick('type')}
+                  className="text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    Type
+                    {tableState.sortColumn === 'type' && (
+                      <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </div>
+                </th>
+              )}
+              {tableState.visibleColumns.includes('make') && (
+                <th
+                  onClick={() => tableState.handleSortClick('make')}
+                  className="text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    Make / Model
+                    {tableState.sortColumn === 'make' && (
+                      <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </div>
+                </th>
+              )}
+              {tableState.visibleColumns.includes('condition') && (
+                <th
+                  onClick={() => tableState.handleSortClick('condition')}
+                  className="text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    Condition
+                    {tableState.sortColumn === 'condition' && (
+                      <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </div>
+                </th>
+              )}
+              {tableState.visibleColumns.includes('status') && (
+                <th
+                  onClick={() => tableState.handleSortClick('status')}
+                  className="text-left py-3 px-4 font-semibold text-gray-700 cursor-pointer hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex items-center gap-2">
+                    Status
+                    {tableState.sortColumn === 'status' && (
+                      <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                    )}
+                  </div>
+                </th>
+              )}
               <th className="text-right py-3 px-4 font-semibold text-gray-700">Actions</th>
             </tr>
           </thead>
@@ -232,59 +237,69 @@ export default function Inventory() {
                   key={device.id}
                   className="border-b border-gray-100 hover:bg-gray-50 cursor-pointer"
                 >
-                  <td
-                    className="py-3 px-4 font-medium text-gray-900"
-                    onClick={() => handleDeviceClick(device)}
-                  >
-                    {device.serial}
-                  </td>
-                  <td
-                    className="py-3 px-4 text-gray-700"
-                    onClick={() => handleDeviceClick(device)}
-                  >
-                    {device.type.charAt(0).toUpperCase() + device.type.slice(1)}
-                  </td>
-                  <td
-                    className="py-3 px-4 text-gray-700"
-                    onClick={() => handleDeviceClick(device)}
-                  >
-                    {device.make} {device.model}
-                  </td>
-                  <td
-                    className="py-3 px-4"
-                    onClick={() => handleDeviceClick(device)}
-                  >
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        device.condition === 'new'
-                          ? 'bg-green-100 text-green-800'
-                          : device.condition === 'good'
-                          ? 'bg-blue-100 text-blue-800'
-                          : device.condition === 'fair'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}
+                  {tableState.visibleColumns.includes('serial') && (
+                    <td
+                      className="py-3 px-4 font-medium text-gray-900"
+                      onClick={() => handleDeviceClick(device)}
                     >
-                      {device.condition.charAt(0).toUpperCase() +
-                        device.condition.slice(1)}
-                    </span>
-                  </td>
-                  <td
-                    className="py-3 px-4"
-                    onClick={() => handleDeviceClick(device)}
-                  >
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        device.status === 'available'
-                          ? 'bg-green-100 text-green-800'
-                          : device.status === 'assigned'
-                          ? 'bg-blue-100 text-blue-800'
-                          : 'bg-gray-100 text-gray-800'
-                      }`}
+                      {device.serial}
+                    </td>
+                  )}
+                  {tableState.visibleColumns.includes('type') && (
+                    <td
+                      className="py-3 px-4 text-gray-700"
+                      onClick={() => handleDeviceClick(device)}
                     >
-                      {device.status.charAt(0).toUpperCase() + device.status.slice(1)}
-                    </span>
-                  </td>
+                      {device.type.charAt(0).toUpperCase() + device.type.slice(1)}
+                    </td>
+                  )}
+                  {tableState.visibleColumns.includes('make') && (
+                    <td
+                      className="py-3 px-4 text-gray-700"
+                      onClick={() => handleDeviceClick(device)}
+                    >
+                      {device.make} {device.model}
+                    </td>
+                  )}
+                  {tableState.visibleColumns.includes('condition') && (
+                    <td
+                      className="py-3 px-4"
+                      onClick={() => handleDeviceClick(device)}
+                    >
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          device.condition === 'new'
+                            ? 'bg-green-100 text-green-800'
+                            : device.condition === 'good'
+                            ? 'bg-blue-100 text-blue-800'
+                            : device.condition === 'fair'
+                            ? 'bg-yellow-100 text-yellow-800'
+                            : 'bg-red-100 text-red-800'
+                        }`}
+                      >
+                        {device.condition.charAt(0).toUpperCase() +
+                          device.condition.slice(1)}
+                      </span>
+                    </td>
+                  )}
+                  {tableState.visibleColumns.includes('status') && (
+                    <td
+                      className="py-3 px-4"
+                      onClick={() => handleDeviceClick(device)}
+                    >
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          device.status === 'available'
+                            ? 'bg-green-100 text-green-800'
+                            : device.status === 'assigned'
+                            ? 'bg-blue-100 text-blue-800'
+                            : 'bg-gray-100 text-gray-800'
+                        }`}
+                      >
+                        {device.status.charAt(0).toUpperCase() + device.status.slice(1)}
+                      </span>
+                    </td>
+                  )}
                   <td className="py-3 px-4 text-right">
                     <button
                       onClick={() => handleDeviceClick(device)}

@@ -10,6 +10,9 @@ import SearchInput from '../components/common/SearchInput';
 import LoadingState from '../components/common/LoadingState';
 import ErrorBanner from '../components/common/ErrorBanner';
 import CandidateStageWidget from '../components/widgets/CandidateStageWidget';
+import { useTableState } from '../hooks/useTableState';
+import FilterChip from '../components/common/FilterChip';
+import ColumnVisibilityToggle from '../components/common/ColumnVisibilityToggle';
 
 const STAGES = [
   { value: 'all', label: 'All Stages' },
@@ -19,6 +22,9 @@ const STAGES = [
   { value: 'offer', label: 'Offer' },
   { value: 'hired', label: 'Hired' },
 ];
+
+const STAGE_OPTIONS = ['sourced', 'screening', 'interview', 'offer', 'hired'];
+const ALL_COLUMNS = ['name', 'email', 'roleApplied', 'stage', 'status', 'createdAt'];
 
 const STAGE_COLORS = {
   sourced: 'bg-blue-50 border-blue-200 text-blue-700',
@@ -41,14 +47,14 @@ export default function Candidates() {
     getCountByStage,
   } = useCandidates();
 
+  const tableState = useTableState('candidates', ALL_COLUMNS, 'createdAt', 'desc');
+
   // Local state
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedCandidate, setSelectedCandidate] = useState(null);
   const [isDetailPanelOpen, setIsDetailPanelOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [stageFilter, setStageFilter] = useState('all');
-  const [sortBy, setSortBy] = useState('name');
-  const [sortDirection, setSortDirection] = useState('asc');
   const [currentPage, setCurrentPage] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
@@ -79,23 +85,12 @@ export default function Candidates() {
       );
     }
 
-    // Sort
-    const sorted = [...filtered].sort((a, b) => {
-      let aVal = a[sortBy] || '';
-      let bVal = b[sortBy] || '';
+    // Apply table state filters and sort
+    filtered = tableState.applyFilters(filtered);
+    filtered = tableState.applySort(filtered);
 
-      if (sortBy === 'name' || sortBy === 'email') {
-        aVal = aVal.toLowerCase();
-        bVal = bVal.toLowerCase();
-      }
-
-      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
-      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
-      return 0;
-    });
-
-    return sorted;
-  }, [candidates, stageFilter, searchTerm, sortBy, sortDirection]);
+    return filtered;
+  }, [candidates, stageFilter, searchTerm, tableState]);
 
   // Pagination
   const totalPages = Math.ceil(filteredAndSortedCandidates.length / ITEMS_PER_PAGE);
@@ -152,12 +147,7 @@ export default function Candidates() {
 
   // Handle sort column
   const handleSort = (column) => {
-    if (sortBy === column) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(column);
-      setSortDirection('asc');
-    }
+    tableState.handleSortClick(column);
     setCurrentPage(1);
   };
 
@@ -196,31 +186,31 @@ export default function Candidates() {
 
         {/* Filters and Search */}
         <div className="bg-white rounded-lg border border-neutral-200 p-6 mb-6 shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Search */}
-            <div className="md:col-span-2">
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Search Candidates
-              </label>
-              <SearchInput
-                value={searchTerm}
-                onChange={setSearchTerm}
-                placeholder="Search by name, email, or role..."
-              />
-            </div>
+          {/* Search */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-neutral-700 mb-2">
+              Search Candidates
+            </label>
+            <SearchInput
+              value={searchTerm}
+              onChange={setSearchTerm}
+              placeholder="Search by name, email, or role..."
+            />
+          </div>
 
-            {/* Stage Filter */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 mb-2">
-                Filter by Stage
-              </label>
+          {/* Filter controls */}
+          <div className="flex flex-wrap gap-3 items-center">
+            <span className="text-sm font-medium text-neutral-600">Filters:</span>
+
+            {/* Stage filter - traditional select for now */}
+            <div className="inline-block">
               <select
                 value={stageFilter}
                 onChange={(e) => {
                   setStageFilter(e.target.value);
                   setCurrentPage(1);
                 }}
-                className="w-full px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                className="px-3 py-2 border border-neutral-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
               >
                 {STAGES.map(stage => (
                   <option key={stage.value} value={stage.value}>
@@ -229,6 +219,31 @@ export default function Candidates() {
                 ))}
               </select>
             </div>
+
+            {/* Additional filter chips can be added here */}
+            <FilterChip
+              label="Status"
+              options={['active', 'inactive', 'archived']}
+              selected={tableState.filters.status || []}
+              onChange={(value) => tableState.updateFilter('status', value)}
+            />
+
+            {tableState.getActiveFilterCount() > 0 && (
+              <button
+                onClick={() => tableState.clearFilters()}
+                className="ml-2 px-3 py-2 text-sm text-red-600 hover:text-red-700 font-medium"
+              >
+                Clear chip filters
+              </button>
+            )}
+
+            <div className="flex-grow" />
+
+            <ColumnVisibilityToggle
+              allColumns={ALL_COLUMNS}
+              visibleColumns={tableState.visibleColumns}
+              onToggle={(col) => tableState.toggleColumnVisibility(col)}
+            />
           </div>
         </div>
 
@@ -261,48 +276,81 @@ export default function Candidates() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-neutral-200 bg-neutral-50">
-                    <th
-                      onClick={() => handleSort('name')}
-                      className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        Name
-                        {sortBy === 'name' && (
-                          <svg className={`w-4 h-4 transition-transform ${sortDirection === 'desc' ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                    </th>
-                    <th
-                      onClick={() => handleSort('email')}
-                      className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        Email
-                        {sortBy === 'email' && (
-                          <svg className={`w-4 h-4 transition-transform ${sortDirection === 'desc' ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                    </th>
-                    <th className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider">
-                      Role
-                    </th>
-                    <th
-                      onClick={() => handleSort('stage')}
-                      className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 transition-colors"
-                    >
-                      <div className="flex items-center gap-2">
-                        Stage
-                        {sortBy === 'stage' && (
-                          <svg className={`w-4 h-4 transition-transform ${sortDirection === 'desc' ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
-                          </svg>
-                        )}
-                      </div>
-                    </th>
+                    {tableState.visibleColumns.includes('name') && (
+                      <th
+                        onClick={() => handleSort('name')}
+                        className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          Name
+                          {tableState.sortColumn === 'name' && (
+                            <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </th>
+                    )}
+                    {tableState.visibleColumns.includes('email') && (
+                      <th
+                        onClick={() => handleSort('email')}
+                        className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          Email
+                          {tableState.sortColumn === 'email' && (
+                            <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </th>
+                    )}
+                    {tableState.visibleColumns.includes('roleApplied') && (
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 transition-colors"
+                        onClick={() => handleSort('roleApplied')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Role
+                          {tableState.sortColumn === 'roleApplied' && (
+                            <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </th>
+                    )}
+                    {tableState.visibleColumns.includes('stage') && (
+                      <th
+                        onClick={() => handleSort('stage')}
+                        className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 transition-colors"
+                      >
+                        <div className="flex items-center gap-2">
+                          Stage
+                          {tableState.sortColumn === 'stage' && (
+                            <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </th>
+                    )}
+                    {tableState.visibleColumns.includes('status') && (
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 transition-colors"
+                        onClick={() => handleSort('status')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Status
+                          {tableState.sortColumn === 'status' && (
+                            <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </th>
+                    )}
+                    {tableState.visibleColumns.includes('createdAt') && (
+                      <th className="px-6 py-4 text-left text-xs font-semibold text-neutral-700 uppercase tracking-wider cursor-pointer hover:bg-neutral-100 transition-colors"
+                        onClick={() => handleSort('createdAt')}
+                      >
+                        <div className="flex items-center gap-2">
+                          Date Added
+                          {tableState.sortColumn === 'createdAt' && (
+                            <span className="text-sm">{tableState.sortOrder === 'asc' ? '↑' : '↓'}</span>
+                          )}
+                        </div>
+                      </th>
+                    )}
                     <th className="px-6 py-4 text-right text-xs font-semibold text-neutral-700 uppercase tracking-wider">
                       Actions
                     </th>
@@ -315,16 +363,36 @@ export default function Candidates() {
                       onClick={() => handleSelectCandidate(candidate)}
                       className="hover:bg-neutral-50 transition-colors cursor-pointer"
                     >
-                      <td className="px-6 py-4">
-                        <p className="font-medium text-neutral-900">{candidate.name}</p>
-                      </td>
-                      <td className="px-6 py-4 text-neutral-600 text-sm">{candidate.email}</td>
-                      <td className="px-6 py-4 text-neutral-600 text-sm">{candidate.roleApplied || candidate.role || '-'}</td>
-                      <td className="px-6 py-4">
-                        <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium border ${STAGE_COLORS[candidate.stage] || ''}`}>
-                          {candidate.stage?.charAt(0).toUpperCase() + candidate.stage?.slice(1)}
-                        </span>
-                      </td>
+                      {tableState.visibleColumns.includes('name') && (
+                        <td className="px-6 py-4">
+                          <p className="font-medium text-neutral-900">{candidate.name}</p>
+                        </td>
+                      )}
+                      {tableState.visibleColumns.includes('email') && (
+                        <td className="px-6 py-4 text-neutral-600 text-sm">{candidate.email}</td>
+                      )}
+                      {tableState.visibleColumns.includes('roleApplied') && (
+                        <td className="px-6 py-4 text-neutral-600 text-sm">{candidate.roleApplied || candidate.role || '-'}</td>
+                      )}
+                      {tableState.visibleColumns.includes('stage') && (
+                        <td className="px-6 py-4">
+                          <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium border ${STAGE_COLORS[candidate.stage] || ''}`}>
+                            {candidate.stage?.charAt(0).toUpperCase() + candidate.stage?.slice(1)}
+                          </span>
+                        </td>
+                      )}
+                      {tableState.visibleColumns.includes('status') && (
+                        <td className="px-6 py-4 text-neutral-600 text-sm">{candidate.status || '-'}</td>
+                      )}
+                      {tableState.visibleColumns.includes('createdAt') && (
+                        <td className="px-6 py-4 text-neutral-600 text-sm">
+                          {candidate.createdAt ? new Date(candidate.createdAt).toLocaleDateString('en-US', {
+                            month: 'short',
+                            day: 'numeric',
+                            year: 'numeric',
+                          }) : '-'}
+                        </td>
+                      )}
                       <td className="px-6 py-4 text-right">
                         <button
                           onClick={(e) => {

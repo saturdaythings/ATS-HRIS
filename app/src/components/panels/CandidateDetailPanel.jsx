@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import Badge from '../common/Badge';
 import Timeline from '../common/Timeline';
+import DatePicker from '../common/DatePicker';
 import ResumeUploadForm from '../forms/ResumeUploadForm';
 import PromoteModal from '../modals/PromoteModal';
 
@@ -26,6 +27,7 @@ export default function CandidateDetailPanel({ candidate, isOpen, onClose }) {
     notes: '',
     resumeUrl: '',
     skills: [],
+    sourcedAt: new Date(),
   });
 
   const [activities] = useState([
@@ -106,6 +108,7 @@ export default function CandidateDetailPanel({ candidate, isOpen, onClose }) {
         notes: candidate.notes || '',
         resumeUrl: candidate.resumeUrl || '',
         skills: candidate.skills || [],
+        sourcedAt: candidate.sourcedAt ? new Date(candidate.sourcedAt) : new Date(),
       });
       setSelectedSkills(candidate.skills || []);
       setIsEditing(false);
@@ -267,6 +270,12 @@ export default function CandidateDetailPanel({ candidate, isOpen, onClose }) {
                       <p className="text-slate-900 capitalize">{formData.status}</p>
                     </div>
                     <div>
+                      <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Sourced At</label>
+                      <p className="text-slate-900">
+                        {formData.sourcedAt ? new Date(formData.sourcedAt).toLocaleDateString() : '-'}
+                      </p>
+                    </div>
+                    <div>
                       <label className="block text-xs font-semibold text-slate-500 uppercase mb-1">Notes</label>
                       <p className="text-slate-900">{formData.notes || '-'}</p>
                     </div>
@@ -379,6 +388,14 @@ export default function CandidateDetailPanel({ candidate, isOpen, onClose }) {
                         <option value="rejected">Rejected</option>
                         <option value="hired">Hired</option>
                       </select>
+                    </div>
+                    <div>
+                      <DatePicker
+                        label="Sourced At"
+                        value={formData.sourcedAt}
+                        onChange={(date) => setFormData(prev => ({ ...prev, sourcedAt: date }))}
+                        helperText="Date when candidate was added to the pipeline"
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-900 mb-1">Notes</label>

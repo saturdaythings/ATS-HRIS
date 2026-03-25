@@ -1,13 +1,12 @@
 import { useState } from 'react';
+import DatePicker from '../common/DatePicker';
 
 /**
  * ReturnDeviceModal Component
  * Modal to return a device from an employee
  */
 export default function ReturnDeviceModal({ device, onSuccess, onCancel }) {
-  const [returnedDate, setReturnedDate] = useState(
-    new Date().toISOString().split('T')[0]
-  );
+  const [returnedDate, setReturnedDate] = useState(new Date());
   const [condition, setCondition] = useState('good');
   const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -32,7 +31,7 @@ export default function ReturnDeviceModal({ device, onSuccess, onCancel }) {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            returnedDate,
+            returnedDate: returnedDate.toISOString().split('T')[0],
             condition: condition || null,
             notes: notes || null,
           }),
@@ -81,17 +80,12 @@ export default function ReturnDeviceModal({ device, onSuccess, onCancel }) {
             )}
 
             {/* Return Date */}
-            <div>
-              <label className="block text-sm font-medium text-slate-900 mb-2">
-                Return Date
-              </label>
-              <input
-                type="date"
-                value={returnedDate}
-                onChange={e => setReturnedDate(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-orange-500"
-              />
-            </div>
+            <DatePicker
+              label="Return Date"
+              value={returnedDate}
+              onChange={setReturnedDate}
+              helperText="Date device was or will be returned"
+            />
 
             {/* Condition */}
             <div>

@@ -25,6 +25,7 @@ import trackTemplatesRouter from './routes/trackTemplates.js';
 import configListsRouter from './routes/configLists.js';
 import exportsRouter from './routes/exports.js';
 import searchRouter from './routes/search.js';
+import assistantRouter from './routes/assistant.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -62,6 +63,7 @@ app.use('/api/track-templates', trackTemplatesRouter);
 app.use('/api/config-lists', configListsRouter);
 app.use('/api/exports', exportsRouter);
 app.use('/api/search', searchRouter);
+app.use('/api/assistant', assistantRouter);
 
 // Error handling
 app.use(errorHandler);

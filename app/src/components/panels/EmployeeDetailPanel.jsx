@@ -6,10 +6,13 @@ import { useState, useEffect } from 'react';
 import Badge from '../common/Badge';
 import ProgressBar from '../common/ProgressBar';
 import Timeline from '../common/Timeline';
+import DatePicker from '../common/DatePicker';
+import OffboardModal from '../modals/OffboardModal';
 
 export default function EmployeeDetailPanel({ employee, isOpen, onClose }) {
   const [activeTab, setActiveTab] = useState('overview');
   const [isEditing, setIsEditing] = useState(false);
+  const [showOffboardModal, setShowOffboardModal] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -81,19 +84,21 @@ export default function EmployeeDetailPanel({ employee, isOpen, onClose }) {
   const [devices] = useState([
     {
       id: 1,
-      type: 'MacBook Pro',
+      type: 'MacBook Pro M3',
       serial: 'C123456789',
       assignedDate: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
       status: 'active',
       returnedDate: null,
+      deviceCondition: 'new',
     },
     {
       id: 2,
       type: 'iPhone 15',
       serial: 'A987654321',
-      assignedDate: new Date(Date.now() - 20 * 24 * 60 * 60 * 1000),
-      status: 'active',
-      returnedDate: null,
+      assignedDate: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000),
+      status: 'returned',
+      returnedDate: new Date(Date.now() - 10 * 24 * 60 * 60 * 1000),
+      returnedCondition: 'fair',
     },
   ]);
 
@@ -129,6 +134,31 @@ export default function EmployeeDetailPanel({ employee, isOpen, onClose }) {
   const handleMarkTaskComplete = (taskId) => {
     // TODO: Call API to mark task complete
     console.log('Mark task complete:', taskId);
+  };
+
+  const handleOffboard = async (data) => {
+    try {
+      const response = await fetch(`/api/offboarding/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          employeeId: employee.id,
+          lastDay: data.lastDay,
+          trackIds: data.trackIds,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to start offboarding');
+      }
+
+      setShowOffboardModal(false);
+      // Optionally refresh or navigate to offboarding page
+      console.log('Offboarding started successfully');
+    } catch (error) {
+      console.error('Offboarding error:', error);
+      // TODO: Show error toast/notification
+    }
   };
 
   if (!isOpen || !employee) return null;
@@ -244,6 +274,7 @@ export default function EmployeeDetailPanel({ employee, isOpen, onClose }) {
                       Reassign Manager
                     </button>
                     <button
+                      onClick={() => setShowOffboardModal(true)}
                       className="w-full px-4 py-2 bg-red-50 text-red-700 rounded-lg font-medium hover:bg-red-100 transition-colors"
                     >
                       Offboard
@@ -297,6 +328,17 @@ export default function EmployeeDetailPanel({ employee, isOpen, onClose }) {
                           <option key={dept} value={dept}>{dept}</option>
                         ))}
                       </select>
+                    </div>
+                    <div>
+                      <DatePicker
+                        label="Start Date"
+                        value={formData.startDate}
+                        onChange={(date) => setFormData(prev => ({
+                          ...prev,
+                          startDate: date ? date.toISOString().split('T')[0] : '',
+                        }))}
+                        helperText="Date employee started or will start"
+                      />
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-slate-900 mb-1">Manager</label>
@@ -389,39 +431,100 @@ export default function EmployeeDetailPanel({ employee, isOpen, onClose }) {
           {/* Devices Tab */}
           {activeTab === 'devices' && (
             <div className="space-y-6">
-              <div>
-                <h3 className="text-sm font-semibold text-slate-900 mb-3">Assigned Devices</h3>
-                <div className="space-y-3">
-                  {devices.filter(d => d.status === 'active').map(device => (
-                    <div key={device.id} className="p-4 border border-slate-200 rounded-lg">
-                      <div className="flex items-start justify-between mb-2">
-                        <p className="text-sm font-medium text-slate-900">{device.type}</p>
-                        <Badge variant="active" size="sm">Active</Badge>
-                      </div>
-                      <p className="text-xs text-slate-600">Serial: {device.serial}</p>
-                      <p className="text-xs text-slate-600">
-                        Assigned: {new Date(device.assignedDate).toLocaleDateString()}
-                      </p>
-                    </div>
-                  ))}
+              {/* Helper function to format dates */}
+              {devices.length === 0 ? (
+                <div className="text-center py-6 text-slate-500 text-sm">
+                  No devices assigned
                 </div>
-              </div>
+              ) : (
+                <>
+                  {/* Active/Current Devices */}
+                  {devices.filter(d => d.status === 'active').length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-900 mb-3">Current Devices</h3>
+                      <div className="space-y-3">
+                        {devices.filter(d => d.status === 'active').map(device => {
+                          const assignedDate = new Date(device.assignedDate).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          });
+                          const conditionLabel = device.deviceCondition
+                            ? device.deviceCondition.charAt(0).toUpperCase() + device.deviceCondition.slice(1)
+                            : 'Good';
 
-              {devices.some(d => d.status !== 'active') && (
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-900 mb-3">Return History</h3>
-                  <div className="space-y-3">
-                    {devices.filter(d => d.status !== 'active').map(device => (
-                      <div key={device.id} className="p-4 border border-slate-200 rounded-lg opacity-60">
-                        <p className="text-sm font-medium text-slate-900">{device.type}</p>
-                        <p className="text-xs text-slate-600">Serial: {device.serial}</p>
-                        <p className="text-xs text-slate-600">
-                          Returned: {device.returnedDate ? new Date(device.returnedDate).toLocaleDateString() : 'Unknown'}
-                        </p>
+                          return (
+                            <div key={device.id} className="p-4 border border-slate-200 rounded-lg">
+                              <div className="flex items-start justify-between mb-2">
+                                <p className="text-sm font-medium text-slate-900">{device.type}</p>
+                                <Badge variant="active" size="sm">Active</Badge>
+                              </div>
+                              <p className="text-xs text-slate-600 mb-1">Serial: {device.serial}</p>
+                              <div className="text-xs text-slate-600 space-y-1">
+                                <div>
+                                  <span className="font-medium">{assignedDate}</span>
+                                  <span className="mx-1">–</span>
+                                  <span className="font-medium">present</span>
+                                </div>
+                                <div>
+                                  <span className="text-slate-600">Condition:</span>
+                                  <span className="ml-1 font-medium">{conditionLabel}</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
-                    ))}
-                  </div>
-                </div>
+                    </div>
+                  )}
+
+                  {/* Returned Devices */}
+                  {devices.filter(d => d.status !== 'active').length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold text-slate-900 mb-3">Returned Devices</h3>
+                      <div className="space-y-3">
+                        {devices.filter(d => d.status !== 'active').map(device => {
+                          const assignedDate = new Date(device.assignedDate).toLocaleDateString('en-US', {
+                            year: 'numeric',
+                            month: 'short',
+                            day: 'numeric',
+                          });
+                          const returnedDate = device.returnedDate
+                            ? new Date(device.returnedDate).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric',
+                            })
+                            : 'Unknown';
+                          const returnedCondition = device.returnedCondition
+                            ? device.returnedCondition.charAt(0).toUpperCase() + device.returnedCondition.slice(1)
+                            : 'Unknown';
+
+                          return (
+                            <div key={device.id} className="p-4 border border-slate-200 rounded-lg bg-slate-50">
+                              <div className="flex items-start justify-between mb-2">
+                                <p className="text-sm font-medium text-slate-900">{device.type}</p>
+                                <Badge variant="inactive" size="sm">Returned</Badge>
+                              </div>
+                              <p className="text-xs text-slate-600 mb-1">Serial: {device.serial}</p>
+                              <div className="text-xs text-slate-600 space-y-1">
+                                <div>
+                                  <span className="font-medium">{assignedDate}</span>
+                                  <span className="mx-1">–</span>
+                                  <span className="font-medium">{returnedDate}</span>
+                                </div>
+                                <div>
+                                  <span className="text-slate-600">Returned:</span>
+                                  <span className="ml-1 font-medium">{returnedCondition}</span>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
           )}
@@ -435,6 +538,15 @@ export default function EmployeeDetailPanel({ employee, isOpen, onClose }) {
           )}
         </div>
       </div>
+
+      {/* Offboard Modal */}
+      {showOffboardModal && (
+        <OffboardModal
+          employee={employee}
+          onConfirm={handleOffboard}
+          onCancel={() => setShowOffboardModal(false)}
+        />
+      )}
     </>
   );
 }

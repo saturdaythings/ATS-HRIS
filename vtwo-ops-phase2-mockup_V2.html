@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<title>V.Two Ops — Phase 2 Features</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Text',sans-serif;background:#efefef;display:flex;flex-direction:column;align-items:center;padding:24px;gap:16px}
+
+.shell{display:flex;width:100%;max-width:1280px;height:720px;border:1px solid #ddd;border-radius:12px;overflow:hidden;background:#fff;box-shadow:0 2px 20px rgba(0,0,0,.07)}
+.sidebar{width:216px;flex-shrink:0;background:#fafafa;border-right:.5px solid #e8e8e8;display:flex;flex-direction:column}
+.sb-logo{padding:16px;border-bottom:.5px solid #e8e8e8}
+.sb-wordmark{font-size:14px;font-weight:600;color:#111;letter-spacing:-.3px}
+.sb-wordmark span{color:#555;font-weight:400}
+.sb-nav{flex:1;overflow-y:auto;padding:6px 0}
+.nav-group-label{font-size:10px;font-weight:500;color:#aaa;text-transform:uppercase;letter-spacing:.08em;padding:8px 16px 3px}
+.nav-item{display:flex;align-items:center;padding:6px 16px 6px 28px;font-size:13px;color:#555;cursor:pointer;border-right:2px solid transparent}
+.nav-item.top{padding-left:16px}
+.nav-item.active{background:#fff;color:#111;font-weight:500;border-right-color:#111}
+.sb-foot{border-top:.5px solid #e8e8e8;padding:10px 16px;display:flex;align-items:center;gap:8px}
+.avatar{width:26px;height:26px;border-radius:50%;background:#111;color:#fff;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.sb-user-name{font-size:12px;font-weight:500;color:#111}
+.sb-user-role{font-size:11px;color:#aaa}
+
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0;position:relative}
+.topbar{height:48px;border-bottom:.5px solid #e8e8e8;display:flex;align-items:center;padding:0 20px;gap:12px;flex-shrink:0;background:#fff}
+.topbar-title{font-size:14px;font-weight:500;color:#111}
+.topbar-sep{color:#ddd}
+.topbar-sub{font-size:13px;color:#888}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.search-box{display:flex;align-items:center;gap:6px;background:#f5f5f5;border:.5px solid #e8e8e8;border-radius:7px;padding:5px 10px;font-size:12.5px;color:#aaa;width:190px}
+.ai-btn{font-size:12.5px;font-weight:500;padding:5px 12px;border-radius:7px;background:#111;color:#fff;border:none;cursor:pointer;display:flex;align-items:center;gap:5px}
+.ai-btn-dot{width:6px;height:6px;border-radius:50%;background:#4ade80}
+
+.btn{font-size:12.5px;font-weight:500;padding:6px 12px;border-radius:7px;cursor:pointer;border:none}
+.btn-primary{background:#111;color:#fff}
+.btn-secondary{background:#fff;color:#111;border:.5px solid #e0e0e0}
+.btn-ghost{background:transparent;color:#555;border:.5px solid #e0e0e0}
+.btn-sm{font-size:11.5px;padding:4px 9px}
+
+/* table area */
+.table-toolbar{display:flex;align-items:center;gap:7px;padding:10px 16px;border-bottom:.5px solid #e8e8e8;flex-shrink:0;background:#fff;flex-wrap:wrap}
+.filter-chip{font-size:12px;padding:4px 10px;border:.5px solid #e8e8e8;border-radius:999px;color:#555;cursor:pointer;background:#fff;white-space:nowrap}
+.filter-chip.on{background:#111;color:#fff;border-color:#111}
+.col-toggle-btn{font-size:12px;padding:4px 10px;border:.5px solid #e8e8e8;border-radius:7px;color:#555;cursor:pointer;background:#fff;margin-left:auto;display:flex;align-items:center;gap:5px}
+.tbl-wrap{flex:1;overflow:auto}
+table{width:100%;border-collapse:collapse}
+th{font-size:10.5px;font-weight:500;color:#aaa;text-transform:uppercase;letter-spacing:.06em;padding:9px 14px;text-align:left;border-bottom:.5px solid #e8e8e8;background:#fff;position:sticky;top:0;white-space:nowrap;cursor:pointer;user-select:none}
+th:hover{color:#111}
+th .sort-arrow{margin-left:3px;opacity:.4}
+th.sorted .sort-arrow{opacity:1;color:#111}
+td{padding:10px 14px;font-size:13px;color:#111;border-bottom:.5px solid #f3f3f3;white-space:nowrap}
+tbody tr:hover td{background:#fafafa;cursor:pointer}
+tbody tr.selected td{background:#f5f5f5}
+.stale-dot{width:6px;height:6px;border-radius:50%;background:#e74c3c;display:inline-block;margin-right:5px;vertical-align:middle}
+.stage-pill{font-size:11px;font-weight:500;padding:2px 8px;border-radius:999px;display:inline-block}
+.s-interview{background:#eff6ff;color:#1d4ed8}
+.s-screening{background:#fef9c3;color:#92400e}
+.s-applied{background:#f3f4f6;color:#374151}
+.s-offer{background:#f0fdf4;color:#166534}
+.s-active{background:#dcfce7;color:#166534}
+.s-inactive{background:#fef2f2;color:#991b1b}
+.s-available{background:#dcfce7;color:#166534}
+.s-assigned{background:#fef9c3;color:#92400e}
+
+/* col visibility dropdown */
+.col-dropdown{position:absolute;top:48px;right:16px;background:#fff;border:.5px solid #e8e8e8;border-radius:10px;padding:12px;width:200px;box-shadow:0 4px 16px rgba(0,0,0,.1);z-index:50;display:none}
+.col-dropdown.open{display:block}
+.col-dropdown-title{font-size:11px;font-weight:500;color:#aaa;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.col-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:.5px solid #f5f5f5;font-size:13px;color:#111}
+.col-row:last-child{border-bottom:none}
+.col-checkbox{width:14px;height:14px;border:.5px solid #ccc;border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;font-size:10px}
+.col-checkbox.checked{background:#111;border-color:#111;color:#fff}
+
+/* detail panel */
+.detail-panel{width:360px;flex-shrink:0;border-left:.5px solid #e8e8e8;display:flex;flex-direction:column;background:#fff}
+.dp-header{padding:14px 18px 10px;border-bottom:.5px solid #e8e8e8}
+.dp-header-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:4px}
+.dp-name{font-size:16px;font-weight:500;color:#111}
+.dp-sub{font-size:12.5px;color:#777;margin-bottom:6px}
+.dp-meta{display:flex;gap:5px;flex-wrap:wrap}
+.dp-header-actions{display:flex;gap:6px;flex-shrink:0}
+.dp-tabs{display:flex;border-bottom:.5px solid #e8e8e8;padding:0 18px}
+.dp-tab{font-size:12.5px;padding:8px 10px 8px 0;margin-right:6px;color:#aaa;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-.5px;white-space:nowrap}
+.dp-tab.active{color:#111;border-bottom-color:#111;font-weight:500}
+.dp-body{flex:1;overflow-y:auto;padding:14px 18px}
+.dp-actions{padding:10px 18px;border-top:.5px solid #e8e8e8;display:flex;gap:7px}
+
+/* inline edit fields */
+.field{margin-bottom:12px;position:relative}
+.field-lbl{font-size:10.5px;color:#bbb;text-transform:uppercase;letter-spacing:.06em;margin-bottom:3px}
+.field-val{font-size:13px;color:#111;padding:4px 6px;border-radius:5px;border:.5px solid transparent;cursor:text;transition:border .1s;line-height:1.5}
+.field-val:hover{border-color:#e0e0e0;background:#fafafa}
+.field-val.editing{border-color:#111;background:#fff;outline:none;cursor:text}
+.field-input{font-size:13px;color:#111;padding:4px 6px;border-radius:5px;border:.5px solid #111;width:100%;outline:none;background:#fff}
+.field-select{font-size:13px;color:#111;padding:4px 6px;border-radius:5px;border:.5px solid #111;width:100%;outline:none;background:#fff}
+.inline-save-row{display:flex;gap:5px;margin-top:4px}
+.save-btn{font-size:11px;padding:2px 8px;border-radius:5px;background:#111;color:#fff;border:none;cursor:pointer}
+.cancel-btn{font-size:11px;padding:2px 8px;border-radius:5px;background:#fff;color:#555;border:.5px solid #e0e0e0;cursor:pointer}
+.edit-hint{font-size:10.5px;color:#bbb;margin-top:2px}
+
+/* interview history */
+.int-card{border:.5px solid #e8e8e8;border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.int-card-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.int-card-date{font-size:12px;font-weight:500;color:#111}
+.int-fmt{font-size:10px;padding:1px 6px;border-radius:999px;background:#f5f5f5;border:.5px solid #e8e8e8;color:#666}
+.int-card-interviewer{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:.5px solid #f5f5f5;font-size:12px}
+.int-card-interviewer:last-child{border-bottom:none}
+.int-name{color:#111;font-weight:500}
+.int-role{color:#aaa;font-size:11px}
+.rec-hire{color:#166534;font-weight:500}
+.rec-maybe{color:#92400e;font-weight:500}
+.rec-no{color:#991b1b;font-weight:500}
+.int-feedback{font-size:11.5px;color:#888;margin-top:4px;font-style:italic}
+
+/* activity tab */
+.act-item{display:flex;gap:10px;padding:7px 0;border-bottom:.5px solid #f5f5f5}
+.act-item:last-child{border-bottom:none}
+.act-dot{width:7px;height:7px;border-radius:50%;margin-top:4px;flex-shrink:0}
+.act-text{font-size:12.5px;color:#555;flex:1}
+.act-bold{color:#111;font-weight:500}
+.act-time{font-size:11px;color:#bbb;margin-top:2px}
+
+/* device history */
+.assign-row{border:.5px solid #e8e8e8;border-radius:8px;padding:10px 12px;margin-bottom:6px}
+.assign-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:3px}
+.assign-name{font-size:13px;font-weight:500;color:#111}
+.assign-dates{font-size:12px;color:#888}
+.assign-condition{font-size:11px;padding:1px 6px;border-radius:999px;background:#f5f5f5;border:.5px solid #e8e8e8;color:#666}
+.assign-current{border-color:#166534;background:#f0fdf4}
+.assign-current .assign-name{color:#166534}
+
+/* AI assistant panel */
+.ai-panel{width:400px;flex-shrink:0;border-left:.5px solid #e8e8e8;display:flex;flex-direction:column;background:#fff}
+.ai-panel-header{padding:14px 18px;border-bottom:.5px solid #e8e8e8;display:flex;align-items:center;justify-content:space-between}
+.ai-panel-title{font-size:14px;font-weight:500;color:#111;display:flex;align-items:center;gap:7px}
+.ai-status{font-size:11px;color:#16a34a;background:#dcfce7;padding:2px 7px;border-radius:999px}
+.ai-messages{flex:1;overflow-y:auto;padding:16px 18px;display:flex;flex-direction:column;gap:12px}
+.msg{max-width:88%;display:flex;flex-direction:column;gap:3px}
+.msg.user{align-self:flex-end}
+.msg.assistant{align-self:flex-start}
+.msg-bubble{font-size:13px;line-height:1.5;padding:9px 12px;border-radius:10px}
+.msg.user .msg-bubble{background:#111;color:#fff;border-radius:10px 10px 2px 10px}
+.msg.assistant .msg-bubble{background:#f5f5f5;color:#111;border-radius:10px 10px 10px 2px}
+.msg-time{font-size:10.5px;color:#bbb;padding:0 4px}
+.msg.user .msg-time{text-align:right}
+
+/* confirm card inside assistant */
+.confirm-card{background:#fff;border:.5px solid #e8e8e8;border-radius:8px;padding:12px;margin-top:4px}
+.confirm-title{font-size:11.5px;font-weight:500;color:#555;margin-bottom:8px}
+.confirm-row{display:flex;justify-content:space-between;font-size:12.5px;padding:4px 0;border-bottom:.5px solid #f5f5f5}
+.confirm-row:last-child{border-bottom:none}
+.confirm-key{color:#aaa}
+.confirm-val{color:#111;font-weight:500}
+.confirm-actions{display:flex;gap:7px;margin-top:10px}
+
+.ai-input-area{padding:12px 18px;border-top:.5px solid #e8e8e8;display:flex;gap:8px;align-items:flex-end}
+.ai-input{flex:1;border:.5px solid #e0e0e0;border-radius:8px;padding:8px 12px;font-size:13px;color:#111;resize:none;outline:none;min-height:38px;max-height:100px;font-family:inherit}
+.ai-input:focus{border-color:#111}
+.ai-send{background:#111;color:#fff;border:none;border-radius:7px;padding:8px 12px;font-size:13px;cursor:pointer;flex-shrink:0}
+
+/* demo tabs */
+.demo-tabs{display:flex;background:#e8e8e8;border-radius:8px;padding:2px;width:100%;max-width:1280px}
+.demo-tab{flex:1;font-size:11.5px;padding:5px 8px;border-radius:6px;cursor:pointer;color:#666;border:none;background:transparent;text-align:center}
+.demo-tab.on{background:#fff;color:#111;font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,.1)}
+.tag{font-size:11px;padding:2px 7px;border-radius:999px;background:#f5f5f5;border:.5px solid #e8e8e8;color:#555}
+.sec-head{font-size:10.5px;font-weight:500;color:#aaa;text-transform:uppercase;letter-spacing:.07em;margin:14px 0 8px;padding-bottom:5px;border-bottom:.5px solid #f0f0f0}
+</style>
+</head>
+<body>
+
+<div style="width:100%;max-width:1280px;background:#fef9c3;border:.5px solid #fde68a;border-radius:8px;padding:10px 16px;font-size:12.5px;color:#92400e;">
+  <strong>V.Two Ops — Phase 2 Features Reference</strong> &nbsp;·&nbsp; Shows only NEW features: AI assistant · Inline editing · Active/inactive · Table controls · Interview history · Device assignment history
+</div>
+
+<div class="demo-tabs">
+  <button class="demo-tab on" onclick="showTab('ai')">AI Assistant</button>
+  <button class="demo-tab" onclick="showTab('inline')">Inline Editing</button>
+  <button class="demo-tab" onclick="showTab('table')">Table Controls</button>
+  <button class="demo-tab" onclick="showTab('interviews')">Interview History</button>
+  <button class="demo-tab" onclick="showTab('devices')">Device History</button>
+</div>
+
+<!-- ═══════════════════ AI ASSISTANT ═══ -->
+<div id="tab-ai" class="shell">
+  <div class="sidebar">
+    <div class="sb-logo"><div class="sb-wordmark">V.Two <span>Ops</span></div></div>
+    <div class="sb-nav">
+      <div class="nav-item top">Dashboard</div>
+      <div class="nav-group-label">People</div>
+      <div class="nav-item active">Candidates</div>
+      <div class="nav-item">Employees</div>
+      <div class="nav-item">Onboarding</div>
+      <div class="nav-item">Offboarding</div>
+      <div class="nav-group-label">Devices</div>
+      <div class="nav-item">Inventory</div>
+      <div class="nav-item">Assignments</div>
+      <div class="nav-item top">Tracks</div>
+      <div class="nav-item top">Reports</div>
+      <div class="nav-group-label">Settings</div>
+      <div class="nav-item">Lists</div>
+      <div class="nav-item">Users</div>
+    </div>
+    <div class="sb-foot"><div class="avatar">OK</div><div><div class="sb-user-name">Oliver</div><div class="sb-user-role">Admin</div></div></div>
+  </div>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title">People</div><div class="topbar-sep">/</div><div class="topbar-sub">Candidates</div>
+      <div class="topbar-right">
+        <div class="search-box">Global search...</div>
+        <button class="ai-btn"><span class="ai-btn-dot"></span> Ask Oliver</button>
+      </div>
+    </div>
+    <!-- main area + AI panel side by side -->
+    <div style="flex:1;display:flex;overflow:hidden">
+      <!-- table (compressed) -->
+      <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+        <div class="table-toolbar">
+          <div class="filter-chip on">Active ✕</div>
+          <div class="filter-chip">Stage ▾</div>
+          <div class="filter-chip">Seniority ▾</div>
+          <div class="filter-chip">Source ▾</div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Stage</th><th>Seniority</th><th>Added</th></tr></thead>
+            <tbody>
+              <tr><td>Sofia Reyes</td><td><span class="stage-pill s-interview">Interview</span></td><td>Senior</td><td>Mar 10</td></tr>
+              <tr><td>Leo Hartmann</td><td><span class="stage-pill s-screening">Screening</span></td><td>Mid</td><td>Mar 14</td></tr>
+              <tr><td>Chen Wei</td><td><span class="stage-pill s-offer">Offer</span></td><td>Senior</td><td>Feb 28</td></tr>
+              <tr><td>Priya Nair</td><td><span class="stage-pill s-applied">Applied</span></td><td>Junior</td><td>Mar 18</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- AI PANEL -->
+      <div class="ai-panel">
+        <div class="ai-panel-header">
+          <div class="ai-panel-title">
+            Ask Oliver
+            <span class="ai-status">Ready</span>
+          </div>
+          <button class="btn btn-ghost btn-sm">✕</button>
+        </div>
+
+        <div class="ai-messages">
+
+          <!-- example 1: action with confirmation -->
+          <div class="msg user">
+            <div class="msg-bubble">Move Sam to interviewed</div>
+            <div class="msg-time">9:14 AM</div>
+          </div>
+          <div class="msg assistant">
+            <div class="msg-bubble">
+              Found Samuel Park — currently in Screening. I'll move him to Interview stage.
+              <div class="confirm-card">
+                <div class="confirm-title">Confirm update</div>
+                <div class="confirm-row"><span class="confirm-key">Candidate</span><span class="confirm-val">Samuel Park</span></div>
+                <div class="confirm-row"><span class="confirm-key">Stage</span><span class="confirm-val">Screening → Interview</span></div>
+                <div class="confirm-actions">
+                  <button class="btn btn-primary btn-sm">Confirm</button>
+                  <button class="btn btn-secondary btn-sm">Cancel</button>
+                </div>
+              </div>
+            </div>
+            <div class="msg-time">9:14 AM</div>
+          </div>
+
+          <!-- example 2: question answered -->
+          <div class="msg user">
+            <div class="msg-bubble">How many mid devs do we have in pipeline?</div>
+            <div class="msg-time">9:16 AM</div>
+          </div>
+          <div class="msg assistant">
+            <div class="msg-bubble">You have <strong>4 mid-level developers</strong> currently active in pipeline — 1 in Screening, 2 in Interview, 1 with an Offer out.</div>
+            <div class="msg-time">9:16 AM</div>
+          </div>
+
+          <!-- example 3: gap filling -->
+          <div class="msg user">
+            <div class="msg-bubble">Schedule James for Friday</div>
+            <div class="msg-time">9:18 AM</div>
+          </div>
+          <div class="msg assistant">
+            <div class="msg-bubble">James Okafor — what time on Friday?</div>
+            <div class="msg-time">9:18 AM</div>
+          </div>
+          <div class="msg user">
+            <div class="msg-bubble">2pm</div>
+            <div class="msg-time">9:18 AM</div>
+          </div>
+          <div class="msg assistant">
+            <div class="msg-bubble">
+              Who's interviewing him?
+            </div>
+            <div class="msg-time">9:18 AM</div>
+          </div>
+          <div class="msg user">
+            <div class="msg-bubble">R. Patel, video call</div>
+            <div class="msg-time">9:19 AM</div>
+          </div>
+          <div class="msg assistant">
+            <div class="msg-bubble">
+              Got it.
+              <div class="confirm-card">
+                <div class="confirm-title">Confirm interview</div>
+                <div class="confirm-row"><span class="confirm-key">Candidate</span><span class="confirm-val">James Okafor</span></div>
+                <div class="confirm-row"><span class="confirm-key">Date</span><span class="confirm-val">Fri Mar 27, 2:00 PM</span></div>
+                <div class="confirm-row"><span class="confirm-key">Format</span><span class="confirm-val">Video</span></div>
+                <div class="confirm-row"><span class="confirm-key">Interviewer</span><span class="confirm-val">R. Patel</span></div>
+                <div class="confirm-actions">
+                  <button class="btn btn-primary btn-sm">Confirm</button>
+                  <button class="btn btn-secondary btn-sm">Edit</button>
+                </div>
+              </div>
+            </div>
+            <div class="msg-time">9:19 AM</div>
+          </div>
+
+        </div>
+
+        <div class="ai-input-area">
+          <textarea class="ai-input" placeholder="Ask Oliver anything or give an instruction..."></textarea>
+          <button class="ai-send">Send</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ INLINE EDITING ═══ -->
+<div id="tab-inline" class="shell" style="display:none">
+  <div class="sidebar">
+    <div class="sb-logo"><div class="sb-wordmark">V.Two <span>Ops</span></div></div>
+    <div class="sb-nav">
+      <div class="nav-item top">Dashboard</div>
+      <div class="nav-group-label">People</div>
+      <div class="nav-item active">Candidates</div>
+      <div class="nav-item">Employees</div>
+    </div>
+    <div class="sb-foot"><div class="avatar">OK</div><div><div class="sb-user-name">Oliver</div><div class="sb-user-role">Admin</div></div></div>
+  </div>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title">People</div><div class="topbar-sep">/</div><div class="topbar-sub">Candidates</div>
+      <div class="topbar-right"><div class="search-box">Global search...</div></div>
+    </div>
+    <div style="flex:1;display:flex;overflow:hidden">
+      <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+        <div class="table-toolbar">
+          <div class="filter-chip on">Active ✕</div>
+          <div class="filter-chip">Stage ▾</div>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Stage</th><th>Status</th><th>Seniority</th><th>Source</th><th>Added</th></tr></thead>
+            <tbody>
+              <tr class="selected"><td>Sofia Reyes</td><td><span class="stage-pill s-interview">Interview</span></td><td><span class="stage-pill s-active">Active</span></td><td>Senior</td><td>LinkedIn</td><td>Mar 10</td></tr>
+              <tr><td>Marcus Webb</td><td><span class="stage-pill s-screening">Screening</span></td><td><span class="stage-pill s-inactive">Inactive</span></td><td>Mid</td><td>LinkedIn</td><td>Mar 3</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- DETAIL PANEL with inline edit -->
+      <div class="detail-panel">
+        <div class="dp-header">
+          <div class="dp-header-top">
+            <div>
+              <div class="dp-name">Sofia Reyes</div>
+              <div class="dp-sub">sofia.reyes@email.com</div>
+            </div>
+          </div>
+          <div class="dp-meta">
+            <span class="stage-pill s-interview">Interview</span>
+            <span class="stage-pill s-active">Active</span>
+            <span class="tag">Senior</span>
+          </div>
+        </div>
+        <div class="dp-tabs">
+          <div class="dp-tab active">Overview</div>
+          <div class="dp-tab">Interviews</div>
+          <div class="dp-tab">Activity</div>
+        </div>
+        <div class="dp-body">
+          <div style="font-size:11px;color:#aaa;background:#f8f8f8;border-radius:6px;padding:7px 10px;margin-bottom:12px">Click any field to edit it</div>
+
+          <!-- normal field -->
+          <div class="field">
+            <div class="field-lbl">Location</div>
+            <div class="field-val">Denver, CO</div>
+          </div>
+
+          <!-- field being edited -->
+          <div class="field">
+            <div class="field-lbl">Role applied</div>
+            <input class="field-input" value="Senior PM" />
+            <div class="inline-save-row">
+              <button class="save-btn">Save</button>
+              <button class="cancel-btn">Cancel</button>
+            </div>
+          </div>
+
+          <!-- select field -->
+          <div class="field">
+            <div class="field-lbl">Stage</div>
+            <select class="field-select">
+              <option>Applied</option>
+              <option>Screening</option>
+              <option selected>Interview</option>
+              <option>Offer</option>
+            </select>
+            <div class="inline-save-row">
+              <button class="save-btn">Save</button>
+              <button class="cancel-btn">Cancel</button>
+            </div>
+          </div>
+
+          <!-- status field — active/inactive toggle -->
+          <div class="field">
+            <div class="field-lbl">Status</div>
+            <select class="field-select">
+              <option selected>Active</option>
+              <option>Inactive</option>
+            </select>
+            <div class="inline-save-row">
+              <button class="save-btn">Save</button>
+              <button class="cancel-btn">Cancel</button>
+            </div>
+          </div>
+
+          <!-- date field — overridable -->
+          <div class="field">
+            <div class="field-lbl">Sourced date</div>
+            <input class="field-input" type="date" value="2026-03-10" />
+            <div class="inline-save-row">
+              <button class="save-btn">Save</button>
+              <button class="cancel-btn">Cancel</button>
+            </div>
+            <div class="edit-hint">Can be back-dated — not locked to today</div>
+          </div>
+
+          <div class="field">
+            <div class="field-lbl">Source</div>
+            <div class="field-val">LinkedIn</div>
+          </div>
+
+          <div class="field">
+            <div class="field-lbl">Notes</div>
+            <div class="field-val" style="color:#777">Strong B2B SaaS background. Referral from T. Park.</div>
+          </div>
+        </div>
+        <div class="dp-actions">
+          <button class="btn btn-secondary">Log interview</button>
+          <button class="btn btn-primary">Move to Offer →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ TABLE CONTROLS ═══ -->
+<div id="tab-table" class="shell" style="display:none">
+  <div class="sidebar">
+    <div class="sb-logo"><div class="sb-wordmark">V.Two <span>Ops</span></div></div>
+    <div class="sb-nav">
+      <div class="nav-item top">Dashboard</div>
+      <div class="nav-group-label">People</div>
+      <div class="nav-item active">Candidates</div>
+      <div class="nav-item">Employees</div>
+    </div>
+    <div class="sb-foot"><div class="avatar">OK</div><div><div class="sb-user-name">Oliver</div><div class="sb-user-role">Admin</div></div></div>
+  </div>
+  <div class="main" style="position:relative">
+    <div class="topbar">
+      <div class="topbar-title">People</div><div class="topbar-sep">/</div><div class="topbar-sub">Candidates</div>
+      <div class="topbar-right"><button class="btn btn-primary">+ Add candidate</button><div class="search-box">Search...</div></div>
+    </div>
+    <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;position:relative">
+      <div class="table-toolbar">
+        <!-- filter chips -->
+        <div class="filter-chip on">Active ✕</div>
+        <div class="filter-chip on">Interview ✕</div>
+        <div class="filter-chip">Stage ▾</div>
+        <div class="filter-chip">Status ▾</div>
+        <div class="filter-chip">Seniority ▾</div>
+        <div class="filter-chip">Source ▾</div>
+        <div class="filter-chip">Client ▾</div>
+        <div class="filter-chip">Skills ▾</div>
+        <div class="filter-chip">Date added ▾</div>
+        <!-- column toggle -->
+        <button class="col-toggle-btn" onclick="toggleColDropdown()">Columns ▾</button>
+      </div>
+
+      <!-- column visibility dropdown -->
+      <div class="col-dropdown open" id="col-dropdown" style="top:100px;right:20px">
+        <div class="col-dropdown-title">Show / hide columns</div>
+        <div class="col-row"><div class="col-checkbox checked">✓</div>Name</div>
+        <div class="col-row"><div class="col-checkbox checked">✓</div>Role</div>
+        <div class="col-row"><div class="col-checkbox checked">✓</div>Stage</div>
+        <div class="col-row"><div class="col-checkbox checked">✓</div>Status</div>
+        <div class="col-row"><div class="col-checkbox checked">✓</div>Seniority</div>
+        <div class="col-row"><div class="col-checkbox">&#x2713;</div>Source</div>
+        <div class="col-row"><div class="col-checkbox">&#x2713;</div>Client</div>
+        <div class="col-row"><div class="col-checkbox checked">✓</div>Date added</div>
+        <div class="col-row"><div class="col-checkbox checked">✓</div>Last activity</div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr>
+            <th>Name <span class="sort-arrow">↕</span></th>
+            <th>Role <span class="sort-arrow">↕</span></th>
+            <th class="sorted">Stage <span class="sort-arrow">↑</span></th>
+            <th>Status <span class="sort-arrow">↕</span></th>
+            <th>Seniority <span class="sort-arrow">↕</span></th>
+            <th>Date added <span class="sort-arrow">↕</span></th>
+            <th>Last activity <span class="sort-arrow">↕</span></th>
+          </tr></thead>
+          <tbody>
+            <tr><td>Sofia Reyes</td><td>Senior PM</td><td><span class="stage-pill s-interview">Interview</span></td><td><span class="stage-pill s-active">Active</span></td><td>Senior</td><td>Mar 10</td><td>Today</td></tr>
+            <tr><td>Yuki Tanaka</td><td>Project Manager</td><td><span class="stage-pill s-interview">Interview</span></td><td><span class="stage-pill s-active">Active</span></td><td>Senior</td><td>Mar 5</td><td>Mar 19</td></tr>
+            <tr><td>Marcus Webb</td><td>UX Designer</td><td><span class="stage-pill s-screening">Screening</span></td><td><span class="stage-pill s-inactive">Inactive</span></td><td>Mid</td><td>Mar 3</td><td>Mar 3</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ INTERVIEW HISTORY ═══ -->
+<div id="tab-interviews" class="shell" style="display:none">
+  <div class="sidebar">
+    <div class="sb-logo"><div class="sb-wordmark">V.Two <span>Ops</span></div></div>
+    <div class="sb-nav">
+      <div class="nav-item top">Dashboard</div>
+      <div class="nav-group-label">People</div>
+      <div class="nav-item active">Candidates</div>
+    </div>
+    <div class="sb-foot"><div class="avatar">OK</div><div><div class="sb-user-name">Oliver</div><div class="sb-user-role">Admin</div></div></div>
+  </div>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title">People</div><div class="topbar-sep">/</div><div class="topbar-sub">Candidates</div>
+      <div class="topbar-right"><div class="search-box">Global search...</div></div>
+    </div>
+    <div style="flex:1;display:flex;overflow:hidden">
+      <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Name</th><th>Stage</th><th>Seniority</th></tr></thead>
+            <tbody>
+              <tr class="selected"><td>Sofia Reyes</td><td><span class="stage-pill s-interview">Interview</span></td><td>Senior</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="detail-panel">
+        <div class="dp-header">
+          <div class="dp-name">Sofia Reyes</div>
+          <div class="dp-sub">Senior PM · Acme Corp</div>
+          <div class="dp-meta"><span class="stage-pill s-interview">Interview</span><span class="stage-pill s-active">Active</span></div>
+        </div>
+        <div class="dp-tabs">
+          <div class="dp-tab">Overview</div>
+          <div class="dp-tab active">Interviews</div>
+          <div class="dp-tab">Activity</div>
+          <div class="dp-tab">Offer</div>
+          <div class="dp-tab">Resumes</div>
+        </div>
+        <div class="dp-body">
+          <div class="sec-head">Interview history</div>
+
+          <div class="int-card">
+            <div class="int-card-top">
+              <div class="int-card-date">Mar 25, 2026 · 2:00 PM</div>
+              <span class="int-fmt">Video</span>
+            </div>
+            <div class="int-card-interviewer">
+              <div><span class="int-name">J. Kim</span> <span class="int-role">· Tech Lead</span></div>
+              <span class="rec-hire">Hire</span>
+            </div>
+            <div class="int-card-interviewer">
+              <div><span class="int-name">T. Park</span> <span class="int-role">· PM</span></div>
+              <span class="rec-maybe">Maybe</span>
+            </div>
+            <div class="int-feedback">Strong systems thinking. Needs follow-up on client-facing exp.</div>
+          </div>
+
+          <div class="int-card">
+            <div class="int-card-top">
+              <div class="int-card-date">Mar 18, 2026 · 10:00 AM</div>
+              <span class="int-fmt">Phone</span>
+            </div>
+            <div class="int-card-interviewer">
+              <div><span class="int-name">R. Patel</span> <span class="int-role">· Screening</span></div>
+              <span class="rec-hire">Hire</span>
+            </div>
+            <div class="int-feedback">Good comms. Clear alignment on role scope.</div>
+          </div>
+
+          <div class="sec-head">Activity</div>
+          <div class="act-item"><div class="act-dot" style="background:#3b82f6"></div><div><div class="act-text"><span class="act-bold">Stage</span> moved to Interview</div><div class="act-time">Mar 18 · R. Patel</div></div></div>
+          <div class="act-item"><div class="act-dot" style="background:#aaa"></div><div><div class="act-text"><span class="act-bold">Interview</span> logged · Phone screen</div><div class="act-time">Mar 18</div></div></div>
+          <div class="act-item"><div class="act-dot" style="background:#aaa"></div><div><div class="act-text"><span class="act-bold">Candidate</span> added · LinkedIn</div><div class="act-time">Mar 10</div></div></div>
+        </div>
+        <div class="dp-actions">
+          <button class="btn btn-secondary">Log interview</button>
+          <button class="btn btn-primary">Move to Offer →</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════ DEVICE HISTORY ═══ -->
+<div id="tab-devices" class="shell" style="display:none">
+  <div class="sidebar">
+    <div class="sb-logo"><div class="sb-wordmark">V.Two <span>Ops</span></div></div>
+    <div class="sb-nav">
+      <div class="nav-item top">Dashboard</div>
+      <div class="nav-group-label">Devices</div>
+      <div class="nav-item active">Inventory</div>
+      <div class="nav-item">Assignments</div>
+    </div>
+    <div class="sb-foot"><div class="avatar">OK</div><div><div class="sb-user-name">Oliver</div><div class="sb-user-role">Admin</div></div></div>
+  </div>
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title">Devices</div><div class="topbar-sep">/</div><div class="topbar-sub">Inventory</div>
+      <div class="topbar-right"><div class="search-box">Global search...</div></div>
+    </div>
+    <div style="flex:1;display:flex;overflow:hidden">
+      <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+        <div class="tbl-wrap">
+          <table>
+            <thead><tr><th>Serial</th><th>Make / Model</th><th>Status</th><th>Assigned to</th></tr></thead>
+            <tbody>
+              <tr class="selected"><td>MBP-2024-001</td><td>Apple / MacBook Pro M3</td><td><span class="stage-pill s-assigned">Assigned</span></td><td>James Okafor</td></tr>
+              <tr><td>MBP-2024-002</td><td>Apple / MacBook Pro M3</td><td><span class="stage-pill s-available">Available</span></td><td>—</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="detail-panel">
+        <div class="dp-header">
+          <div class="dp-name">MacBook Pro M3</div>
+          <div class="dp-sub">Apple · MBP-2024-001</div>
+          <div class="dp-meta"><span class="stage-pill s-assigned">Assigned</span><span class="tag">Laptop</span></div>
+        </div>
+        <div class="dp-tabs">
+          <div class="dp-tab">Details</div>
+          <div class="dp-tab active">Assignment history</div>
+        </div>
+        <div class="dp-body">
+          <div class="sec-head">Assignment history</div>
+
+          <!-- current assignment -->
+          <div class="assign-row assign-current">
+            <div class="assign-top">
+              <div class="assign-name">James Okafor</div>
+              <span class="stage-pill s-assigned" style="font-size:10px">Current</span>
+            </div>
+            <div class="assign-dates">Assigned Mar 24, 2026 · Condition: New</div>
+          </div>
+
+          <!-- past assignment -->
+          <div class="assign-row">
+            <div class="assign-top">
+              <div class="assign-name" style="color:#555">Tom Nguyen</div>
+              <span class="assign-condition">Returned: Fair</span>
+            </div>
+            <div class="assign-dates">Jan 6, 2025 → Mar 20, 2026</div>
+          </div>
+
+          <div class="assign-row">
+            <div class="assign-top">
+              <div class="assign-name" style="color:#555">Rania Aziz</div>
+              <span class="assign-condition">Returned: Good</span>
+            </div>
+            <div class="assign-dates">Mar 1, 2024 → Dec 20, 2024</div>
+          </div>
+
+          <div style="font-size:12px;color:#aaa;margin-top:12px">When a new device is assigned, the previous assignment is automatically closed with a return date and condition — no history is lost.</div>
+        </div>
+        <div class="dp-actions">
+          <button class="btn btn-secondary">Record return</button>
+          <button class="btn btn-ghost">Edit</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function showTab(id) {
+  ['ai','inline','table','interviews','devices'].forEach(t => {
+    const el = document.getElementById('tab-' + t);
+    if(el) el.style.display = 'none';
+  });
+  const el = document.getElementById('tab-' + id);
+  if(el) el.style.display = 'flex';
+  document.querySelectorAll('.demo-tab').forEach(b => b.classList.remove('on'));
+  const tabs = ['ai','inline','table','interviews','devices'];
+  document.querySelectorAll('.demo-tab')[tabs.indexOf(id)].classList.add('on');
+}
+function toggleColDropdown() {
+  document.getElementById('col-dropdown').classList.toggle('open');
+}
+</script>
+</body>
+</html>

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import DatePicker from '../common/DatePicker';
 
 /**
  * AssignDeviceModal Component
@@ -7,9 +8,7 @@ import { useState, useEffect } from 'react';
 export default function AssignDeviceModal({ device, onSuccess, onCancel }) {
   const [employees, setEmployees] = useState([]);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
-  const [assignedDate, setAssignedDate] = useState(
-    new Date().toISOString().split('T')[0]
-  );
+  const [assignedDate, setAssignedDate] = useState(new Date());
   const [notes, setNotes] = useState('');
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -55,7 +54,7 @@ export default function AssignDeviceModal({ device, onSuccess, onCancel }) {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             employeeId: selectedEmployeeId,
-            assignedDate,
+            assignedDate: assignedDate.toISOString().split('T')[0],
             notes: notes || null,
           }),
         }
@@ -148,17 +147,12 @@ export default function AssignDeviceModal({ device, onSuccess, onCancel }) {
             )}
 
             {/* Assigned Date */}
-            <div>
-              <label className="block text-sm font-medium text-slate-900 mb-2">
-                Assigned Date
-              </label>
-              <input
-                type="date"
-                value={assignedDate}
-                onChange={e => setAssignedDate(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
+            <DatePicker
+              label="Assigned Date"
+              value={assignedDate}
+              onChange={setAssignedDate}
+              helperText="Date device was or will be assigned to employee"
+            />
 
             {/* Notes */}
             <div>

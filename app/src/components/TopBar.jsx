@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import NotificationDropdown from './NotificationDropdown';
+import AssistantPanel from './panels/AssistantPanel';
 import useNotifications from '../hooks/useNotifications';
 
 export default function TopBar({ onMenuClick, employeeId = 'default-employee' }) {
@@ -56,8 +57,11 @@ export default function TopBar({ onMenuClick, employeeId = 'default-employee' })
         />
       </div>
 
-      {/* Right: User avatar */}
+      {/* Right: Assistant button and user avatar */}
       <div className="flex items-center gap-4">
+        {/* Assistant Panel */}
+        <AssistantPanel />
+
         {/* Notification bell with dropdown */}
         <div className="relative">
           <button
