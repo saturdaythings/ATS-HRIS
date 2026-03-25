@@ -509,6 +509,205 @@ function toggleTask(runId, taskId) {
   openRunDetail(runId);
 }
 
+// Inventory page helper functions
+const typeEmoji = { laptop: '💻', monitor: '🖥️', phone: '📱', keyboard: '⌨️' };
+
+function devCards(list) {
+  return list.map(d => `
+    <div class="device-card" onclick="showDevDetail('${d.id}')">
+      <div class="device-icon">${typeEmoji[d.type] || '📦'}</div>
+      <div class="device-name">${d.name}</div>
+      <div class="device-serial">${d.serial}</div>
+      <div style="margin-top:10px;display:flex;align-items:center;justify-content:space-between">
+        ${statusPill(d.status)}
+        ${d.assignedTo ? `<span style="font-size:12px;color:var(--text2)">${employees.find(e => e.id === d.assignedTo)?.name.split(' ')[0] || 'Unknown'}</span>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+function filterDevs(s) {
+  const list = s ? devices.filter(d => d.status === s) : devices;
+  const g = document.getElementById('device-grid');
+  if (g) g.innerHTML = devCards(list);
+}
+
+function showDevDetail(id) {
+  const d = devices.find(x => x.id === id);
+  if (!d) return;
+  const assignee = d.assignedTo ? employees.find(e => e.id === d.assignedTo) : null;
+  showModal(`
+    <div class="modal">
+      <div class="modal-header">
+        <div style="display:flex;align-items:center;gap:10px">
+          <span style="font-size:24px">${typeEmoji[d.type] || '📦'}</span>
+          <div>
+            <div class="modal-title">${d.name}</div>
+            <div style="font-size:12px;color:var(--text2);font-family:var(--mono)">${d.serial}</div>
+          </div>
+        </div>
+        <button class="detail-close" onclick="closeModal()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-row"><span class="detail-key">Make / Model</span><span class="detail-val">${d.make} ${d.model}</span></div>
+        <div class="detail-row"><span class="detail-key">Status</span>${statusPill(d.status)}</div>
+        <div class="detail-row"><span class="detail-key">Condition</span><span class="detail-val">${d.condition}</span></div>
+        <div class="detail-row"><span class="detail-key">Purchased</span><span class="detail-val">${d.purchaseDate}</span></div>
+        ${assignee ? `<div class="detail-row"><span class="detail-key">Assigned To</span><span class="detail-val">${assignee.name}</span></div>` : ''}
+      </div>
+      <div class="modal-footer">
+        ${d.status === 'available' ? `<button class="btn btn-primary" onclick="showAssignModal('${d.id}')">Assign to Employee</button>` : `<button class="btn btn-danger" onclick="returnDevice('${d.id}')">Return Device</button>`}
+        <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+      </div>
+    </div>`);
+}
+
+function showAssignModal(devId) {
+  const d = devices.find(x => x.id === devId);
+  if (!d) return;
+  closeModal();
+  showModal(`
+    <div class="modal">
+      <div class="modal-header"><div class="modal-title">Assign ${d.name}</div><button class="detail-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">Employee</label>
+          <select class="form-input form-select" id="ae">
+            ${employees.map(e => `<option value="${e.id}">${e.name} — ${e.role}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="assignDev('${devId}')">Assign</button>
+      </div>
+    </div>`);
+}
+
+function assignDev(devId) {
+  const empId = document.getElementById('ae').value;
+  const d = devices.find(x => x.id === devId);
+  const e = employees.find(x => x.id === empId);
+  if (!d || !e) return;
+  d.status = 'assigned';
+  d.assignedTo = empId;
+  assignments.push({ id: 'a' + Date.now(), employeeId: empId, deviceId: devId, assignedAt: now(), status: 'active' });
+  closeModal();
+  showToast(`${d.name} assigned to ${e.name}`);
+  // Refresh inventory display
+  const p = document.getElementById('page');
+  if (p) {
+    const avail = devices.filter(dv => dv.status === 'available').length;
+    p.innerHTML = `
+      <div class="page-header">
+        <div>
+          <div class="page-title">Device Inventory</div>
+          <div class="page-subtitle">${devices.length} devices · ${avail} available</div>
+        </div>
+        <button class="btn btn-primary" onclick="showAddDeviceModal()">+ Add Device</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:20px">
+        <button class="btn btn-secondary btn-sm" onclick="filterDevs('')">All (${devices.length})</button>
+        <button class="btn btn-secondary btn-sm" onclick="filterDevs('available')">Available (${avail})</button>
+        <button class="btn btn-secondary btn-sm" onclick="filterDevs('assigned')">Assigned (${devices.filter(dv => dv.status === 'assigned').length})</button>
+      </div>
+      <div class="device-grid" id="device-grid">${devCards(devices)}</div>
+    `;
+  }
+}
+
+function returnDevice(devId) {
+  const d = devices.find(x => x.id === devId);
+  if (!d) return;
+  d.status = 'available';
+  d.assignedTo = null;
+  const i = assignments.findIndex(a => a.deviceId === devId && a.status === 'active');
+  if (i >= 0) assignments.splice(i, 1);
+  closeModal();
+  showToast(`${d.name} returned`);
+  // Refresh inventory display
+  const p = document.getElementById('page');
+  if (p) {
+    const avail = devices.filter(dv => dv.status === 'available').length;
+    p.innerHTML = `
+      <div class="page-header">
+        <div>
+          <div class="page-title">Device Inventory</div>
+          <div class="page-subtitle">${devices.length} devices · ${avail} available</div>
+        </div>
+        <button class="btn btn-primary" onclick="showAddDeviceModal()">+ Add Device</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:20px">
+        <button class="btn btn-secondary btn-sm" onclick="filterDevs('')">All (${devices.length})</button>
+        <button class="btn btn-secondary btn-sm" onclick="filterDevs('available')">Available (${avail})</button>
+        <button class="btn btn-secondary btn-sm" onclick="filterDevs('assigned')">Assigned (${devices.filter(dv => dv.status === 'assigned').length})</button>
+      </div>
+      <div class="device-grid" id="device-grid">${devCards(devices)}</div>
+    `;
+  }
+}
+
+function showAddDeviceModal() {
+  showModal(`
+    <div class="modal">
+      <div class="modal-header"><div class="modal-title">Add Device</div><button class="detail-close" onclick="closeModal()">×</button></div>
+      <div class="modal-body">
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Make</label><input class="form-input" id="dmk" placeholder="Apple"/></div>
+          <div class="form-group"><label class="form-label">Model</label><input class="form-input" id="dml" placeholder='MacBook Pro 14"'/></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="dtp"><option value="laptop">Laptop</option><option value="monitor">Monitor</option><option value="phone">Phone</option><option value="keyboard">Keyboard</option></select></div>
+          <div class="form-group"><label class="form-label">Serial</label><input class="form-input" id="dsr" placeholder="ABC123"/></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button class="btn btn-primary" onclick="addDevice()">Add</button>
+      </div>
+    </div>`);
+}
+
+function addDevice() {
+  const mk = document.getElementById('dmk').value.trim();
+  const ml = document.getElementById('dml').value.trim();
+  if (!mk || !ml) { showToast('Make and model required'); return; }
+  const nd = {
+    id: 'd' + Date.now(),
+    name: `${mk} ${ml}`,
+    type: document.getElementById('dtp').value,
+    make: mk,
+    model: ml,
+    serial: document.getElementById('dsr').value || 'N/A',
+    status: 'available',
+    assignedTo: null,
+    condition: 'new',
+    purchaseDate: today()
+  };
+  devices.push(nd);
+  closeModal();
+  showToast(`${nd.name} added`);
+  // Refresh inventory display
+  const p = document.getElementById('page');
+  if (p) {
+    const avail = devices.filter(d => d.status === 'available').length;
+    p.innerHTML = `
+      <div class="page-header">
+        <div>
+          <div class="page-title">Device Inventory</div>
+          <div class="page-subtitle">${devices.length} devices · ${avail} available</div>
+        </div>
+        <button class="btn btn-primary" onclick="showAddDeviceModal()">+ Add Device</button>
+      </div>
+      <div style="display:flex;gap:8px;margin-bottom:20px">
+        <button class="btn btn-secondary btn-sm" onclick="filterDevs('')">All (${devices.length})</button>
+        <button class="btn btn-secondary btn-sm" onclick="filterDevs('available')">Available (${avail})</button>
+        <button class="btn btn-secondary btn-sm" onclick="filterDevs('assigned')">Assigned (${devices.filter(d => d.status === 'assigned').length})</button>
+      </div>
+      <div class="device-grid" id="device-grid">${devCards(devices)}</div>
+    `;
+  }
+}
+
 class Application {
   constructor() {
     this.initialized = false;
@@ -1102,63 +1301,29 @@ class Application {
 
   async renderDevices() {
     try {
-      const devices = await api.getDevices();
+      // Fetch devices from API and store in global variable
+      const fetchedDevs = await api.getDevices().catch(() => []);
+      devices = fetchedDevs;
 
-      let html = `
-        <main>
-          <header>
-            <h1>Devices</h1>
-            <button class="btn btn-primary" onclick="router.navigate('/devices/new')">
-              + New Device
-            </button>
-          </header>
+      const avail = devices.filter(d => d.status === 'available').length;
 
-          <section class="table-section">
-            <input type="search" placeholder="Filter by model..." data-filter="model" class="search-input">
-            <table>
-              <thead>
-                <tr>
-                  <th data-sort-by="type">Type</th>
-                  <th data-sort-by="model">Model</th>
-                  <th data-sort-by="status">Status</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
+      return `
+        <div class="page-header">
+          <div>
+            <div class="page-title">Device Inventory</div>
+            <div class="page-subtitle">${devices.length} devices · ${avail} available</div>
+          </div>
+          <button class="btn btn-primary" onclick="showAddDeviceModal()">+ Add Device</button>
+        </div>
+        <div style="display:flex;gap:8px;margin-bottom:20px">
+          <button class="btn btn-secondary btn-sm" onclick="filterDevs('')">All (${devices.length})</button>
+          <button class="btn btn-secondary btn-sm" onclick="filterDevs('available')">Available (${avail})</button>
+          <button class="btn btn-secondary btn-sm" onclick="filterDevs('assigned')">Assigned (${devices.filter(d => d.status === 'assigned').length})</button>
+        </div>
+        <div class="device-grid" id="device-grid">${devCards(devices)}</div>
       `;
-
-      devices.forEach(device => {
-        html += `
-          <tr>
-            <td data-column="type">${device.type || 'N/A'}</td>
-            <td data-column="model">${device.model || 'N/A'}</td>
-            <td data-column="status">${device.status || 'N/A'}</td>
-            <td>
-              <button class="btn btn-sm" data-toggle-row="${device.id}">Details</button>
-              <button class="btn btn-danger btn-sm" data-delete-row="${device.id}">Delete</button>
-            </td>
-          </tr>
-          <tr class="detail-row">
-            <td colspan="4">
-              <div class="detail-content">
-                <p><strong>Serial:</strong> ${device.serial || 'N/A'}</p>
-                <p><strong>Assigned To:</strong> ${device.assignedTo || 'Unassigned'}</p>
-              </div>
-            </td>
-          </tr>
-        `;
-      });
-
-      html += `
-              </tbody>
-            </table>
-          </section>
-        </main>
-      `;
-
-      return html;
     } catch (error) {
-      return `<main><p>Error loading devices: ${error.message}</p></main>`;
+      return `<div style="padding:20px"><p>Error loading devices: ${error.message}</p></div>`;
     }
   }
 
@@ -1198,55 +1363,51 @@ class Application {
 
   async renderAssignments() {
     try {
-      const assignments = await api.getAssignments();
+      // Fetch all required data from API
+      const fetchedAssignments = await api.getAssignments().catch(() => []);
+      const fetchedEmployees = await api.getEmployees().catch(() => []);
+      const fetchedDevices = await api.getDevices().catch(() => []);
 
-      let html = `
-        <main>
-          <header>
-            <h1>Assignments</h1>
-            <button class="btn btn-primary" onclick="router.navigate('/assignments/new')">
-              + New Assignment
-            </button>
-          </header>
+      assignments = fetchedAssignments;
+      employees = fetchedEmployees;
+      devices = fetchedDevices;
 
-          <section class="table-section">
-            <table>
-              <thead>
-                <tr>
-                  <th data-sort-by="employee">Employee</th>
-                  <th data-sort-by="device">Device</th>
-                  <th data-sort-by="assignedAt">Assigned</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
+      return `
+        <div class="page-header">
+          <div>
+            <div class="page-title">Device Assignments</div>
+            <div class="page-subtitle">${assignments.length} active assignments</div>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Employee</th>
+                <th>Device</th>
+                <th>Assigned Date</th>
+                <th>Status</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="assign-tbody">
+              ${assignments.length ? assignments.map(a => {
+                const emp = employees.find(e => e.id === a.employeeId);
+                const dev = devices.find(d => d.id === a.deviceId);
+                return `<tr>
+                  <td>${emp ? personCell(emp.name, emp.role) : 'Unknown'}</td>
+                  <td>${dev ? dev.name : 'Unknown'}</td>
+                  <td>${a.assignedAt ? new Date(a.assignedAt).toLocaleDateString() : '—'}</td>
+                  <td>${statusPill(a.status)}</td>
+                  <td style="text-align:right"><button class="btn-ghost btn-sm" style="color:var(--red)" onclick="if(confirm('Remove assignment?')) { assignments.splice(assignments.findIndex(x => x.id==='${a.id}'), 1); location.reload(); }">✕</button></td>
+                </tr>`;
+              }).join('') : '<tr><td colspan="5" style="text-align:center;padding:20px;color:var(--text3)">No device assignments yet</td></tr>'}
+            </tbody>
+          </table>
+        </div>
       `;
-
-      assignments.forEach(assign => {
-        html += `
-          <tr onclick="router.navigate('/assignments/${assign.id}')" style="cursor: pointer;">
-            <td data-column="employee">
-              <a href="#/assignments/${assign.id}">${assign.employee?.name || 'N/A'}</a>
-            </td>
-            <td data-column="device">${assign.device?.name || assign.device?.model || 'N/A'}</td>
-            <td data-column="assignedAt">${assign.assignedAt ? new Date(assign.assignedAt).toLocaleDateString() : 'N/A'}</td>
-            <td>
-              <button class="btn btn-danger btn-sm" data-delete-row="${assign.id}">Remove</button>
-            </td>
-          </tr>
-        `;
-      });
-
-      html += `
-              </tbody>
-            </table>
-          </section>
-        </main>
-      `;
-
-      return html;
     } catch (error) {
-      return `<main><p>Error loading assignments: ${error.message}</p></main>`;
+      return `<div style="padding:20px"><p>Error loading assignments: ${error.message}</p></div>`;
     }
   }
 
