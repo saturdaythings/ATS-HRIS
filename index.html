@@ -758,7 +758,7 @@ function renderCandDetail(id){
         ${ivs.length?ivs.map(iv=>`<div class="interview-card">
           <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
             <div><div style="font-weight:500;font-size:13px">${iv.date}</div><div style="font-size:12px;color:var(--text2)">${iv.interviewers||'—'}</div></div>
-            <div style="display:flex;align-items:center;gap:8px">${scoreDisplay(iv.score)}<button class="btn-ghost btn-sm" style="color:var(--red);padding:4px 6px" onclick="deleteIv('${iv.id}','${c.id}')">✕</button></div>
+            <div style="display:flex;align-items:center;gap:8px">${scoreDisplay(iv.score)}<button class="btn-ghost btn-sm" style="padding:4px 6px" onclick="showEditIvModal('${iv.id}','${c.id}')">Edit</button><button class="btn-ghost btn-sm" style="color:var(--red);padding:4px 6px" onclick="deleteIv('${iv.id}','${c.id}')">✕</button></div>
           </div>
           ${iv.notes?`<p style="font-size:12px;color:var(--text2);line-height:1.5">${iv.notes}</p>`:''}</div>`).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">No interviews logged yet</div>'}
       </div>
@@ -814,6 +814,26 @@ async function addIv(candId){
 async function deleteIv(ivId,candId){
   DB.interviews=DB.interviews.filter(x=>x.id!==ivId);
   await save('interviews');showToast('Removed');renderCandDetail(candId);
+}
+
+function showEditIvModal(ivId, candId){
+  const iv=DB.interviews.find(x=>x.id===ivId);
+  const c=DB.candidates.find(x=>x.id===candId);
+  showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Edit Interview — ${c.name}</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
+    <div class="form-row"><div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="eiv-date" value="${iv.date}"/></div><div class="form-group"><label class="form-label">Score</label><select class="form-input form-select" id="eiv-score"><option value="">— No score —</option>${[1,2,3,4,5].map(n=>`<option value="${n}"${iv.score==n?' selected':''}>${n} — ${SCORE_LABELS[n]}</option>`).join('')}</select></div></div>
+    <div class="form-group"><label class="form-label">Interviewer(s)</label><input class="form-input" id="eiv-int" value="${iv.interviewers||''}"/></div>
+    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="eiv-notes" rows="4">${iv.notes||''}</textarea></div>
+  </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEditIv('${ivId}','${candId}')">Save</button></div></div>`);
+}
+
+async function saveEditIv(ivId, candId){
+  const iv=DB.interviews.find(x=>x.id===ivId);
+  iv.date=document.getElementById('eiv-date').value;
+  iv.score=document.getElementById('eiv-score').value;
+  iv.interviewers=document.getElementById('eiv-int').value;
+  iv.notes=document.getElementById('eiv-notes').value;
+  await save('interviews');
+  closeModal();showToast('Interview updated');renderCandDetail(candId);
 }
 
 function showAddCandModal(){
@@ -1155,7 +1175,7 @@ function showDevDetail(id){
     <div class="detail-row"><span class="detail-key">Purchased</span><span class="detail-val">${d.purchaseDate}</span></div>
     ${a?`<div class="detail-row"><span class="detail-key">Assigned To</span><span class="detail-val">${a.name}</span></div>`:''}
   </div>
-  <div class="modal-footer">${d.status==='available'?`<button class="btn btn-primary" onclick="showAssignModal('${d.id}')">Assign to Employee</button>`:`<button class="btn btn-danger" onclick="returnDevice('${d.id}')">Return Device</button>`}<button class="btn btn-secondary" onclick="closeModal()">Close</button></div></div>`);
+  <div class="modal-footer"><button class="btn btn-secondary btn-sm" onclick="showEditDeviceModal('${d.id}')">Edit</button>${d.status==='available'?`<button class="btn btn-primary" onclick="showAssignModal('${d.id}')">Assign to Employee</button>`:`<button class="btn btn-danger" onclick="returnDevice('${d.id}')">Return Device</button>`}<button class="btn btn-secondary" onclick="closeModal()">Close</button></div></div>`);
 }
 
 function showAssignModal(devId){
@@ -1197,6 +1217,37 @@ async function addDevice(){
   if(!mk||!ml){showToast('Make and model required');return;}
   const nd={id:uid(),name:`${mk} ${ml}`,type:document.getElementById('dtp').value,make:mk,model:ml,serial:document.getElementById('dsr').value||'N/A',status:'available',assignedTo:'',condition:document.getElementById('dcond').value,purchaseDate:document.getElementById('dpurch').value};
   DB.devices.push(nd);await save('devices');closeModal();showToast(`${nd.name} added`);renderInventory();
+}
+
+function showEditDeviceModal(id){
+  const d=DB.devices.find(x=>x.id===id);
+  showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Edit Device</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
+    <div class="form-row"><div class="form-group"><label class="form-label">Make</label><input class="form-input" id="edv-mk" value="${d.make||''}"/></div><div class="form-group"><label class="form-label">Model</label><input class="form-input" id="edv-ml" value="${d.model||''}"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="edv-tp"><option value="laptop"${d.type==='laptop'?' selected':''}>Laptop</option><option value="monitor"${d.type==='monitor'?' selected':''}>Monitor</option><option value="phone"${d.type==='phone'?' selected':''}>Phone</option><option value="keyboard"${d.type==='keyboard'?' selected':''}>Keyboard</option><option value="mouse"${d.type==='mouse'?' selected':''}>Mouse</option></select></div><div class="form-group"><label class="form-label">Serial #</label><input class="form-input" id="edv-sr" value="${d.serial||''}"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Condition</label><select class="form-input form-select" id="edv-cond"><option${d.condition==='new'?' selected':''}>new</option><option${d.condition==='good'?' selected':''}>good</option><option${d.condition==='fair'?' selected':''}>fair</option><option${d.condition==='poor'?' selected':''}>poor</option></select></div><div class="form-group"><label class="form-label">Purchase Date</label><input type="date" class="form-input" id="edv-purch" value="${d.purchaseDate||''}"/></div></div>
+  </div><div class="modal-footer"><button class="btn btn-danger btn-sm" style="margin-right:auto" onclick="deleteDevice('${d.id}')">Delete</button><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEditDevice('${d.id}')">Save</button></div></div>`);
+}
+
+async function saveEditDevice(id){
+  const d=DB.devices.find(x=>x.id===id);
+  d.make=document.getElementById('edv-mk').value;
+  d.model=document.getElementById('edv-ml').value;
+  d.name=`${d.make} ${d.model}`;
+  d.type=document.getElementById('edv-tp').value;
+  d.serial=document.getElementById('edv-sr').value;
+  d.condition=document.getElementById('edv-cond').value;
+  d.purchaseDate=document.getElementById('edv-purch').value;
+  await save('devices');
+  closeModal();showToast('Device updated');renderInventory();
+}
+
+async function deleteDevice(id){
+  if(!confirm('Delete this device?'))return;
+  const d=DB.devices.find(x=>x.id===id);
+  if(d.status==='assigned'){showToast('Return device before deleting');return;}
+  DB.devices=DB.devices.filter(x=>x.id!==id);
+  await save('devices');
+  closeModal();showToast('Device deleted');renderInventory();
 }
 
 // ── ASSIGNMENTS ───────────────────────────────────────────────────────────────
