@@ -2020,11 +2020,11 @@ class Application {
 
   async renderReports() {
     try {
-      // Fetch data from API
-      const cands = await api.getCandidates().catch(() => []);
-      const emps = await api.getEmployees().catch(() => []);
-      const devs = await api.getDevices().catch(() => []);
-      const onbs = await api.getOnboarding().catch(() => []);
+      // Use global seeded data
+      const cands = candidates;
+      const emps = employees;
+      const devs = devices;
+      const onbs = onboardingRuns;
 
       // Calculate metrics
       const activeCands = cands.filter(c => c.candStatus === 'Active').length;
