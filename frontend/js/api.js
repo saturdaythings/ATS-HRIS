@@ -142,6 +142,26 @@ class API {
   }
 
   /**
+   * Generic call method (GET/POST/PATCH/DELETE)
+   * @param {string} method
+   * @param {string} endpoint
+   * @param {Object} body
+   * @returns {Promise<any>}
+   */
+  async call(method, endpoint, body = null) {
+    if (method === 'GET') {
+      return this.get(endpoint);
+    } else if (method === 'POST') {
+      return this.post(endpoint, body);
+    } else if (method === 'PATCH') {
+      return this.patch(endpoint, body);
+    } else if (method === 'DELETE') {
+      return this.delete(endpoint);
+    }
+    throw new Error(`Unsupported method: ${method}`);
+  }
+
+  /**
    * Fetch all candidates
    * @returns {Promise<Array>}
    */

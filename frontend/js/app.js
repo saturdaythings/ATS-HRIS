@@ -288,7 +288,79 @@ class Application {
    */
 
   async renderDashboard() {
-    return this.loadPageFile('dashboard.html');
+    try {
+      const data = await api.call('GET', '/dashboard');
+      const dashboard = data.data;
+
+      return `
+        <main style="padding:20px;">
+          <h1 style="font-size:24px;font-weight:500;margin-bottom:20px;">Dashboard</h1>
+
+          <div class="stat-row">
+            <div class="stat-card">
+              <div class="stat-lbl">Active Candidates</div>
+              <div class="stat-val">${dashboard.activeCandidateCount || 0}</div>
+              <div class="stat-sub">in pipeline</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-lbl">Interviews This Week</div>
+              <div class="stat-val">${dashboard.interviewsScheduledThisWeek || 0}</div>
+              <div class="stat-sub">scheduled</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-lbl">Onboardings in Progress</div>
+              <div class="stat-val">${dashboard.onboardingsInProgress || 0}</div>
+              <div class="stat-sub">active runs</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-lbl">Devices Unassigned</div>
+              <div class="stat-val">${dashboard.unassignedDeviceCount || 0}</div>
+              <div class="stat-sub">available</div>
+            </div>
+          </div>
+
+          <div class="dash-grid">
+            <div class="widget">
+              <div class="widget-title">Stale Candidates</div>
+              ${(dashboard.staleCandidates || []).length > 0
+                ? (dashboard.staleCandidates || []).map(c => `
+                    <div class="stale-row">
+                      <div><div class="stale-name">${c.name}</div></div>
+                      <div class="stale-pill">${Math.floor((Date.now() - new Date(c.latestStageChangeAt)) / (1000*60*60*24))} days</div>
+                    </div>
+                  `).join('')
+                : '<p style="color:#aaa;">No stale candidates</p>'
+              }
+            </div>
+            <div class="widget">
+              <div class="widget-title">Upcoming Interviews</div>
+              ${(dashboard.upcomingInterviewsNext7Days || []).length > 0
+                ? (dashboard.upcomingInterviewsNext7Days || []).map(i => `
+                    <div class="int-row">
+                      <div><div class="int-name">${i.candidate?.name || 'Unknown'}</div></div>
+                    </div>
+                  `).join('')
+                : '<p style="color:#aaa;">No upcoming interviews</p>'
+              }
+            </div>
+          </div>
+
+          <div class="widget">
+            <div class="widget-title">Recent Activity</div>
+            ${(dashboard.lastActivityRecords || []).slice(0, 5).length > 0
+              ? (dashboard.lastActivityRecords || []).slice(0, 5).map(a => `
+                  <div class="act-row">
+                    <div><div class="act-text">${a.description || 'Activity'}</div></div>
+                  </div>
+                `).join('')
+              : '<p style="color:#aaa;">No recent activity</p>'
+            }
+          </div>
+        </main>
+      `;
+    } catch (error) {
+      return `<main style="padding:20px;"><p>Error loading dashboard: ${error.message}</p></main>`;
+    }
   }
 
   async renderCandidates() {
@@ -684,9 +756,9 @@ class Application {
             <table>
               <thead>
                 <tr>
-                  <th data-sort-by="employeeId">Employee</th>
-                  <th data-sort-by="deviceId">Device</th>
-                  <th data-sort-by="date">Date</th>
+                  <th data-sort-by="employee">Employee</th>
+                  <th data-sort-by="device">Device</th>
+                  <th data-sort-by="assignedAt">Assigned</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -695,10 +767,12 @@ class Application {
 
       assignments.forEach(assign => {
         html += `
-          <tr>
-            <td data-column="employeeId">${assign.employeeId || 'N/A'}</td>
-            <td data-column="deviceId">${assign.deviceId || 'N/A'}</td>
-            <td data-column="date">${assign.date || 'N/A'}</td>
+          <tr onclick="router.navigate('/assignments/${assign.id}')" style="cursor: pointer;">
+            <td data-column="employee">
+              <a href="#/assignments/${assign.id}">${assign.employee?.name || 'N/A'}</a>
+            </td>
+            <td data-column="device">${assign.device?.name || assign.device?.model || 'N/A'}</td>
+            <td data-column="assignedAt">${assign.assignedAt ? new Date(assign.assignedAt).toLocaleDateString() : 'N/A'}</td>
             <td>
               <button class="btn btn-danger btn-sm" data-delete-row="${assign.id}">Remove</button>
             </td>
@@ -720,67 +794,127 @@ class Application {
   }
 
   async renderAssignmentDetail(id) {
-    return `<main><p>Assignment detail page</p></main>`;
+    try {
+      const assignment = await api.getAssignment(id);
+
+      return `
+        <main style="padding:20px;">
+          <button class="btn btn-secondary" onclick="router.back()">← Back</button>
+          <h1>${assignment.employee?.name || 'Assignment'}</h1>
+
+          <section class="detail-section">
+            <h2>Assignment Details</h2>
+            <dl>
+              <dt>Employee</dt>
+              <dd>${assignment.employee?.name || 'N/A'}</dd>
+              <dt>Device</dt>
+              <dd>${assignment.device?.name || assignment.device?.model || 'N/A'}</dd>
+              <dt>Assigned At</dt>
+              <dd>${assignment.assignedAt ? new Date(assignment.assignedAt).toLocaleDateString() : 'N/A'}</dd>
+              <dt>Status</dt>
+              <dd>${assignment.status || 'Active'}</dd>
+            </dl>
+          </section>
+        </main>
+      `;
+    } catch (error) {
+      return `<main style="padding:20px;"><p>Error: ${error.message}</p></main>`;
+    }
   }
 
   async renderOnboarding() {
     try {
       const onboarding = await api.getOnboarding();
+      const runs = onboarding || [];
 
-      let html = `
-        <main>
-          <header>
-            <h1>Onboarding</h1>
+      return `
+        <main style="padding:20px;">
+          <header style="margin-bottom:24px;">
+            <h1 style="font-size:24px;font-weight:500;color:#111;margin-bottom:8px;">Onboarding</h1>
+            <p style="font-size:13px;color:#888;">Manage new employee onboarding and orientation</p>
           </header>
-
-          <section class="table-section">
-            <table>
-              <thead>
-                <tr>
-                  <th data-sort-by="candidateId">Candidate</th>
-                  <th data-sort-by="status">Status</th>
-                  <th data-sort-by="progress">Progress</th>
-                </tr>
-              </thead>
-              <tbody>
-      `;
-
-      onboarding.forEach(item => {
-        html += `
-          <tr>
-            <td data-column="candidateId">${item.candidateId || 'N/A'}</td>
-            <td data-column="status">${item.status || 'N/A'}</td>
-            <td data-column="progress"><div class="progress-bar"><div style="width: ${item.progress || 0}%"></div></div></td>
-          </tr>
-        `;
-      });
-
-      html += `
-              </tbody>
-            </table>
+          <section id="onboarding-runs">
+            ${runs.length > 0
+              ? runs.map(run => `
+                  <div class="run-card" onclick="router.navigate('/onboarding/${run.id}')" style="cursor: pointer;">
+                    <div class="run-header">
+                      <div class="run-name">${run.employee?.name || 'Employee'}</div>
+                      <div class="run-sub" style="color:#888;">Status: ${run.status || 'active'}</div>
+                    </div>
+                    <div class="progress-bg">
+                      <div class="progress-fill" style="width: ${(run.tasks?.filter(t => t.status === 'completed').length || 0) / (run.tasks?.length || 1) * 100}%"></div>
+                    </div>
+                    ${(run.tasks || []).slice(0, 3).map(t => `
+                      <div class="run-task">
+                        <span>${t.status === 'completed' ? '✓' : '○'}</span>
+                        <span style="margin-left:8px;">${t.taskTemplate?.name || 'Task'}</span>
+                      </div>
+                    `).join('')}
+                  </div>
+                `).join('')
+              : '<p style="color:#aaa;padding:20px;">No onboarding runs in progress</p>'
+            }
           </section>
         </main>
       `;
-
-      return html;
     } catch (error) {
-      return `<main><p>Error loading onboarding: ${error.message}</p></main>`;
+      return `<main style="padding:20px;"><p>Error loading onboarding: ${error.message}</p></main>`;
     }
   }
 
   async renderOnboardingDetail(id) {
-    return `<main><p>Onboarding detail page</p></main>`;
+    try {
+      const run = await api.call('GET', `/onboarding/${id}`);
+      const data = run.data;
+
+      return `
+        <main style="padding:20px;">
+          <button class="btn btn-secondary" onclick="router.back()">← Back</button>
+          <h1>${data.employee?.name || 'Onboarding Run'}</h1>
+
+          <div class="run-card">
+            <div class="run-header">
+              <div>
+                <div class="run-name">Status: ${data.status || 'N/A'}</div>
+              </div>
+            </div>
+
+            <div style="margin-top:16px;">
+              <h3 style="font-size:14px;font-weight:500;margin-bottom:12px;">Tasks</h3>
+              ${(data.tasks || []).length > 0
+                ? (data.tasks || []).map(t => `
+                    <div class="run-task">
+                      <span class="task-check-${t.status === 'completed' ? 'done' : 'pending'}">
+                        ${t.status === 'completed' ? '✓' : '○'}
+                      </span>
+                      <span class="task-text-${t.status === 'completed' ? 'done' : ''}">
+                        ${t.taskTemplate?.name || 'Task'}
+                      </span>
+                      <span class="task-owner">· ${t.taskTemplate?.ownerRole || 'unassigned'}</span>
+                    </div>
+                  `).join('')
+                : '<p style="color:#aaa;">No tasks</p>'
+              }
+            </div>
+          </div>
+        </main>
+      `;
+    } catch (error) {
+      return `<main style="padding:20px;"><p>Error: ${error.message}</p></main>`;
+    }
   }
 
   async renderWorkflows() {
     try {
-      const workflows = await api.getWorkflows();
+      const tracksData = await api.call('GET', '/tracks');
+      const workflows = tracksData.data || tracksData || [];
 
       let html = `
-        <main>
-          <header>
-            <h1>Onboarding Workflows</h1>
-            <button class="btn btn-primary">+ New Workflow</button>
+        <main style="padding:20px;">
+          <header style="margin-bottom:24px;">
+            <h1 style="font-size:24px;font-weight:500;color:#111;margin-bottom:8px;">Onboarding Workflows</h1>
+            <p style="font-size:13px;color:#888;">Manage onboarding templates and workflows</p>
+            <button class="btn btn-primary" style="margin-top:16px;">+ New Workflow</button>
           </header>
 
           <section class="table-section">
@@ -788,7 +922,8 @@ class Application {
               <thead>
                 <tr>
                   <th data-sort-by="name">Name</th>
-                  <th data-sort-by="steps">Steps</th>
+                  <th data-sort-by="type">Type</th>
+                  <th data-sort-by="tasks">Tasks</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -799,7 +934,8 @@ class Application {
         html += `
           <tr>
             <td data-column="name">${workflow.name || 'N/A'}</td>
-            <td data-column="steps">${workflow.steps?.length || 0}</td>
+            <td data-column="type">${workflow.type || 'standard'}</td>
+            <td data-column="tasks">${workflow.tasks?.length || 0}</td>
             <td>
               <button class="btn btn-sm">Edit</button>
             </td>
@@ -816,19 +952,21 @@ class Application {
 
       return html;
     } catch (error) {
-      return `<main><p>Error loading workflows: ${error.message}</p></main>`;
+      return `<main style="padding:20px;"><p>Error loading workflows: ${error.message}</p></main>`;
     }
   }
 
   async renderTemplates() {
     try {
-      const templates = await api.getTemplates();
+      const tracksData = await api.call('GET', '/tracks');
+      const templates = tracksData.data || tracksData || [];
 
       let html = `
-        <main>
-          <header>
-            <h1>Email Templates</h1>
-            <button class="btn btn-primary">+ New Template</button>
+        <main style="padding:20px;">
+          <header style="margin-bottom:24px;">
+            <h1 style="font-size:24px;font-weight:500;color:#111;margin-bottom:8px;">Onboarding Templates</h1>
+            <p style="font-size:13px;color:#888;">Manage task templates and track types</p>
+            <button class="btn btn-primary" style="margin-top:16px;">+ New Template</button>
           </header>
 
           <section class="table-section">
@@ -837,6 +975,7 @@ class Application {
                 <tr>
                   <th data-sort-by="name">Name</th>
                   <th data-sort-by="type">Type</th>
+                  <th data-sort-by="description">Description</th>
                   <th>Actions</th>
                 </tr>
               </thead>
@@ -847,7 +986,8 @@ class Application {
         html += `
           <tr>
             <td data-column="name">${template.name || 'N/A'}</td>
-            <td data-column="type">${template.type || 'N/A'}</td>
+            <td data-column="type">${template.type || 'standard'}</td>
+            <td data-column="description">${template.description ? template.description.substring(0, 50) + '...' : 'N/A'}</td>
             <td>
               <button class="btn btn-sm">Edit</button>
             </td>
@@ -864,7 +1004,7 @@ class Application {
 
       return html;
     } catch (error) {
-      return `<main><p>Error loading templates: ${error.message}</p></main>`;
+      return `<main style="padding:20px;"><p>Error loading templates: ${error.message}</p></main>`;
     }
   }
 
@@ -946,55 +1086,154 @@ class Application {
 
   async renderOffboarding() {
     try {
+      const offboarding = await api.call('GET', '/onboarding?type=offboarding');
+      const runs = offboarding.data || [];
+
       return `
-        <main>
+        <main style="padding:20px;">
           <header style="margin-bottom:24px;">
             <h1 style="font-size:24px;font-weight:500;color:#111;margin-bottom:8px;">Offboarding</h1>
             <p style="font-size:13px;color:#888;">Manage employee separations and final tasks</p>
           </header>
-          <section id="offboarding-content">
-            <p>Offboarding page</p>
+          <section id="offboarding-runs">
+            ${runs.length > 0
+              ? runs.map(run => `
+                  <div class="run-card">
+                    <div class="run-header">
+                      <div class="run-name">${run.employee?.name || 'Employee'}</div>
+                      <div class="run-sub" style="color:#888;">Status: ${run.status}</div>
+                    </div>
+                    <div class="progress-bg">
+                      <div class="progress-fill" style="width: ${(run.tasks?.filter(t => t.status === 'completed').length || 0) / (run.tasks?.length || 1) * 100}%"></div>
+                    </div>
+                    ${(run.tasks || []).slice(0, 5).map(t => `
+                      <div class="run-task">
+                        <span>${t.status === 'completed' ? '✓' : '○'}</span>
+                        <span style="margin-left:8px;">${t.taskTemplate?.name || 'Task'}</span>
+                      </div>
+                    `).join('')}
+                  </div>
+                `).join('')
+              : '<p style="color:#aaa;padding:20px;">No offboarding runs</p>'
+            }
           </section>
         </main>
       `;
     } catch (error) {
-      return `<main><p>Error loading offboarding: ${error.message}</p></main>`;
+      return `<main style="padding:20px;"><p>Error loading offboarding: ${error.message}</p></main>`;
     }
   }
 
   async renderTracks() {
     try {
+      const tracksData = await api.call('GET', '/tracks');
+      const tracks = tracksData.data || tracksData || [];
+
       return `
-        <main>
+        <main style="padding:20px;">
           <header style="margin-bottom:24px;">
             <h1 style="font-size:24px;font-weight:500;color:#111;margin-bottom:8px;">Tracks</h1>
             <p style="font-size:13px;color:#888;">Career development and progression tracking</p>
           </header>
           <section id="tracks-content">
-            <p>Tracks page</p>
+            ${tracks.length > 0
+              ? tracks.map(track => `
+                  <div class="run-card">
+                    <div class="run-header">
+                      <div class="run-name">${track.name || 'Track'}</div>
+                      <div class="run-sub" style="color:#888;">Type: ${track.type || 'standard'}</div>
+                    </div>
+                    ${track.description ? `<p style="font-size:13px;color:#666;margin:12px 0;">${track.description}</p>` : ''}
+                    <div style="margin-top:12px;">
+                      <h4 style="font-size:12px;font-weight:500;margin-bottom:8px;color:#888;">Tasks</h4>
+                      ${(track.tasks || []).length > 0
+                        ? (track.tasks || []).map(t => `
+                            <div class="run-task">
+                              <span style="color:#666;">•</span>
+                              <span style="margin-left:8px;">${t.name || 'Task'}</span>
+                            </div>
+                          `).join('')
+                        : '<p style="font-size:12px;color:#aaa;">No tasks</p>'
+                      }
+                    </div>
+                  </div>
+                `).join('')
+              : '<p style="color:#aaa;padding:20px;">No tracks found</p>'
+            }
           </section>
         </main>
       `;
     } catch (error) {
-      return `<main><p>Error loading tracks: ${error.message}</p></main>`;
+      return `<main style="padding:20px;"><p>Error loading tracks: ${error.message}</p></main>`;
     }
   }
 
   async renderReports() {
     try {
+      const data = await api.call('GET', '/dashboard');
+      const dashboard = data.data || {};
+
       return `
-        <main>
+        <main style="padding:20px;">
           <header style="margin-bottom:24px;">
             <h1 style="font-size:24px;font-weight:500;color:#111;margin-bottom:8px;">Reports</h1>
             <p style="font-size:13px;color:#888;">Analytics and HR insights</p>
           </header>
           <section id="reports-content">
-            <p>Reports page</p>
+            <div class="stat-row">
+              <div class="stat-card">
+                <div class="stat-lbl">Active Candidates</div>
+                <div class="stat-val">${dashboard.activeCandidateCount || 0}</div>
+                <div class="stat-sub">in pipeline</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-lbl">Interviews This Week</div>
+                <div class="stat-val">${dashboard.interviewsScheduledThisWeek || 0}</div>
+                <div class="stat-sub">scheduled</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-lbl">Onboardings in Progress</div>
+                <div class="stat-val">${dashboard.onboardingsInProgress || 0}</div>
+                <div class="stat-sub">active runs</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-lbl">Devices Unassigned</div>
+                <div class="stat-val">${dashboard.unassignedDeviceCount || 0}</div>
+                <div class="stat-sub">available</div>
+              </div>
+            </div>
+
+            <div class="widget" style="margin-top:24px;">
+              <div class="widget-title">Stale Candidates (${(dashboard.staleCandidates || []).length})</div>
+              ${(dashboard.staleCandidates || []).length > 0
+                ? (dashboard.staleCandidates || []).map(c => `
+                    <div class="stale-row">
+                      <div><div class="stale-name">${c.name}</div></div>
+                      <div class="stale-pill">${Math.floor((Date.now() - new Date(c.latestStageChangeAt)) / (1000*60*60*24))} days</div>
+                    </div>
+                  `).join('')
+                : '<p style="color:#aaa;padding:12px 0;">No stale candidates</p>'
+              }
+            </div>
+
+            <div class="widget" style="margin-top:24px;">
+              <div class="widget-title">Pending Onboarding Tasks (${(dashboard.pendingOnboardingTasksNext7Days || []).length})</div>
+              ${(dashboard.pendingOnboardingTasksNext7Days || []).length > 0
+                ? (dashboard.pendingOnboardingTasksNext7Days || []).map(t => `
+                    <div class="run-task">
+                      <span>○</span>
+                      <span style="margin-left:8px;">${t.taskTemplate?.name || 'Task'}</span>
+                      <span style="font-size:11px;color:#999;margin-left:auto;">${t.employee?.name || 'Unknown'}</span>
+                    </div>
+                  `).join('')
+                : '<p style="color:#aaa;padding:12px 0;">No pending tasks</p>'
+              }
+            </div>
           </section>
         </main>
       `;
     } catch (error) {
-      return `<main><p>Error loading reports: ${error.message}</p></main>`;
+      return `<main style="padding:20px;"><p>Error loading reports: ${error.message}</p></main>`;
     }
   }
 }
