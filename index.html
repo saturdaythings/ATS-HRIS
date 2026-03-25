@@ -879,7 +879,8 @@ function promoteCandidate(id){
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Promote to Employee</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
     <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Promoting <strong>${c.name}</strong> to employee. They will appear in the Directory and be marked Hired in Hiring.</p>
     <div class="form-row"><div class="form-group"><label class="form-label">Department</label><select class="form-input form-select" id="pdept"><option>Engineering</option><option>Design</option><option>Product</option><option>Data</option><option>Operations</option></select></div><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="pstart" value="${new Date(Date.now()+7*86400000).toISOString().split('T')[0]}"/></div></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Manager</label><select class="form-input form-select" id="pmgr"><option value="">(none)</option>${DB.employees.map(e=>`<option value="${e.id}">${e.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Work Location</label><input class="form-input" id="ploc" value="${c.city||'Remote'}"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Manager</label><select class="form-input form-select" id="pmgr"><option value="">${DB.employees.length===0?'No existing employees':'(no manager)'}
+</option>${DB.employees.map(e=>`<option value="${e.id}">${e.name} — ${e.role}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Work Location</label><input class="form-input" id="ploc" value="${c.city||'Remote'}"/></div></div>
     <div class="form-group"><label class="form-label">Work Email</label><input class="form-input" id="pemail" value="${autoEmail}" placeholder="${autoEmail}"/></div>
   </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="doPromote('${id}')">Confirm & Promote</button></div></div>`);
 }
@@ -894,7 +895,35 @@ async function doPromote(id){
   DB.employees.push(ne);
   DB.activities.unshift({id:uid(),type:'hire',desc:`${c.name} promoted to employee`,at:now()});
   await save('candidates');await save('employees');await save('activities');
-  closeModal();showToast(`${c.name} promoted — now in Directory`);renderCandDetail(id);refreshHiringView();
+  closeModal();
+  renderCandDetail(id);
+  refreshHiringView();
+  // Offer to start onboarding run immediately
+  const onboardingTracks = DB.tracks.filter(t=>t.type==='company'||t.type==='role');
+  if(onboardingTracks.length>0){
+    showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Start Onboarding for ${ne.name}?</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
+      <p style="font-size:13px;color:var(--text2);margin-bottom:16px">${ne.name} has been added to the Directory with status <strong>onboarding</strong>. Would you like to start an onboarding run now?</p>
+      <div class="form-group"><label class="form-label">Track Template</label><select class="form-input form-select" id="quick-track">${onboardingTracks.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="quick-start" value="${ne.startDate}"/></div>
+    </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal();showToast('${ne.name} added to Directory')">Skip for now</button><button class="btn btn-primary" onclick="quickStartOnboarding('${ne.id}')">Start Onboarding</button></div></div>`);
+  } else {
+    showToast(`${ne.name} promoted → now in Directory`);
+  }
+}
+
+async function quickStartOnboarding(empId){
+  const trackId=document.getElementById('quick-track').value;
+  const startDate=document.getElementById('quick-start').value;
+  const runId=uid();
+  DB.onboardingRuns.push({id:runId,employeeId:empId,trackId,type:'onboarding',status:'active',startDate});
+  const newTasks=getTrackTasks(trackId).map(tt=>{
+    const due=new Date(startDate);due.setDate(due.getDate()+parseInt(tt.dueDaysOffset||0));
+    return{id:uid(),runId,name:tt.name,ownerRole:tt.ownerRole,status:'pending',dueDate:due.toISOString().split('T')[0]};
+  });
+  DB.runTasks.push(...newTasks);
+  await save('onboardingRuns');await save('runTasks');
+  closeModal();showToast('Onboarding run started');
+  nav('onboarding');
 }
 
 // ── DIRECTORY ─────────────────────────────────────────────────────────────────
@@ -1053,7 +1082,7 @@ function renderOnboarding(){
 
 function showStartRunModal(type){
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Start ${type} Run</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
-    <div class="form-group"><label class="form-label">Employee</label><select class="form-input form-select" id="run-emp">${DB.employees.map(e=>`<option value="${e.id}">${e.name} — ${e.role}</option>`).join('')}</select></div>
+    <div class="form-group"><label class="form-label">Employee</label><select class="form-input form-select" id="run-emp">${DB.employees.length===0?'<option value="">No employees yet — promote a candidate first</option>':DB.employees.slice().reverse().map(e=>`<option value="${e.id}">${e.name} — ${e.role} (${e.status})</option>`).join('')}</select></div>
     <div class="form-group"><label class="form-label">Track Template</label><select class="form-input form-select" id="run-track">${DB.tracks.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}</select></div>
     <div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="run-start" value="${today()}"/></div>
   </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="startRun('${type}')">Start Run</button></div></div>`);
