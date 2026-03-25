@@ -81,16 +81,81 @@ const today = () => new Date().toISOString().split('T')[0];
 // Global state for hiring page
 let selectedCandId = null;
 let kanbanFilter = '';
-let candidates = []; // Will be populated from API
+let candidates = [
+  {id:'c1',name:'Priya Nair',role:'Senior Engineer',seniority:'Senior',source:'LinkedIn',stage:'sourced',candStatus:'Active',empType:'FTE',compType:'salary',compAmount:160000,resumeLink:'https://sharepoint.com/resumes/priya',addedAt:'2026-03-10',updatedAt:'2026-03-22',notes:'Strong Python background, referred by Anita',client:null,
+    interviews:[
+      {id:'i1',date:'2026-03-20',interviewers:'Anita Rao, Jordan Lee',score:4,notes:'Great technical depth, strong systems design answers. Move forward.'}
+    ]},
+  {id:'c2',name:'Marcus Webb',role:'Product Designer',seniority:'Mid',source:'Referral',stage:'screening',candStatus:'Active',empType:'FTE',compType:'salary',compAmount:120000,resumeLink:'https://sharepoint.com/resumes/marcus',addedAt:'2026-03-05',updatedAt:'2026-03-23',notes:'Portfolio looks great',client:null,
+    interviews:[]},
+  {id:'c3',name:'Sophie Tremblay',role:'Engineering Manager',seniority:'Staff',source:'Outbound',stage:'interview',candStatus:'Active',empType:'Open to Both',compType:'salary',compAmount:180000,resumeLink:'',addedAt:'2026-02-28',updatedAt:'2026-03-20',notes:'2nd round done, panel next week',client:null,
+    interviews:[
+      {id:'i2',date:'2026-03-10',interviewers:'Dana Kim',score:3,notes:'Solid background but unclear on vision. Scheduling panel.'},
+      {id:'i3',date:'2026-03-20',interviewers:'Dana Kim, Jordan Lee, Nina Patel',score:4,notes:'Panel went well. Strong leadership examples. Final decision pending.'}
+    ]},
+  {id:'c4',name:'Darius Okafor',role:'Data Analyst',seniority:'Junior',source:'Indeed',stage:'interview',candStatus:'Active',empType:'Contract',compType:'hourly',compAmount:75,resumeLink:'https://sharepoint.com/resumes/darius',addedAt:'2026-03-01',updatedAt:'2026-03-19',notes:'Technical screen passed',client:'Acme Corp',
+    interviews:[
+      {id:'i4',date:'2026-03-19',interviewers:'Rafael Santos',score:4,notes:'Good SQL skills, quick learner. Recommend moving to final round.'}
+    ]},
+  {id:'c5',name:'Jin Park',role:'Backend Engineer',seniority:'Mid',source:'LinkedIn',stage:'offer',candStatus:'Active',empType:'FTE',compType:'salary',compAmount:145000,resumeLink:'https://sharepoint.com/resumes/jin',addedAt:'2026-02-15',updatedAt:'2026-03-24',notes:'Offer extended, awaiting response',client:null,
+    interviews:[
+      {id:'i5',date:'2026-03-05',interviewers:'Jordan Lee',score:5,notes:'Exceptional. Best backend candidate we\'ve seen this quarter.'},
+      {id:'i6',date:'2026-03-15',interviewers:'Jordan Lee, Dana Kim',score:5,notes:'Confirmed strong hire. Offer approved.'}
+    ]},
+  {id:'c6',name:'Aisha Kamara',role:'UX Researcher',seniority:'Senior',source:'Website',stage:'hired',candStatus:'Active',empType:'FTE',compType:'salary',compAmount:130000,resumeLink:'https://sharepoint.com/resumes/aisha',addedAt:'2026-02-10',updatedAt:'2026-03-15',notes:'Starts April 7',client:null,
+    interviews:[
+      {id:'i7',date:'2026-03-01',interviewers:'Nina Patel, Marcus Webb',score:5,notes:'Outstanding portfolio presentation. Unanimous hire.'}
+    ]},
+  {id:'c7',name:'Tom Eriksson',role:'DevOps Engineer',seniority:'Mid',source:'LinkedIn',stage:'sourced',candStatus:'Nurturing',empType:'FTE',compType:'salary',compAmount:140000,resumeLink:'',addedAt:'2026-03-18',updatedAt:'2026-03-18',notes:'Outreach sent, not ready for 3 months',client:null,
+    interviews:[]},
+  {id:'c8',name:'Camille Dubois',role:'Frontend Engineer',seniority:'Mid',source:'Outbound',stage:'screening',candStatus:'On Hold',empType:'Open to Both',compType:'salary',compAmount:125000,resumeLink:'',addedAt:'2026-03-12',updatedAt:'2026-03-21',notes:'Waiting on budget approval',client:'Globex',
+    interviews:[]},
+];
 
 // Global state for directory page
 let selectedEmpId = null;
-let employees = [];
-let devices = [];
-let assignments = [];
+let employees = [
+  {id:'e1',name:'Jordan Lee',role:'Engineering Lead',dept:'Engineering',status:'active',location:'Remote',manager:'Dana Kim',startDate:'2024-01-15',email:'jordan@vtwo.co',phone:'555-0101'},
+  {id:'e2',name:'Aisha Kamara',role:'UX Researcher',dept:'Design',status:'onboarding',location:'NYC',manager:'Jordan Lee',startDate:'2026-04-07',email:'aisha@vtwo.co',phone:'555-0102'},
+  {id:'e3',name:'Rafael Santos',role:'Backend Engineer',dept:'Engineering',status:'active',location:'Remote',manager:'Jordan Lee',startDate:'2023-06-01',email:'rafael@vtwo.co',phone:'555-0103'},
+  {id:'e4',name:'Nina Patel',role:'Product Manager',dept:'Product',status:'active',location:'SF',manager:'Dana Kim',startDate:'2023-09-12',email:'nina@vtwo.co',phone:'555-0104'},
+  {id:'e5',name:'Yuki Tanaka',role:'Data Engineer',dept:'Engineering',status:'active',location:'Remote',manager:'Jordan Lee',startDate:'2024-04-03',email:'yuki@vtwo.co',phone:'555-0105'},
+];
+
+let devices = [
+  {id:'d1',name:'MacBook Pro 16"',type:'laptop',make:'Apple',model:'MBP M3 Pro',serial:'MBP24001',status:'assigned',assignedTo:'e1',condition:'good',purchaseDate:'2024-01-10'},
+  {id:'d2',name:'MacBook Air 13"',type:'laptop',make:'Apple',model:'MBA M2',serial:'MBA23042',status:'assigned',assignedTo:'e3',condition:'good',purchaseDate:'2023-06-01'},
+  {id:'d3',name:'Dell U2723D Monitor',type:'monitor',make:'Dell',model:'U2723D',serial:'DU27001',status:'available',assignedTo:null,condition:'good',purchaseDate:'2023-08-15'},
+  {id:'d4',name:'MacBook Pro 14"',type:'laptop',make:'Apple',model:'MBP M3',serial:'MBP24022',status:'assigned',assignedTo:'e4',condition:'good',purchaseDate:'2024-03-01'},
+  {id:'d5',name:'iPhone 15 Pro',type:'phone',make:'Apple',model:'iPhone 15 Pro',serial:'IP15001',status:'assigned',assignedTo:'e2',condition:'new',purchaseDate:'2026-04-01'},
+  {id:'d6',name:'MacBook Pro 14"',type:'laptop',make:'Apple',model:'MBP M3',serial:'MBP24033',status:'available',assignedTo:null,condition:'good',purchaseDate:'2024-06-15'},
+];
+
+let assignments = [
+  {id:'a1',employeeId:'e1',deviceId:'d1',assignedAt:'2024-01-15',status:'active'},
+  {id:'a2',employeeId:'e3',deviceId:'d2',assignedAt:'2023-06-01',status:'active'},
+  {id:'a3',employeeId:'e4',deviceId:'d4',assignedAt:'2024-03-01',status:'active'},
+  {id:'a4',employeeId:'e2',deviceId:'d5',assignedAt:'2026-04-01',status:'active'},
+];
 
 // Global state for onboarding page
-let onboardingRuns = [];
+let onboardingRuns = [
+  {id:'r1',employeeId:'e2',trackId:'t1',type:'onboarding',status:'active',startDate:'2026-04-07',tasks:[
+    {id:'ri1',name:'Complete I-9 and W-4 paperwork',ownerRole:'HR',status:'completed',dueDate:'2026-03-31'},
+    {id:'ri2',name:'Set up dev environment',ownerRole:'IT',status:'pending',dueDate:'2026-04-08'},
+    {id:'ri3',name:'Access to repos and tools',ownerRole:'IT',status:'pending',dueDate:'2026-04-08'},
+    {id:'ri4',name:'Meet team and manager 1:1',ownerRole:'Manager',status:'pending',dueDate:'2026-04-10'},
+    {id:'ri5',name:'Complete security training',ownerRole:'HR',status:'pending',dueDate:'2026-04-14'},
+  ]},
+];
+
+let activities = [
+  {id:'ac1',type:'hire',desc:'Aisha Kamara hired as UX Researcher',at:'2026-03-15T10:30:00'},
+  {id:'ac2',type:'stage',desc:'Jin Park moved to Offer stage',at:'2026-03-24T09:15:00'},
+  {id:'ac3',type:'device',desc:'iPhone 15 Pro assigned to Aisha Kamara',at:'2026-04-01T14:00:00'},
+  {id:'ac4',type:'interview',desc:'Interview logged for Sophie Tremblay',at:'2026-03-20T11:00:00'},
+  {id:'ac5',type:'stage',desc:'Priya Nair added to pipeline',at:'2026-03-10T09:00:00'},
+];
 
 // Hiring page helper functions
 function filterKanbanStatus(v) {
