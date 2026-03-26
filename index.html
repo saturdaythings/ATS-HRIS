@@ -1385,11 +1385,11 @@ function buildTrackCard(track,doneColor){
   }else{
     stepsHtml='<div style="font-size:12px;color:'+doneColor+';font-weight:500">All tasks complete</div>';
   }
-  return'<div class="card" style="margin-left:52px;margin-bottom:12px"><div style="font-weight:600;font-size:13px;margin-bottom:10px;color:var(--text)">'+track.trackName+' — '+track.pct+'% complete</div>'+stepsHtml+'</div>';
+  return'<div class="card" style="margin-left:52px;margin-bottom:12px;cursor:pointer" onclick="openRunDetail(\''+track.runId+'\')"><div style="font-weight:600;font-size:13px;margin-bottom:10px;color:var(--text)">'+track.trackName+' — '+track.pct+'% complete</div>'+stepsHtml+'</div>';
 }
 function buildGroupCard(emp,bgColor,textColor){
   var ini=(emp.empName.match(/\b\w/g)||[]).join('');
-  var html='<div style="margin-bottom:24px"><div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;padding:12px;background:var(--bg);border-radius:var(--radius-lg)"><div style="width:40px;height:40px;border-radius:50%;background:'+bgColor+';color:'+textColor+';display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;flex-shrink:0">'+ini+'</div><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--text)">'+emp.empName+'</div><div style="font-size:12px;color:var(--text2)">'+emp.role+'</div></div></div>';
+  var html='<div style="margin-bottom:24px"><div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;padding:12px;background:var(--bg);border-radius:var(--radius-lg);cursor:pointer" onclick="nav(\'directory\');setTimeout(function(){selectEmp(\''+emp.empId+'\');},200)"><div style="width:40px;height:40px;border-radius:50%;background:'+bgColor+';color:'+textColor+';display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;flex-shrink:0">'+ini+'</div><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--text)">'+emp.empName+'</div><div style="font-size:12px;color:var(--text2)">'+emp.role+'</div></div><div style="font-size:11px;color:var(--text3);align-self:center">View in Directory →</div></div>';
   return html;
 }
 function renderOnboarding(){
@@ -1493,10 +1493,13 @@ async function completeTrackStatus(empId,newStatus,runId){
 }
 
 // ── OFFBOARDING ───────────────────────────────────────────────────────────────
+let offboardingShowCompleted=false;
 function renderOffboarding(){
   const p=document.getElementById('page');
   const groups=groupOffboardingByEmployee();
-  var html='<div class="page-header"><div><div class="page-title">Offboarding</div><div class="page-subtitle">'+groups.length+' active</div></div><button class="btn btn-primary" onclick="showStartRunModal(\'offboarding\')">+ Start Run</button></div>';
+  var completedGroups=groupOffboardingCompletedByEmployee();
+  var html='<div class="page-header"><div><div class="page-title">Offboarding</div><div class="page-subtitle">'+groups.length+' active</div></div>';
+  html+='<div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm'+(offboardingShowCompleted?' btn-active':'')+'" onclick="offboardingShowCompleted=!offboardingShowCompleted;renderOffboarding()">Show Completed ('+completedGroups.length+')</button><button class="btn btn-primary" onclick="showStartRunModal(\'offboarding\')">+ Start Run</button></div></div>';
   if(groups.length>0){
     groups.forEach(function(emp){
       html+=buildGroupCard(emp,'var(--red-light)','var(--red)');
@@ -1506,7 +1509,30 @@ function renderOffboarding(){
   }else{
     html+='<div style="padding:20px;text-align:center;color:var(--text3)">No active offboarding runs</div>';
   }
+  if(offboardingShowCompleted&&completedGroups.length>0){
+    html+='<div style="margin-top:24px;border-top:1px solid var(--border);padding-top:16px"><div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Completed</div>';
+    completedGroups.forEach(function(emp){
+      html+=buildGroupCard(emp,'var(--surface2)','var(--text2)');
+      emp.tracks.forEach(function(track){html+=buildTrackCard(track,'var(--text3)');});
+      html+='</div>';
+    });
+    html+='</div>';
+  }
   p.innerHTML=html;
+}
+
+function groupOffboardingCompletedByEmployee(){
+  const groups={};
+  DB.onboardingRuns.filter(r=>r.status==='completed'&&r.type==='offboarding').forEach(run=>{
+    const emp=DB.employees.find(e=>e.id===run.employeeId);
+    if(!emp)return;
+    if(!groups[emp.id]){groups[emp.id]={empId:emp.id,empName:emp.name,role:emp.role,endDate:emp.endDate,tracks:[]};}
+    const runTasks=DB.runTasks.filter(t=>t.runId===run.id);
+    const completed=runTasks.filter(t=>t.status==='completed').length;
+    const track=DB.tracks.find(t=>t.id===run.trackId);
+    groups[emp.id].tracks.push({runId:run.id,trackName:track?track.name:'Track',pct:runTasks.length?Math.round(completed/runTasks.length*100):0,nextSteps:[],allDone:true});
+  });
+  return Object.values(groups);
 }
 
 // ── INVENTORY ─────────────────────────────────────────────────────────────────
