@@ -1324,6 +1324,7 @@ function selectEmp(id){
     <div class="detail-section"><div class="detail-section-title">Info</div>
       <div class="detail-row"><span class="detail-key">Status</span>${statusPill(e.status)}</div>
       <div class="detail-row"><span class="detail-key">Manager</span><span class="detail-val">${e.manager||'—'}</span></div>
+      <div class="detail-row"><span class="detail-key">Buddy</span><span class="detail-val">${e.buddy||'—'}</span></div>
       <div class="detail-row"><span class="detail-key">Location</span><span class="detail-val">${[e.city,e.state,e.country].filter(Boolean).join(', ')||e.location||'—'}</span></div>
       <div class="detail-row"><span class="detail-key">Email</span><span class="detail-val" style="font-size:12px">${e.email||'—'}</span></div>
       <div class="detail-row"><span class="detail-key">Phone</span><span class="detail-val">${e.phone||'—'}</span></div>
@@ -1400,7 +1401,8 @@ function showEditEmpModal(id){
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Edit — ${e.name}</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
     <div class="form-row"><div class="form-group"><label class="form-label">Role</label><input class="form-input" id="eer" value="${e.role}"/></div><div class="form-group"><label class="form-label">Department</label><select class="form-input form-select" id="eedept"><option${e.dept==='Engineering'?' selected':''}>Engineering</option><option${e.dept==='Design'?' selected':''}>Design</option><option${e.dept==='Product'?' selected':''}>Product</option><option${e.dept==='Data'?' selected':''}>Data</option><option${e.dept==='Operations'?' selected':''}>Operations</option></select></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Status</label><select class="form-input form-select" id="eestat"><option${e.status==='active'?' selected':''}>active</option><option${e.status==='onboarding'?' selected':''}>onboarding</option><option${e.status==='offboarding'?' selected':''}>offboarding</option><option${e.status==='inactive'?' selected':''}>inactive</option></select></div><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="eestart" value="${e.startDate||''}"/></div></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Manager</label><input class="form-input" id="eemgr" value="${e.manager||''}"/></div><div class="form-group"><label class="form-label">Email</label><input class="form-input" id="eeemail" value="${e.email||''}"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Manager</label><input class="form-input" id="eemgr" value="${e.manager||''}"/></div><div class="form-group"><label class="form-label">Buddy</label><input class="form-input" id="eebuddy" value="${e.buddy||''}"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Email</label><input class="form-input" id="eeemail" value="${e.email||''}"/></div></div>
     <div class="form-row-3"><div class="form-group"><label class="form-label">City</label><input class="form-input" id="eecity" value="${e.city||''}"/></div><div class="form-group"><label class="form-label">State</label><input class="form-input" id="eestate" value="${e.state||''}"/></div><div class="form-group"><label class="form-label">Country</label><input class="form-input" id="eecountry" value="${e.country||'US'}"/></div></div>
   </div><div class="modal-footer"><button class="btn btn-danger btn-sm" style="margin-right:auto" onclick="deleteEmp('${e.id}')">Delete</button><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEditEmp('${e.id}')">Save</button></div></div>`);
 }
@@ -1409,7 +1411,7 @@ async function saveEditEmp(id){
   const e=DB.employees.find(x=>x.id===id);
   e.role=document.getElementById('eer').value;e.dept=document.getElementById('eedept').value;
   e.status=document.getElementById('eestat').value;e.startDate=document.getElementById('eestart').value;
-  e.manager=document.getElementById('eemgr').value;e.email=document.getElementById('eeemail').value;
+  e.manager=document.getElementById('eemgr').value;e.buddy=document.getElementById('eebuddy').value;e.email=document.getElementById('eeemail').value;
   e.city=document.getElementById('eecity').value;e.state=document.getElementById('eestate').value;e.country=document.getElementById('eecountry').value;
   e.location=e.city||'Remote';
   await save('employees');closeModal();showToast('Saved');selectEmp(id);refreshEmpTable();
