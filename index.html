@@ -647,6 +647,37 @@ function nav(page){
   ({dashboard:renderDashboard,hiring:renderHiring,directory:renderDirectory,onboarding:renderOnboarding,offboarding:renderOffboarding,inventory:renderInventory,assignments:renderAssignments,tracks:renderTracks,settings:renderSettings}[page]||function(){})();
 }
 
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function groupOnboardingByEmployee(){
+  const groups={};
+  DB.onboardingRuns.filter(r=>r.status==='active'&&r.type==='onboarding').forEach(run=>{
+    const emp=DB.employees.find(e=>e.id===run.employeeId);
+    if(!emp)return;
+    if(!groups[emp.id]){groups[emp.id]={empId:emp.id,empName:emp.name,role:emp.role,startDate:emp.startDate,tracks:[]};}
+    const runTasks=DB.runTasks.filter(t=>t.runId===run.id);
+    const pending=runTasks.filter(t=>t.status==='pending');
+    const completed=runTasks.filter(t=>t.status==='completed').length;
+    const track=DB.tracks.find(t=>t.id===run.trackId);
+    groups[emp.id].tracks.push({runId:run.id,trackName:track?track.name:'Track',pct:runTasks.length?Math.round(completed/runTasks.length*100):0,nextSteps:pending.slice(0,2).map(t=>t.name),allDone:pending.length===0});
+  });
+  return Object.values(groups);
+}
+
+function groupOffboardingByEmployee(){
+  const groups={};
+  DB.onboardingRuns.filter(r=>r.status==='active'&&r.type==='offboarding').forEach(run=>{
+    const emp=DB.employees.find(e=>e.id===run.employeeId);
+    if(!emp)return;
+    if(!groups[emp.id]){groups[emp.id]={empId:emp.id,empName:emp.name,role:emp.role,endDate:emp.endDate,tracks:[]};}
+    const runTasks=DB.runTasks.filter(t=>t.runId===run.id);
+    const pending=runTasks.filter(t=>t.status==='pending');
+    const completed=runTasks.filter(t=>t.status==='completed').length;
+    const track=DB.tracks.find(t=>t.id===run.trackId);
+    groups[emp.id].tracks.push({runId:run.id,trackName:track?track.name:'Track',pct:runTasks.length?Math.round(completed/runTasks.length*100):0,nextSteps:pending.slice(0,2).map(t=>t.name),allDone:pending.length===0});
+  });
+  return Object.values(groups);
+}
+
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
 function renderDashboard(){
   const p=document.getElementById('page');
