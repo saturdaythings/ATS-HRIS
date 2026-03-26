@@ -186,6 +186,8 @@ tr.selected td{background:var(--accent-light)}
   /* Page */
   .page{padding:16px;overflow-y:auto;flex:1}
 
+  /* FAB clears bottom nav */
+  #cp-fab{bottom:76px}
   /* Bottom nav */
   .bottom-nav{display:flex;position:fixed;bottom:0;left:0;right:0;height:60px;background:var(--surface);border-top:1px solid var(--border);z-index:100;flex:1}
   .bottom-nav-item{flex:1;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text3);font-weight:500;cursor:pointer;border-top:3px solid transparent;position:relative}
@@ -394,6 +396,10 @@ tr.selected td{background:var(--accent-light)}
     <div class="nav-item" onclick="nav('tracks')">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 4h12M2 8h8M2 12h5"/></svg>
       Tracks
+    </div>
+    <div class="nav-item" onclick="nav('reports')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="9" width="3" height="5" rx="1"/><rect x="6.5" y="5" width="3" height="9" rx="1"/><rect x="11" y="1" width="3" height="13" rx="1"/></svg>
+      Reports
     </div>
 
     <div class="nav-item" onclick="nav('settings')">
@@ -662,7 +668,7 @@ function renderEmpty(title,sub=''){return`<div class="empty-state"><div class="e
 function fmtSelect(opts,val,id,cls='form-input form-select'){return`<select class="${cls}" id="${id}">${opts.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join('')}</select>`;}
 
 // ── NAV ───────────────────────────────────────────────────────────────────────
-const TITLES={dashboard:'Dashboard',hiring:'Hiring',directory:'Directory',activity:'Activity',onboarding:'Onboarding',offboarding:'Offboarding',inventory:'Inventory',assignments:'Assignments',tracks:'Tracks',settings:'Settings'};
+const TITLES={dashboard:'Dashboard',hiring:'Hiring',directory:'Directory',activity:'Activity',onboarding:'Onboarding',offboarding:'Offboarding',inventory:'Inventory',assignments:'Assignments',tracks:'Tracks',reports:'Reports',settings:'Settings'};
 let currentPage='';
 
 function toggleSidebar(){
@@ -688,7 +694,7 @@ function nav(page){
   const p=document.getElementById('page');
   p.style.cssText='flex:1;overflow-y:auto;padding:28px 28px 40px';
   p.innerHTML='';
-  ({dashboard:renderDashboard,hiring:renderHiring,directory:renderDirectory,activity:renderActivity,onboarding:renderOnboarding,offboarding:renderOffboarding,inventory:renderInventory,assignments:renderAssignments,tracks:renderTracks,settings:renderSettings}[page]||function(){})();
+  ({dashboard:renderDashboard,hiring:renderHiring,directory:renderDirectory,activity:renderActivity,onboarding:renderOnboarding,offboarding:renderOffboarding,inventory:renderInventory,assignments:renderAssignments,tracks:renderTracks,reports:renderReports,settings:renderSettings}[page]||function(){})();
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
@@ -755,7 +761,10 @@ function dashOffboardRow(e){
 }
 function dashGroupCard(emp,navTarget){
   return'<div class="card" style="margin-bottom:8px;cursor:pointer" onclick="nav(\''+navTarget+'\')">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between">'
     +'<div style="font-weight:500;font-size:12px;color:var(--text)">'+emp.empName+'</div>'
+    +'<button class="btn-link" style="font-size:11px" onclick="event.stopPropagation();nav(\'directory\');setTimeout(function(){selectEmp(\''+emp.empId+'\');},200)">Profile</button>'
+    +'</div>'
     +'<div style="font-size:11px;color:var(--text2)">'+emp.tracks.map(function(t){return t.trackName;}).join(', ')+'</div>'
     +'</div>';
 }
@@ -1289,9 +1298,17 @@ async function saveEditCand(id){
   touch(c);await save('candidates');closeModal();showToast('Saved');renderCandDetail(id);refreshHiringView();
 }
 
-async function deleteCand(id){
-  if(!confirm('Delete this candidate?'))return;
-  DB.candidates=DB.candidates.filter(x=>x.id!==id);DB.interviews=DB.interviews.filter(x=>x.candidateId!==id);
+function deleteCand(id){
+  var c=DB.candidates.find(function(x){return x.id===id;})||{name:'this candidate'};
+  showModal('<div class="modal"><div class="modal-header"><div class="modal-title">Delete Candidate</div><button class="detail-close" onclick="closeModal()">\u00d7</button></div>'
+    +'<div class="modal-body"><p style="font-size:13px;color:var(--text2);margin-bottom:8px">Delete <strong>'+c.name+'</strong>?</p>'
+    +'<p style="font-size:12px;color:var(--text3)">This will also remove all their interview records. This cannot be undone.</p></div>'
+    +'<div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>'
+    +'<button class="btn btn-danger" onclick="doDeleteCand(\''+id+'\')">Delete</button></div></div>');
+}
+async function doDeleteCand(id){
+  DB.candidates=DB.candidates.filter(function(x){return x.id!==id;});
+  DB.interviews=DB.interviews.filter(function(x){return x.candidateId!==id;});
   await save('candidates');await save('interviews');
   closeModal();closeCandDetail();showToast('Candidate deleted');refreshHiringView();
 }
@@ -1379,7 +1396,7 @@ function renderDirectory(){
       <div style="flex:1;overflow-y:auto" id="emp-list">
         <div class="table-wrap" style="border-radius:0;border-left:0;border-right:0">
           <table><thead><tr>
-            ${['name','role','dept','status','location','phone','startDate','manager','buddy'].map(col=>`<th onclick="empSortBy('${col}')" class="${empSort.col===col?'sorted':''}">${{name:'Employee',role:'Role',dept:'Dept',status:'Status',location:'Location',phone:'Phone',startDate:'Start Date',manager:'Manager',buddy:'Buddy'}[col]}${empSort.col===col?`<span class="sort-arrow">${empSort.dir===1?'↑':'↓'}</span>`:''}</th>`).join('')}
+            ${['name','role','dept','status','location','phone','startDate','manager','buddy'].map(col=>`<th onclick="empSortBy('${col}')" class="${empSort.col===col?'sorted':''}">${{name:'Employee',role:'Role',dept:'Dept',status:'Status',location:'City',phone:'Phone',startDate:'Start Date',manager:'Manager',buddy:'Buddy'}[col]}${empSort.col===col?`<span class="sort-arrow">${empSort.dir===1?'↑':'↓'}</span>`:''}</th>`).join('')}
           </tr></thead>
           <tbody id="emp-tbody">${empRows(DB.employees)}</tbody></table>
         </div>
@@ -1573,10 +1590,11 @@ function buildTrackCard(track,doneColor){
   }
   return'<div class="card" style="margin-left:52px;margin-bottom:12px;cursor:pointer" onclick="openRunDetail(\''+track.runId+'\')"><div style="font-weight:600;font-size:13px;margin-bottom:10px;color:var(--text)">'+track.trackName+' — '+track.pct+'% complete</div>'+stepsHtml+'</div>';
 }
-function buildGroupCard(emp,bgColor,textColor,runType){
+function buildGroupCard(emp,bgColor,textColor,runStatus){
   var ini=(emp.empName.match(/\b\w/g)||[]).join('');
-  // Find first active run for click-through
-  var firstRun=DB.onboardingRuns.find(function(r){return r.employeeId===emp.empId&&r.status==='active';});
+  var _runStatus=runStatus||'active';
+  // Find first matching run for click-through
+  var firstRun=DB.onboardingRuns.find(function(r){return r.employeeId===emp.empId&&r.status===_runStatus;});
   var cardClick=firstRun?'openRunDetail(\''+firstRun.id+'\')':'nav(\'directory\');setTimeout(function(){selectEmp(\''+emp.empId+'\');},200)';
   // Overdue badge
   var overdueTasks=DB.runTasks.filter(function(t){
@@ -1727,7 +1745,7 @@ function renderOffboarding(){
   if(offboardingShowCompleted&&completedGroups.length>0){
     html+='<div style="margin-top:24px;border-top:1px solid var(--border);padding-top:16px"><div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px">Completed</div>';
     completedGroups.forEach(function(emp){
-      html+=buildGroupCard(emp,'var(--surface2)','var(--text2)');
+      html+=buildGroupCard(emp,'var(--surface2)','var(--text2)','completed');
       emp.tracks.forEach(function(track){html+=buildTrackCard(track,'var(--text3)');});
       html+='</div>';
     });
@@ -1839,7 +1857,7 @@ function showAddDeviceModal(){
     </div>
     <div class="form-row"><div class="form-group"><label class="form-label">Make</label><input class="form-input" id="dmk" placeholder="Apple"/></div><div class="form-group"><label class="form-label">Model</label><input class="form-input" id="dml" placeholder='MacBook Pro 14"'/></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Model Number</label><input class="form-input" id="dmnum" placeholder="MDE04LL/A"/></div><div class="form-group"><label class="form-label">Serial #</label><input class="form-input" id="dsr" placeholder="ABC123"/></div></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="dtp"><option value="laptop">Laptop</option><option value="monitor">Monitor</option><option value="phone">Phone</option><option value="keyboard">Keyboard</option><option value="mouse">Mouse</option></select></div><div class="form-group"><label class="form-label">Condition</label><select class="form-input form-select" id="dcond"><option>new</option><option>good</option><option>fair</option><option>poor</option></select></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="dtp">${getList('deviceType').map(function(t){return'<option value="'+t+'">'+t.charAt(0).toUpperCase()+t.slice(1)+'</option>';}).join('')}</select></div><div class="form-group"><label class="form-label">Condition</label><select class="form-input form-select" id="dcond"><option>new</option><option>good</option><option>fair</option><option>poor</option></select></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Purchase Date</label><input type="date" class="form-input" id="dpurch" value="${today()}"/></div><div class="form-group"><label class="form-label">Purchase Store</label><input class="form-input" id="dstore" placeholder="Apple Store, Amazon..."/></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Order Number</label><input class="form-input" id="dorder" placeholder="Order #"/></div></div>
     <div class="form-group"><label class="form-label">Specs / Description</label><textarea class="form-input" id="dspecs" rows="2" placeholder="Full product description or specs"></textarea></div>
@@ -1858,7 +1876,7 @@ function showEditDeviceModal(id){
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Edit Device</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
     <div class="form-row"><div class="form-group"><label class="form-label">Make</label><input class="form-input" id="edv-mk" value="${d.make||''}"/></div><div class="form-group"><label class="form-label">Model</label><input class="form-input" id="edv-ml" value="${d.model||''}"/></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Model Number</label><input class="form-input" id="edv-mnum" value="${d.modelNumber||''}"/></div><div class="form-group"><label class="form-label">Serial #</label><input class="form-input" id="edv-sr" value="${d.serial||''}"/></div></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="edv-tp"><option value="laptop"${d.type==='laptop'?' selected':''}>Laptop</option><option value="monitor"${d.type==='monitor'?' selected':''}>Monitor</option><option value="phone"${d.type==='phone'?' selected':''}>Phone</option><option value="keyboard"${d.type==='keyboard'?' selected':''}>Keyboard</option><option value="mouse"${d.type==='mouse'?' selected':''}>Mouse</option></select></div><div class="form-group"><label class="form-label">Condition</label><select class="form-input form-select" id="edv-cond"><option${d.condition==='new'?' selected':''}>new</option><option${d.condition==='good'?' selected':''}>good</option><option${d.condition==='fair'?' selected':''}>fair</option><option${d.condition==='poor'?' selected':''}>poor</option></select></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="edv-tp">${getList('deviceType').map(function(t){return'<option value="'+t+'"'+(d.type===t?' selected':'')+'>'+t.charAt(0).toUpperCase()+t.slice(1)+'</option>';}).join('')}</select></div><div class="form-group"><label class="form-label">Condition</label><select class="form-input form-select" id="edv-cond"><option${d.condition==='new'?' selected':''}>new</option><option${d.condition==='good'?' selected':''}>good</option><option${d.condition==='fair'?' selected':''}>fair</option><option${d.condition==='poor'?' selected':''}>poor</option></select></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Purchase Date</label><input type="date" class="form-input" id="edv-purch" value="${d.purchaseDate||''}"/></div><div class="form-group"><label class="form-label">Purchase Store</label><input class="form-input" id="edv-store" value="${d.purchaseStore||''}"/></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Order Number</label><input class="form-input" id="edv-order" value="${d.orderNumber||''}"/></div></div>
     <div class="form-group"><label class="form-label">Specs / Description</label><textarea class="form-input" id="edv-specs" rows="2">${d.specs||''}</textarea></div>
@@ -1969,11 +1987,22 @@ function parseDeviceDescription(text){
 }
 
 // ── ASSIGNMENTS ───────────────────────────────────────────────────────────────
+var _assignmentFilter='';
+function filterAssignments(q){
+  _assignmentFilter=q;
+  var active=DB.assignments.filter(function(a){return a.status==='active';});
+  var ql=(q||'').toLowerCase();
+  if(ql){active=active.filter(function(a){var e=getEmp(a.employeeId),d=getDev(a.deviceId);return e.name.toLowerCase().includes(ql)||d.name.toLowerCase().includes(ql);});}
+  var tbody=document.getElementById('assign-tbody');
+  if(tbody){tbody.innerHTML=active.map(function(a){var e=getEmp(a.employeeId),d=getDev(a.deviceId);return'<tr><td>'+personCell(e.name)+'</td><td>'+d.name+'</td><td style="font-family:var(--mono);font-size:12px">'+(d.serial||'—')+'</td><td>'+relTime(a.assignedAt)+'</td><td>'+statusPill(a.status)+'</td><td><button class="btn btn-secondary btn-sm" onclick="returnDevice(\''+d.id+'\')">Return</button></td></tr>';}).join('');}
+}
 function renderAssignments(){
-  const active=DB.assignments.filter(a=>a.status==='active');
-  document.getElementById('page').innerHTML=`<div class="page-header"><div><div class="page-title">Assignments</div><div class="page-subtitle">${active.length} active</div></div></div>
-  <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Device</th><th>Serial</th><th>Assigned</th><th>Status</th><th></th></tr></thead>
-  <tbody>${active.map(a=>{const e=getEmp(a.employeeId),d=getDev(a.deviceId);return'<tr><td>'+personCell(e.name)+'</td><td>'+d.name+'</td><td style="font-family:var(--mono);font-size:12px">'+(d.serial||'—')+'</td><td>'+relTime(a.assignedAt)+'</td><td>'+statusPill(a.status)+'</td><td><button class="btn btn-secondary btn-sm" onclick="returnDevice(\''+d.id+'\')">Return</button></td></tr>';}).join('')}</tbody></table></div>`;
+  var active=DB.assignments.filter(function(a){return a.status==='active';});
+  var rows=active.map(function(a){var e=getEmp(a.employeeId),d=getDev(a.deviceId);return'<tr><td>'+personCell(e.name)+'</td><td>'+d.name+'</td><td style="font-family:var(--mono);font-size:12px">'+(d.serial||'—')+'</td><td>'+relTime(a.assignedAt)+'</td><td>'+statusPill(a.status)+'</td><td><button class="btn btn-secondary btn-sm" onclick="returnDevice(\''+d.id+'\')">Return</button></td></tr>';}).join('');
+  document.getElementById('page').innerHTML='<div class="page-header"><div><div class="page-title">Assignments</div><div class="page-subtitle">'+active.length+' active</div></div></div>'
+    +'<div class="filter-search" style="margin-bottom:14px;max-width:300px"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input placeholder="Filter by employee or device..." oninput="filterAssignments(this.value)" value="'+_assignmentFilter+'"/></div>'
+    +'<div class="table-wrap"><table><thead><tr><th>Employee</th><th>Device</th><th>Serial</th><th>Assigned</th><th>Status</th><th></th></tr></thead>'
+    +'<tbody id="assign-tbody">'+rows+'</tbody></table></div>';
 }
 
 // ── TRACKS ────────────────────────────────────────────────────────────────────
@@ -2011,8 +2040,9 @@ function taskListHTML(t,tasks){
   return tasks.map((task,i)=>`<div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:${i<tasks.length-1?'1px solid var(--border)':'none'}">
     <div style="width:22px;height:22px;border-radius:50%;background:var(--accent-light);color:var(--accent-text);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0">${i+1}</div>
     <div style="flex:1"><div style="font-size:13px;font-weight:500">${task.name}</div><div style="font-size:11px;color:var(--text3)">Owner: ${task.ownerRole}</div></div>
-    <div style="font-size:12px;color:var(--text2)">${parseInt(task.dueDaysOffset)===0?'Day 0':parseInt(task.dueDaysOffset)>0?`+${task.dueDaysOffset}d`:`${task.dueDaysOffset}d`}</div>
-    <button class="btn-ghost btn-sm" style="color:var(--red);padding:4px 6px" onclick="deleteTask('${task.id}','${t.id}')">✕</button>
+    <div style="font-size:12px;color:var(--text2)">${parseInt(task.dueDaysOffset)===0?'Day 0':parseInt(task.dueDaysOffset)>0?'+'+task.dueDaysOffset+'d':task.dueDaysOffset+'d'}</div>
+    <button class="btn btn-sm btn-secondary" title="Edit task" onclick="showEditTaskModal('${task.id}','${t.id}')">${PENCIL_BTN}</button>
+    <button class="btn-ghost btn-sm" style="color:var(--red);padding:4px 6px" onclick="deleteTask('${task.id}','${t.id}')">&#x2715;</button>
   </div>`).join('');
 }
 
@@ -2031,6 +2061,28 @@ async function addTask(trackId){
   await save('tasks');closeModal();showToast('Task added');renderTrackDetail(trackId);const tl=document.getElementById('track-list');if(tl)tl.innerHTML=trackListHTML();
 }
 
+function showEditTaskModal(taskId,trackId){
+  var task=DB.tasks.find(function(x){return x.id===taskId;});if(!task)return;
+  var roleOpts='';getList('ownerRole').forEach(function(r){roleOpts+='<option'+(r===task.ownerRole?' selected':'')+'>'+r+'</option>';});
+  showModal('<div class="modal"><div class="modal-header"><div class="modal-title">Edit Task</div><button class="detail-close" onclick="closeModal()">\u00d7</button></div><div class="modal-body">'
+    +'<div class="form-group"><label class="form-label">Task Name</label><input class="form-input" id="etask-name" value="'+task.name.replace(/"/g,'&quot;')+'"/></div>'
+    +'<div class="form-row"><div class="form-group"><label class="form-label">Owner Role</label><select class="form-input form-select" id="etask-owner">'+roleOpts+'</select></div>'
+    +'<div class="form-group"><label class="form-label">Due (days from start)</label><input type="number" class="form-input" id="etask-days" value="'+(task.dueDaysOffset||'0')+'"/></div></div>'
+    +'</div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>'
+    +'<button class="btn btn-primary" onclick="saveEditTask(\''+taskId+'\',\''+trackId+'\')">Save</button></div></div>');
+}
+async function saveEditTask(taskId,trackId){
+  var task=DB.tasks.find(function(x){return x.id===taskId;});if(!task)return;
+  var nameEl=document.getElementById('etask-name');
+  var ownerEl=document.getElementById('etask-owner');
+  var daysEl=document.getElementById('etask-days');
+  if(nameEl)task.name=nameEl.value.trim();
+  if(ownerEl)task.ownerRole=ownerEl.value;
+  if(daysEl)task.dueDaysOffset=daysEl.value||'0';
+  await save('tasks');closeModal();showToast('Task saved');renderTrackDetail(trackId);
+  var tl=document.getElementById('track-list');if(tl)tl.innerHTML=trackListHTML();
+}
+
 function showEditTrackModal(id){
   const t=DB.tracks.find(x=>x.id===id);
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Edit Track</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
@@ -2040,7 +2092,22 @@ function showEditTrackModal(id){
 }
 
 async function saveTrack(id){const t=DB.tracks.find(x=>x.id===id);t.name=document.getElementById('etname').value;t.type=document.getElementById('ettype').value;t.autoApply=document.getElementById('etauto').value;await save('tracks');closeModal();showToast('Track saved');renderTracks();}
-async function deleteTrack(id){if(!confirm('Delete this track and all its tasks?'))return;DB.tracks=DB.tracks.filter(x=>x.id!==id);DB.tasks=DB.tasks.filter(x=>x.trackId!==id);selectedTrackId=DB.tracks[0]?.id||null;await save('tracks');await save('tasks');closeModal();showToast('Deleted');renderTracks();}
+function deleteTrack(id){
+  var t=DB.tracks.find(function(x){return x.id===id;});
+  var taskCount=DB.tasks.filter(function(x){return x.trackId===id;}).length;
+  var name=t?t.name:'this track';
+  showModal('<div class="modal"><div class="modal-header"><div class="modal-title">Delete Track</div><button class="detail-close" onclick="closeModal()">\u00d7</button></div>'
+    +'<div class="modal-body"><p style="font-size:13px;color:var(--text2);margin-bottom:8px">Delete <strong>'+name+'</strong> and its '+taskCount+' task(s)?</p>'
+    +'<p style="font-size:12px;color:var(--text3)">This action cannot be undone.</p></div>'
+    +'<div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>'
+    +'<button class="btn btn-danger" onclick="doDeleteTrack(\''+id+'\')">Delete Track</button></div></div>');
+}
+async function doDeleteTrack(id){
+  DB.tracks=DB.tracks.filter(function(x){return x.id!==id;});
+  DB.tasks=DB.tasks.filter(function(x){return x.trackId!==id;});
+  selectedTrackId=DB.tracks[0]?DB.tracks[0].id:null;
+  await save('tracks');await save('tasks');closeModal();showToast('Deleted');renderTracks();
+}
 
 function showAddTrackModal(){
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">New Track</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
@@ -2130,12 +2197,16 @@ function renderActivity(){
     +'<div class="card">'+rows+'</div>';
 }
 
-async function clearActivity(){
-  if(!confirm('Clear all activity?'))return;
+function clearActivity(){
+  showModal('<div class="modal"><div class="modal-header"><div class="modal-title">Clear Activity</div><button class="detail-close" onclick="closeModal()">\u00d7</button></div>'
+    +'<div class="modal-body"><p style="font-size:13px;color:var(--text2)">Clear all activity log entries? This cannot be undone.</p></div>'
+    +'<div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>'
+    +'<button class="btn btn-danger" onclick="doClearActivity()">Clear All</button></div></div>');
+}
+async function doClearActivity(){
   DB.activities=[];
   await save('activities');
-  showToast('Cleared');
-  renderActivity();
+  closeModal();showToast('Cleared');renderActivity();
 }
 
 // ── SETTINGS ──────────────────────────────────────────────────────────────────
@@ -2253,12 +2324,20 @@ async function addListItem(listKey){
   showToast(`"${val}" added`);
 }
 
-async function removeListItem(listKey,val){
-  if(!confirm(`Remove "${val}" from ${listKey}?`))return;
-  DB.lists=DB.lists.filter(l=>!(l.listKey===listKey&&l.value===val));
+var _pendingListRemove={key:'',val:''};
+function removeListItem(listKey,val){
+  _pendingListRemove={key:listKey,val:val};
+  showModal('<div class="modal"><div class="modal-header"><div class="modal-title">Remove Value</div><button class="detail-close" onclick="closeModal()">\u00d7</button></div>'
+    +'<div class="modal-body"><p style="font-size:13px;color:var(--text2)">Remove <strong>'+val+'</strong> from the list?</p></div>'
+    +'<div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>'
+    +'<button class="btn btn-danger" onclick="doRemoveListItem()">Remove</button></div></div>');
+}
+async function doRemoveListItem(){
+  var listKey=_pendingListRemove.key,val=_pendingListRemove.val;
+  DB.lists=DB.lists.filter(function(l){return!(l.listKey===listKey&&l.value===val);});
   await save('lists');
-  const tags=document.getElementById(`tags-${listKey}`);if(tags)tags.innerHTML=renderTags(listKey);
-  showToast(`"${val}" removed`);
+  var tags=document.getElementById('tags-'+listKey);if(tags)tags.innerHTML=renderTags(listKey);
+  closeModal();showToast('"'+val+'" removed');
 }
 
 function renderDataTab(){
@@ -2573,7 +2652,7 @@ CP_FLOWS['add-cand']={
   renderStep:function(step,data){
     if(step===1){
       var srcOpts='';
-      getList('candidateSource').forEach(function(s){srcOpts+='<option'+(s===data.source?' selected':'')+'>'+s+'</option>';});
+      getList('source').forEach(function(s){srcOpts+='<option'+(s===data.source?' selected':'')+'>'+s+'</option>';});
       return '<div class="cp-form-2col">'+
         cpFormRow('First name',cpInput('cp-fn','First name',data.fn||''))+
         cpFormRow('Last name',cpInput('cp-ln','Last name',data.ln||''))+
@@ -2632,7 +2711,7 @@ CP_FLOWS['edit-cand']={
       var c=DB.candidates.find(function(x){return x.id===data.candId;})||{};
       var fn=data.fn!=null?data.fn:(c.name?c.name.split(' ')[0]:'');
       var ln=data.ln!=null?data.ln:(c.name?c.name.split(' ').slice(1).join(' '):'');
-      var srcOpts='';getList('candidateSource').forEach(function(s){srcOpts+='<option'+(s===(data.source||c.source)?' selected':'')+'>'+s+'</option>';});
+      var srcOpts='';getList('source').forEach(function(s){srcOpts+='<option'+(s===(data.source||c.source)?' selected':'')+'>'+s+'</option>';});
       var senOpts='';getList('seniority').forEach(function(s){senOpts+='<option'+(s===(data.seniority||c.seniority)?' selected':'')+'>'+s+'</option>';});
       return '<div class="cp-form-2col">'+
         cpFormRow('First name',cpInput('cp-fn','First name',fn))+
@@ -2723,7 +2802,7 @@ CP_FLOWS['promote-to-employee']={
         cpFormRow('Work email',cpInput('cp-email','name@vtwo.co',data.email||'','email'));
     }
     if(step===2){
-      var deptOpts='';getList('department').forEach(function(s){deptOpts+='<option'+(s===data.dept?' selected':'')+'>'+s+'</option>';});
+      var deptOpts='';getList('dept').forEach(function(s){deptOpts+='<option'+(s===data.dept?' selected':'')+'>'+s+'</option>';});
       return cpFormRow('Department',cpSelect('cp-dept',deptOpts))+
         cpFormRow('Location',cpInput('cp-location','City or Remote',data.location||''))+
         cpFormRow('Manager',cpSelect('cp-mgr',cpEmpOpts(data.mgrId,true)))+
@@ -2838,7 +2917,7 @@ CP_FLOWS['add-emp']={
         cpFormRow('Source',cpSelect('cp-source',srcOpts));
     }
     if(step===2){
-      var deptOpts='';getList('department').forEach(function(s){deptOpts+='<option'+(s===data.dept?' selected':'')+'>'+s+'</option>';});
+      var deptOpts='';getList('dept').forEach(function(s){deptOpts+='<option'+(s===data.dept?' selected':'')+'>'+s+'</option>';});
       return cpFormRow('Department',cpSelect('cp-dept',deptOpts))+
         cpFormRow('Start date',cpInput('cp-startDate','',data.startDate||today(),'date'))+
         '<div class="cp-form-2col">'+
@@ -2885,7 +2964,7 @@ CP_FLOWS['edit-emp']={
       var e=DB.employees.find(function(x){return x.id===data.empId;})||{};
       var fn=data.fn!=null?data.fn:(e.name?e.name.split(' ')[0]:'');
       var ln=data.ln!=null?data.ln:(e.name?e.name.split(' ').slice(1).join(' '):'');
-      var deptOpts='';getList('department').forEach(function(s){deptOpts+='<option'+(s===(data.dept||e.dept)?' selected':'')+'>'+s+'</option>';});
+      var deptOpts='';getList('dept').forEach(function(s){deptOpts+='<option'+(s===(data.dept||e.dept)?' selected':'')+'>'+s+'</option>';});
       var stOpts='<option'+(('active'===(data.status||e.status))?' selected':'')+'>active</option><option'+(('onboarding'===(data.status||e.status))?' selected':'')+'>onboarding</option><option'+(('inactive'===(data.status||e.status))?' selected':'')+'>inactive</option>';
       return '<div class="cp-form-2col">'+
         cpFormRow('First name',cpInput('cp-fn','First name',fn))+
@@ -2938,7 +3017,7 @@ CP_FLOWS['offboard-emp']={
   save:async function(data){
     var e=DB.employees.find(function(x){return x.id===data.empId;});
     if(!e)throw new Error('Employee not found');
-    e.status='inactive';e.lastDay=data.lastDay;
+    e.status='offboarding';e.endDate=data.lastDay;
     var offTrack=DB.tracks.find(function(t){return t.type==='offboarding';});
     if(offTrack){
       var runId=uid();
@@ -3062,24 +3141,25 @@ CP_FLOWS['add-device']={
   renderStep:function(step,data){
     if(step===1){
       var devTypeOpts='';getList('deviceType').forEach(function(s){devTypeOpts+='<option'+(s===data.devType?' selected':'')+'>'+s+'</option>';});
-      return cpFormRow('Device name',cpInput('cp-devName','e.g. MacBook Pro 14"',data.devName||''))+
+      return cpFormRow('Make',cpInput('cp-make','e.g. Apple',data.make||''))+
+        cpFormRow('Model',cpInput('cp-model','e.g. MacBook Pro 14"',data.model||''))+
         cpFormRow('Type',cpSelect('cp-devType',devTypeOpts))+
-        cpFormRow('Model',cpInput('cp-model','Model',data.model||''))+
         cpFormRow('Serial number',cpInput('cp-serial','Serial',data.serial||''))+
         cpFormRow('Purchase date',cpInput('cp-purchaseDate','',data.purchaseDate||today(),'date'));
     }
     if(step===2){
       return '<table class="cp-summary-table">'+
-        cpSummaryRow('Name',data.devName)+
+        cpSummaryRow('Name',(data.make||'')+' '+(data.model||''))+
         cpSummaryRow('Type',data.devType)+
         cpSummaryRow('Model',data.model)+
         cpSummaryRow('Serial',data.serial)+
         '</table>';
     }
   },
-  readStep:function(step,data){if(step===1){data.devName=gv('cp-devName');data.devType=gv('cp-devType');data.model=gv('cp-model');data.serial=gv('cp-serial');data.purchaseDate=gv('cp-purchaseDate');}},
+  readStep:function(step,data){if(step===1){data.make=gv('cp-make');data.model=gv('cp-model');data.devType=gv('cp-devType');data.serial=gv('cp-serial');data.purchaseDate=gv('cp-purchaseDate');}},
   save:async function(data){
-    DB.devices.push({id:uid(),name:data.devName,type:data.devType,model:data.model,serial:data.serial,status:'available',assignedTo:null,purchaseDate:data.purchaseDate,location:'Office',notes:''});
+    var devName=data.make+' '+data.model;
+    DB.devices.push({id:uid(),name:devName,make:data.make,type:data.devType,model:data.model,serial:data.serial,status:'available',assignedTo:null,purchaseDate:data.purchaseDate,location:'Office',notes:''});
     await save('devices');
     if(currentPage==='inventory')renderInventory();
   }
@@ -3094,9 +3174,17 @@ CP_FLOWS['edit-device']={
     if(step===2){
       var d=DB.devices.find(function(x){return x.id===data.devId;})||{};
       var devTypeOpts='';getList('deviceType').forEach(function(s){devTypeOpts+='<option'+(s===(data.devType||d.type)?' selected':'')+'>'+s+'</option>';});
-      return cpFormRow('Device name',cpInput('cp-devName','Name',data.devName||d.name||''))+
+      var condOpts='';['new','good','fair','poor'].forEach(function(c){condOpts+='<option'+((data.condition||d.condition||'good')===c?' selected':'')+'>'+c+'</option>';});
+      return cpFormRow('Make',cpInput('cp-make','Make',data.make||d.make||''))+
+        cpFormRow('Device name / model',cpInput('cp-devName','Name',data.devName||d.name||''))+
         cpFormRow('Type',cpSelect('cp-devType',devTypeOpts))+
         cpFormRow('Model',cpInput('cp-model','Model',data.model||d.model||''))+
+        cpFormRow('Serial',cpInput('cp-serial','Serial',data.serial||d.serial||''))+
+        cpFormRow('Condition',cpSelect('cp-condition',condOpts))+
+        cpFormRow('Purchase date',cpInput('cp-purchaseDate','',data.purchaseDate||d.purchaseDate||'','date'))+
+        cpFormRow('Purchase store',cpInput('cp-purchaseStore','Store',data.purchaseStore||d.purchaseStore||''))+
+        cpFormRow('Order number',cpInput('cp-orderNumber','Order #',data.orderNumber||d.orderNumber||''))+
+        cpFormRow('Specs',cpInput('cp-specs','Specs',data.specs||d.specs||''))+
         cpFormRow('Location',cpInput('cp-location','Location',data.location||d.location||''));
     }
     if(step===3){
@@ -3109,12 +3197,22 @@ CP_FLOWS['edit-device']={
   },
   readStep:function(step,data){
     if(step===1){data.devId=gv('cp-devId');}
-    if(step===2){data.devName=gv('cp-devName');data.devType=gv('cp-devType');data.model=gv('cp-model');data.location=gv('cp-location');}
+    if(step===2){data.make=gv('cp-make');data.devName=gv('cp-devName');data.devType=gv('cp-devType');data.model=gv('cp-model');data.serial=gv('cp-serial');data.condition=gv('cp-condition');data.purchaseDate=gv('cp-purchaseDate');data.purchaseStore=gv('cp-purchaseStore');data.orderNumber=gv('cp-orderNumber');data.specs=gv('cp-specs');data.location=gv('cp-location');}
   },
   save:async function(data){
     var d=DB.devices.find(function(x){return x.id===data.devId;});
     if(!d)throw new Error('Device not found');
-    d.name=data.devName;d.type=data.devType;d.model=data.model;d.location=data.location;
+    if(data.make!==undefined)d.make=data.make;
+    if(data.devName!==undefined)d.name=data.devName;
+    if(data.devType!==undefined)d.type=data.devType;
+    if(data.model!==undefined)d.model=data.model;
+    if(data.serial!==undefined)d.serial=data.serial;
+    if(data.condition!==undefined)d.condition=data.condition;
+    if(data.purchaseDate!==undefined)d.purchaseDate=data.purchaseDate;
+    if(data.purchaseStore!==undefined)d.purchaseStore=data.purchaseStore;
+    if(data.orderNumber!==undefined)d.orderNumber=data.orderNumber;
+    if(data.specs!==undefined)d.specs=data.specs;
+    if(data.location!==undefined)d.location=data.location;
     await save('devices');
     if(currentPage==='inventory')renderInventory();
   }
@@ -3187,9 +3285,8 @@ CP_FLOWS['start-run']={
   successMsg:'Onboarding started',
   renderStep:function(step,data){
     if(step===1){
-      var onbTracks=DB.tracks.filter(function(t){return t.type==='onboarding'||!t.type;});
       var tOpts='<option value="">-- Select track --</option>';
-      onbTracks.forEach(function(t){tOpts+='<option value="'+t.id+'"'+(t.id===data.trackId?' selected':'')+'>'+t.name+'</option>';});
+      DB.tracks.forEach(function(t){tOpts+='<option value="'+t.id+'"'+(t.id===data.trackId?' selected':'')+'>'+t.name+'</option>';});
       return cpFormRow('Employee',cpSelect('cp-empId',cpEmpOpts(data.empId,false)))+
         cpFormRow('Track',cpSelect('cp-trackId',tOpts))+
         cpFormRow('Start date',cpInput('cp-startDate','',data.startDate||today(),'date'));
@@ -3471,7 +3568,7 @@ function gsSearch(q){
   dd.classList.add('open');
 }
 document.addEventListener('keydown',function(e){
-  if(e.key==='/'&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'){
+  if(e.key==='/'&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'&&document.getElementById('cp-overlay').style.display!=='flex'){
     e.preventDefault();toggleGlobalSearch();
   }
 });
