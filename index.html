@@ -679,139 +679,146 @@ function groupOffboardingByEmployee(){
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
+// ── DASHBOARD HELPERS (no nested template literals) ──────────────────────────
+function dashStartRow(e){
+  var ini=(e.empName.match(/\b\w/g)||[]).join('');
+  var dateStr=new Date(e.startDate).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  return'<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="nav(\'directory\')">'
+    +'<div style="display:flex;align-items:center;gap:8px">'
+    +'<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0;background:#FAECE7;color:#993C1D">'+ini+'</div>'
+    +'<div><div style="font-size:12px;font-weight:500;color:var(--text)">'+e.empName+'</div><div style="font-size:11px;color:var(--text3)">'+e.role+'</div></div>'
+    +'</div>'
+    +'<div style="text-align:right"><div style="font-size:11px;font-weight:500;color:#185FA5">'+dateStr+'</div><div style="font-size:10px;color:var(--text3)">'+e.daysAway+' days away</div></div>'
+    +'</div>';
+}
+function dashOffboardRow(e){
+  var ini=(e.empName.match(/\b\w/g)||[]).join('');
+  var dateStr=e.endDate?new Date(e.endDate).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'TBD';
+  var daysAway=e.daysAway!==undefined?e.daysAway+' days away':'';
+  return'<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="nav(\'offboarding\')">'
+    +'<div style="display:flex;align-items:center;gap:8px">'
+    +'<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0;background:var(--red-light);color:var(--red)">'+ini+'</div>'
+    +'<div><div style="font-size:12px;font-weight:500;color:var(--text)">'+e.empName+'</div><div style="font-size:11px;color:var(--text3)">'+e.role+'</div></div>'
+    +'</div>'
+    +'<div style="text-align:right"><div style="font-size:11px;font-weight:500;color:var(--red)">'+dateStr+'</div><div style="font-size:10px;color:var(--text3)">'+daysAway+'</div></div>'
+    +'</div>';
+}
+function dashGroupCard(emp,navTarget){
+  return'<div class="card" style="margin-bottom:8px;cursor:pointer" onclick="nav(\''+navTarget+'\')">'
+    +'<div style="font-weight:500;font-size:12px;color:var(--text)">'+emp.empName+'</div>'
+    +'<div style="font-size:11px;color:var(--text2)">'+emp.tracks.map(function(t){return t.trackName;}).join(', ')+'</div>'
+    +'</div>';
+}
+function dashUpcomingIvRow(iv){
+  var dateStr=new Date(iv.date).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+  return'<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="selectedCandId=\''+iv.candId+'\';nav(\'hiring\')">'
+    +'<div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;background:#E6F1FB;color:#0C447C">'+iv.initials+'</div>'
+    +'<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+iv.candName+'</div>'
+    +'<div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">with '+iv.interviewer+' · '+iv.role+'</div></div>'
+    +'<div style="text-align:right;flex-shrink:0"><div style="font-size:11px;font-weight:500;color:var(--text)">'+dateStr+'</div>'
+    +'<div style="font-size:10px;color:var(--text3);margin-top:2px">Interview #'+iv.num+'</div></div>'
+    +'</div>';
+}
+function dashRecentIvRow(iv){
+  var outcomeColor='var(--text3)';var outcome='Pending';
+  if(iv.stage==='offer'){outcome='Advancing';outcomeColor='#1D9E75';}
+  else if(iv.stage==='rejected'){outcome='Not advancing';outcomeColor='#E24B4A';}
+  var dateStr=new Date(iv.date).toLocaleDateString('en-US',{month:'short',day:'numeric'});
+  return'<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="selectedCandId=\''+iv.candId+'\';nav(\'hiring\')">'
+    +'<div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;background:#E6F1FB;color:#0C447C">'+iv.initials+'</div>'
+    +'<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+iv.candName+'</div>'
+    +'<div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">with '+iv.interviewer+' · '+iv.role+'</div></div>'
+    +'<div style="text-align:right;flex-shrink:0"><div style="font-size:11px;font-weight:500;color:var(--text)">'+dateStr+'</div>'
+    +'<div style="font-size:10px;margin-top:2px">Interview #'+iv.num+' · <span style="color:'+outcomeColor+'">'+outcome+'</span></div></div>'
+    +'</div>';
+}
+function dashSectionHeader(title,navTarget){
+  return'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">'
+    +'<div style="font-size:13px;font-weight:500;color:var(--text)">'+title+'</div>'
+    +'<div style="font-size:11px;color:var(--text3);cursor:pointer" onclick="nav(\''+navTarget+'\')">View all →</div>'
+    +'</div>';
+}
+function dashEmpty(msg){
+  return'<div style="font-size:12px;color:var(--text3);padding:16px 0;text-align:center">'+msg+'</div>';
+}
+
 function renderDashboard(){
-  const p=document.getElementById('page');
-  // Upcoming interviews (future, sorted by date ascending)
-  const upcomingIvs=[];
-  DB.interviews.forEach(iv=>{
-    const cand=DB.candidates.find(c=>c.id===iv.candidateId);
+  var p=document.getElementById('page');
+  // Upcoming interviews (future, sorted ascending)
+  var upcomingIvs=[];
+  DB.interviews.forEach(function(iv){
+    var cand=DB.candidates.find(function(c){return c.id===iv.candidateId;});
     if(!cand)return;
     if(new Date(iv.date)>new Date()){
-      const allCandIvs=DB.interviews.filter(i=>i.candidateId===iv.candidateId).sort((a,b)=>new Date(a.date)-new Date(b.date));
-      const ivNum=allCandIvs.findIndex(i=>i.id===iv.id)+1;
+      var allCandIvs=DB.interviews.filter(function(i){return i.candidateId===iv.candidateId;}).sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+      var ivNum=allCandIvs.findIndex(function(i){return i.id===iv.id;})+1;
       upcomingIvs.push({candId:cand.id,candName:cand.name,role:cand.role,interviewer:iv.interviewers||'',date:iv.date,num:ivNum,initials:(cand.name.match(/\b\w/g)||[]).join('')});
     }
   });
-  upcomingIvs.sort((a,b)=>new Date(a.date)-new Date(b.date));
-  // Recent interviews (past, sorted by date descending, last ~4)
-  const recentIvs=[];
-  DB.interviews.forEach(iv=>{
-    const cand=DB.candidates.find(c=>c.id===iv.candidateId);
+  upcomingIvs.sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+  // Recent interviews (past, descending)
+  var recentIvs=[];
+  DB.interviews.forEach(function(iv){
+    var cand=DB.candidates.find(function(c){return c.id===iv.candidateId;});
     if(!cand)return;
     if(new Date(iv.date)<=new Date()){
-      const allCandIvs=DB.interviews.filter(i=>i.candidateId===iv.candidateId).sort((a,b)=>new Date(a.date)-new Date(b.date));
-      const ivNum=allCandIvs.findIndex(i=>i.id===iv.id)+1;
+      var allCandIvs=DB.interviews.filter(function(i){return i.candidateId===iv.candidateId;}).sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+      var ivNum=allCandIvs.findIndex(function(i){return i.id===iv.id;})+1;
       recentIvs.push({candId:cand.id,candName:cand.name,role:cand.role,interviewer:iv.interviewers||'',date:iv.date,num:ivNum,stage:cand.stage,initials:(cand.name.match(/\b\w/g)||[]).join('')});
     }
   });
-  recentIvs.sort((a,b)=>new Date(b.date)-new Date(a.date));
-  // Active onboarding
-  const activeOnb=DB.onboardingRuns.filter(r=>r.status==='active').map(run=>{
-    const emp=DB.employees.find(e=>e.id===run.employeeId);
-    if(!emp)return null;
-    const runTasksList=DB.runTasks.filter(t=>t.runId===run.id);
-    const completedTasks=runTasksList.filter(t=>t.status==='completed').length;
-    const totalTasks=runTasksList.length;
-    const daysSince=emp.startDate?Math.floor((new Date()-new Date(emp.startDate))/86400000):0;
-    const pct=totalTasks?Math.round(completedTasks/totalTasks*100):0;
-    let dotColor='dot-green';
-    if(pct<50)dotColor='dot-amber';
-    if(daysSince<0)dotColor='dot-blue';
-    return{empId:emp.id,empName:emp.name,role:emp.role,daysSince,pct,completedTasks,totalTasks,dotColor,initials:(emp.name.match(/\b\w/g)||[]).join('')};
-  }).filter(Boolean);
+  recentIvs.sort(function(a,b){return new Date(b.date)-new Date(a.date);});
   // Upcoming start dates
-  const upcomingStarts=DB.employees.filter(e=>e.startDate&&new Date(e.startDate)>new Date()).map(e=>{
-    const daysAway=Math.ceil((new Date(e.startDate)-new Date())/86400000);
-    return{empId:e.id,empName:e.name,role:e.role,startDate:e.startDate,daysAway,initials:(e.name.match(/\b\w/g)||[]).join('')};
-  }).sort((a,b)=>new Date(a.startDate)-new Date(b.startDate));
-  p.innerHTML=`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
-      <div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="font-size:13px;font-weight:500;color:var(--text)">Upcoming interviews</div>
-          <div style="font-size:11px;color:var(--text3);cursor:pointer" onclick="nav('hiring')">View all →</div>
-        </div>
-        <div class="card">
-          ${upcomingIvs.slice(0,4).map(iv=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="selectedCandId='${iv.candId}';nav('hiring')">
-            <div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;background:#E6F1FB;color:#0C447C">${iv.initials}</div>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${iv.candName}</div>
-              <div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">with ${iv.interviewer} · ${iv.role}</div>
-            </div>
-            <div style="text-align:right;flex-shrink:0">
-              <div style="font-size:11px;font-weight:500;color:var(--text)">${new Date(iv.date).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})}</div>
-              <div style="font-size:10px;color:var(--text3);margin-top:2px">Interview #${iv.num}</div>
-            </div>
-          </div>`).join('')}
-          ${upcomingIvs.length===0?'<div style="font-size:12px;color:var(--text3);padding:16px 0;text-align:center">No upcoming interviews</div>':''}
-        </div>
-      </div>
-      <div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="font-size:13px;font-weight:500;color:var(--text)">Recent interviews</div>
-          <div style="font-size:11px;color:var(--text3);cursor:pointer" onclick="nav('hiring')">View all →</div>
-        </div>
-        <div class="card">
-          ${recentIvs.slice(0,4).map(iv=>{let outcomeColor='var(--text3)';let outcome='Pending';if(iv.stage==='offer')outcome='Advancing',outcomeColor='#1D9E75';else if(iv.stage==='rejected')outcome='Not advancing',outcomeColor='#E24B4A';return`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="selectedCandId='${iv.candId}';nav('hiring')">
-            <div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;background:#E6F1FB;color:#0C447C">${iv.initials}</div>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${iv.candName}</div>
-              <div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">with ${iv.interviewer} · ${iv.role}</div>
-            </div>
-            <div style="text-align:right;flex-shrink:0">
-              <div style="font-size:11px;font-weight:500;color:var(--text)">${new Date(iv.date).toLocaleDateString('en-US',{month:'short',day:'numeric'})}</div>
-              <div style="font-size:10px;margin-top:2px">Interview #${iv.num} · <span style="color:${outcomeColor}">${outcome}</span></div>
-            </div>
-          </div>`;}).join('')}
-          ${recentIvs.length===0?'<div style="font-size:12px;color:var(--text3);padding:16px 0;text-align:center">No recent interviews</div>':''}
-        </div>
-      </div>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
-      <div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="font-size:13px;font-weight:500;color:var(--text)">Active onboarding</div>
-          <div style="font-size:11px;color:var(--text3);cursor:pointer" onclick="nav('onboarding')">View all →</div>
-        </div>
-        <div class="card">
-          ${activeOnb.slice(0,3).map(ob=>`<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="nav('onboarding')">
-            <div style="width:6px;height:6px;border-radius:50%;flex-shrink:0;background:#1D9E75" class="${ob.dotColor}"></div>
-            <div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;background:#E1F5EE;color:#0F6E56">${ob.initials}</div>
-            <div style="flex:1;min-width:0">
-              <div style="font-size:12px;font-weight:500;color:var(--text)">${ob.empName}</div>
-              <div style="font-size:11px;color:var(--text3)">${ob.role} · Day ${ob.daysSince||'0'}</div>
-            </div>
-            <div style="text-align:right;flex-shrink:0">
-              <div style="width:64px;height:3px;background:var(--border);border-radius:2px;margin-bottom:3px;margin-left:auto;overflow:hidden"><div style="height:3px;border-radius:2px;background:#1D9E75;width:${ob.pct}%"></div></div>
-              <div style="font-size:10px;color:var(--text3)">${ob.pct}% complete</div>
-            </div>
-          </div>`).join('')}
-          ${activeOnb.length===0?'<div style="font-size:12px;color:var(--text3);padding:16px 0;text-align:center">No active onboarding</div>':''}
-        </div>
-      </div>
-      <div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-          <div style="font-size:13px;font-weight:500;color:var(--text)">Upcoming start dates</div>
-          <div style="font-size:11px;color:var(--text3);cursor:pointer" onclick="nav('directory')">View all →</div>
-        </div>
-        <div class="card">
-          ${upcomingStarts.slice(0,3).map(e=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="nav('directory')">
-            <div style="display:flex;align-items:center;gap:8px">
-              <div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0;background:#FAECE7;color:#993C1D">${e.initials}</div>
-              <div>
-                <div style="font-size:12px;font-weight:500;color:var(--text)">${e.empName}</div>
-                <div style="font-size:11px;color:var(--text3)">${e.role}</div>
-              </div>
-            </div>
-            <div style="text-align:right">
-              <div style="font-size:11px;font-weight:500;color:#185FA5">${new Date(e.startDate).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'})}</div>
-              <div style="font-size:10px;color:var(--text3)">${e.daysAway} days away</div>
-            </div>
-          </div>`).join('')}
-          ${upcomingStarts.length===0?'<div style="font-size:12px;color:var(--text3);padding:16px 0;text-align:center">No upcoming start dates</div>':''}
-        </div>
-      </div>
-    </div>`;
+  var upcomingStarts=DB.employees.filter(function(e){return e.startDate&&new Date(e.startDate)>new Date();}).map(function(e){
+    var daysAway=Math.ceil((new Date(e.startDate)-new Date())/86400000);
+    return{empId:e.id,empName:e.name,role:e.role,startDate:e.startDate,daysAway:daysAway,initials:(e.name.match(/\b\w/g)||[]).join('')};
+  }).sort(function(a,b){return new Date(a.startDate)-new Date(b.startDate);});
+  // Upcoming offboards
+  var upcomingOffboards=DB.employees.filter(function(e){return e.status==='offboarding';}).map(function(e){
+    var daysAway=e.endDate?Math.ceil((new Date(e.endDate)-new Date())/86400000):null;
+    return{empId:e.id,empName:e.name,role:e.role,endDate:e.endDate||'',daysAway:daysAway,initials:(e.name.match(/\b\w/g)||[]).join('')};
+  });
+  // Onboarding/offboarding groups (use existing helpers, limit to 2 for preview)
+  var onboardGroups=groupOnboardingByEmployee().slice(0,2);
+  var offboardGroups=groupOffboardingByEmployee().slice(0,2);
+
+  // ── ROW 1: Upcoming start dates + Upcoming offboards ──
+  var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">';
+  html+='<div>'+dashSectionHeader('Upcoming start dates','directory')+'<div class="card">';
+  if(upcomingStarts.length>0){html+=upcomingStarts.slice(0,3).map(dashStartRow).join('');}
+  else{html+=dashEmpty('No upcoming start dates');}
+  html+='</div></div>';
+  html+='<div>'+dashSectionHeader('Upcoming offboards','offboarding')+'<div class="card">';
+  if(upcomingOffboards.length>0){html+=upcomingOffboards.slice(0,3).map(dashOffboardRow).join('');}
+  else{html+=dashEmpty('No upcoming offboards');}
+  html+='</div></div>';
+  html+='</div>';
+
+  // ── ROW 2: Active onboarding groups + Active offboarding groups ──
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">';
+  html+='<div>'+dashSectionHeader('Active onboarding','onboarding');
+  if(onboardGroups.length>0){html+=onboardGroups.map(function(emp){return dashGroupCard(emp,'onboarding');}).join('');}
+  else{html+='<div class="card">'+dashEmpty('No active onboarding')+'</div>';}
+  html+='</div>';
+  html+='<div>'+dashSectionHeader('Active offboarding','offboarding');
+  if(offboardGroups.length>0){html+=offboardGroups.map(function(emp){return dashGroupCard(emp,'offboarding');}).join('');}
+  else{html+='<div class="card">'+dashEmpty('No active offboarding')+'</div>';}
+  html+='</div>';
+  html+='</div>';
+
+  // ── ROW 3: Upcoming interviews + Recent interviews ──
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
+  html+='<div>'+dashSectionHeader('Upcoming interviews','hiring')+'<div class="card">';
+  if(upcomingIvs.length>0){html+=upcomingIvs.slice(0,4).map(dashUpcomingIvRow).join('');}
+  else{html+=dashEmpty('No upcoming interviews');}
+  html+='</div></div>';
+  html+='<div>'+dashSectionHeader('Recent interviews','hiring')+'<div class="card">';
+  if(recentIvs.length>0){html+=recentIvs.slice(0,4).map(dashRecentIvRow).join('');}
+  else{html+=dashEmpty('No recent interviews');}
+  html+='</div></div>';
+  html+='</div>';
+
+  p.innerHTML=html;
 }
 
 // ── HIRING ────────────────────────────────────────────────────────────────────
