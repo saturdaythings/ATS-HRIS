@@ -823,10 +823,15 @@ let sortCol='updatedAt';let sortDir=-1;
 function getFilteredCands(){
   let list=[...DB.candidates];
   const f=hiringFilters;
+  // Get candidates in active onboarding (exclude from hired list)
+  const empWithActiveOnboarding=DB.onboardingRuns.filter(r=>r.status==='active'&&r.type==='onboarding').map(r=>r.employeeId);
+  const onboardingEmpNames=DB.employees.filter(e=>empWithActiveOnboarding.includes(e.id)).map(e=>e.name);
   // In kanban view, hide Hired/Closed by default unless a status filter is explicitly set or showArchived is on
   if(hiringView==='kanban'&&!f.status&&!f.showArchived){
     list=list.filter(c=>c.candStatus!=='Hired'&&c.candStatus!=='Closed');
   }
+  // Exclude candidates with active onboarding runs
+  list=list.filter(c=>!onboardingEmpNames.includes(c.name));
   if(f.q){const q=f.q.toLowerCase();list=list.filter(c=>c.name.toLowerCase().includes(q)||c.role.toLowerCase().includes(q)||(c.city||'').toLowerCase().includes(q));}
   if(f.status)list=list.filter(c=>c.candStatus===f.status);
   if(f.stage)list=list.filter(c=>c.stage===f.stage);
@@ -1244,7 +1249,7 @@ function refreshEmpTable(){
 function empRows(list){
   return list.map(e=>`<tr class="clickable${selectedEmpId===e.id?' selected':''}" onclick="selectEmp('${e.id}')">
     <td>${personCell(e.name,e.email)}</td><td>${e.role}</td><td>${e.dept||'—'}</td>
-    <td>${statusPill(e.status)}</td><td>${e.city||e.location||'—'}</td><td>${e.startDate||'—'}</td><td>${e.manager||'—'}</td>
+    <td>${statusPill(e.status)}</td><td>${e.state||'—'}</td><td>${e.startDate||'—'}</td><td>${e.manager||'—'}</td>
   </tr>`).join('');
 }
 
@@ -1436,6 +1441,23 @@ async function toggleRunTask(runId,taskId){
     const run=DB.onboardingRuns.find(r=>r.id===runId);
     const emp=DB.employees.find(e=>e.id===run?.employeeId);
     if(emp){
+      // Auto-transition onboarding → active if start date has passed
+      if(run.type==='onboarding'&&emp.status==='onboarding'&&emp.startDate){
+        const startDate=new Date(emp.startDate);
+        const today=new Date();
+        today.setHours(0,0,0,0);
+        if(startDate<=today){
+          // Start date has passed and all tasks done—auto-transition
+          emp.status='active';
+          run.status='completed';
+          await save('employees');await save('onboardingRuns');
+          showToast(`${emp.name} → active ✓`);
+          if(currentPage==='onboarding'||currentPage==='offboarding')nav(currentPage);
+          else refreshEmpTable();
+          return;
+        }
+      }
+      // Otherwise show modal (start date in future or offboarding track)
       const newStatus=run.type==='offboarding'?'inactive':'active';
       const label=run.type==='offboarding'?'mark them as inactive':'mark them as active';
       showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Track Complete!</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
