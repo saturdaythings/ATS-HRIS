@@ -1196,9 +1196,11 @@ async function deleteCand(id){
 function promoteCandidate(id){
   const c=DB.candidates.find(x=>x.id===id);
   const autoEmail=c.name.split(' ')[0].toLowerCase()+'@vtwo.co';
+  const empOptions=DB.employees.map(e=>`<option value="${e.id}">${e.name} — ${e.role}</option>`).join('');
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Promote to Employee</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
     <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Promoting <strong>${c.name}</strong> to employee. They will appear in the Directory and be marked Hired in Hiring.</p>
     <div class="form-row"><div class="form-group"><label class="form-label">Department</label><select class="form-input form-select" id="pdept"><option>Engineering</option><option>Design</option><option>Product</option><option>Data</option><option>Operations</option></select></div><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="pstart" value="${new Date(Date.now()+7*86400000).toISOString().split('T')[0]}"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Manager</label><select class="form-input form-select" id="pmgr">${empOptions?'<option value="">Select manager...</option>'+empOptions:'<option value="">No other employees yet</option>'}</select></div><div class="form-group"><label class="form-label">Buddy</label><select class="form-input form-select" id="pbuddy">${empOptions?'<option value="">Select buddy...</option>'+empOptions:'<option value="">No other employees yet</option>'}</select></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Client (if applicable)</label><input class="form-input" id="pclient" value="${c.client||''}"/></div><div class="form-group"><label class="form-label">Work Location</label><input class="form-input" id="ploc" value="${c.city||'Remote'}"/></div></div>
     <div class="form-group"><label class="form-label">Work Email</label><input class="form-input" id="pemail" value="${autoEmail}" placeholder="${autoEmail}"/></div>
   </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="doPromote('${id}')">Confirm & Promote</button></div></div>`);
@@ -1207,11 +1209,15 @@ function promoteCandidate(id){
 async function doPromote(id){
   const c=DB.candidates.find(x=>x.id===id);
   c.candStatus='Hired';c.stage='hired';touch(c);
+  const mgrId=document.getElementById('pmgr').value;
+  const buddyId=document.getElementById('pbuddy').value;
+  const mgrName=(mgrId?DB.employees.find(x=>x.id===mgrId)?.name:'')|| 'TBD';
+  const buddyName=(buddyId?DB.employees.find(x=>x.id===buddyId)?.name:'')|| '';
   const client=document.getElementById('pclient').value;
   const email=document.getElementById('pemail').value.trim()||c.name.split(' ')[0].toLowerCase()+'@vtwo.co';
   const startDate=document.getElementById('pstart').value;
   const status=(()=>{if(!startDate)return 'onboarding';return new Date(startDate)>new Date()?'onboarding':'active';})();
-  const ne={id:uid(),name:c.name,role:c.role,dept:document.getElementById('pdept').value,status,client:client||'',location:document.getElementById('ploc').value,city:c.city||'',state:c.state||'',country:c.country||'US',manager:'TBD',startDate,email,phone:'—'};
+  const ne={id:uid(),name:c.name,role:c.role,dept:document.getElementById('pdept').value,status,client:client||'',location:document.getElementById('ploc').value,city:c.city||'',state:c.state||'',country:c.country||'US',manager:mgrName,buddy:buddyName,startDate,email,phone:'—'};
   DB.employees.push(ne);
   DB.activities.unshift({id:uid(),type:'hire',desc:`${c.name} promoted to employee`,at:now()});
   await save('candidates');await save('employees');await save('activities');
