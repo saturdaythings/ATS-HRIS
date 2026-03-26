@@ -1061,7 +1061,8 @@ function showAddIvModal(candId){
   const c=DB.candidates.find(x=>x.id===candId);
   const typeButtons=IV_TYPES.map(t=>`<button type="button" class="btn btn-secondary btn-sm" onclick="selectIvType('iv-type','${t}')">${t}</button>`).join('');
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Log Interview — ${c.name}</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
-    <div class="form-row"><div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="iv-date" value="${today()}"/></div><div class="form-group"><label class="form-label">Score</label><select class="form-input form-select" id="iv-score"><option value="">— No score —</option>${[1,2,3,4,5].map(n=>`<option value="${n}">${n} — ${SCORE_LABELS[n]}</option>`).join('')}</select></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="iv-date" value="${today()}"/></div><div class="form-group"><label class="form-label">Time</label><input type="time" class="form-input" id="iv-time"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Score</label><select class="form-input form-select" id="iv-score"><option value="">— No score —</option>${[1,2,3,4,5].map(n=>`<option value="${n}">${n} — ${SCORE_LABELS[n]}</option>`).join('')}</select></div></div>
     <div class="form-group"><label class="form-label">Type</label><div style="display:flex;gap:8px;flex-wrap:wrap">${typeButtons}<input type="hidden" id="iv-type"/></div></div>
     <div class="form-group"><label class="form-label">Interviewer(s)</label><input class="form-input" id="iv-int" placeholder="Jordan Lee, Nina Patel"/></div>
     <div class="form-group"><label class="form-label">Notes / Comments</label><textarea class="form-input" id="iv-notes" rows="4" placeholder="Key observations, strengths, concerns..."></textarea></div>
@@ -1071,7 +1072,7 @@ function showAddIvModal(candId){
 async function addIv(candId){
   const date=document.getElementById('iv-date').value;if(!date){showToast('Date required');return;}
   const c=DB.candidates.find(x=>x.id===candId);
-  const iv={id:uid(),candidateId:candId,date,type:document.getElementById('iv-type').value,interviewers:document.getElementById('iv-int').value,score:document.getElementById('iv-score').value,notes:document.getElementById('iv-notes').value};
+  const iv={id:uid(),candidateId:candId,date,time:document.getElementById('iv-time').value,type:document.getElementById('iv-type').value,interviewers:document.getElementById('iv-int').value,score:document.getElementById('iv-score').value,notes:document.getElementById('iv-notes').value};
   DB.interviews.push(iv);touch(c);
   DB.activities.unshift({id:uid(),type:'interview',desc:`Interview logged for ${c.name}`,at:now()});
   await save('interviews');await save('candidates');await save('activities');
@@ -1088,7 +1089,8 @@ function showEditIvModal(ivId, candId){
   const c=DB.candidates.find(x=>x.id===candId);
   const typeButtons=IV_TYPES.map(t=>`<button type="button" class="btn btn-secondary btn-sm${iv.type===t?' btn-active':''}" onclick="selectIvType('eiv-type','${t}')">${t}</button>`).join('');
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Edit Interview — ${c.name}</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
-    <div class="form-row"><div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="eiv-date" value="${iv.date}"/></div><div class="form-group"><label class="form-label">Score</label><select class="form-input form-select" id="eiv-score"><option value="">— No score —</option>${[1,2,3,4,5].map(n=>`<option value="${n}"${iv.score==n?' selected':''}>${n} — ${SCORE_LABELS[n]}</option>`).join('')}</select></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="eiv-date" value="${iv.date}"/></div><div class="form-group"><label class="form-label">Time</label><input type="time" class="form-input" id="eiv-time" value="${iv.time||''}"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Score</label><select class="form-input form-select" id="eiv-score"><option value="">— No score —</option>${[1,2,3,4,5].map(n=>`<option value="${n}"${iv.score==n?' selected':''}>${n} — ${SCORE_LABELS[n]}</option>`).join('')}</select></div></div>
     <div class="form-group"><label class="form-label">Type</label><div style="display:flex;gap:8px;flex-wrap:wrap">${typeButtons}<input type="hidden" id="eiv-type" value="${iv.type||''}"/></div></div>
     <div class="form-group"><label class="form-label">Interviewer(s)</label><input class="form-input" id="eiv-int" value="${iv.interviewers||''}"/></div>
     <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="eiv-notes" rows="4">${iv.notes||''}</textarea></div>
@@ -1098,6 +1100,7 @@ function showEditIvModal(ivId, candId){
 async function saveEditIv(ivId, candId){
   const iv=DB.interviews.find(x=>x.id===ivId);
   iv.date=document.getElementById('eiv-date').value;
+  iv.time=document.getElementById('eiv-time').value;
   iv.type=document.getElementById('eiv-type').value;
   iv.score=document.getElementById('eiv-score').value;
   iv.interviewers=document.getElementById('eiv-int').value;
