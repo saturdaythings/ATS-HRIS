@@ -1285,6 +1285,8 @@ function showDevDetail(id){
     <div class="detail-row"><span class="detail-key">Status</span>${statusPill(d.status)}</div>
     <div class="detail-row"><span class="detail-key">Condition</span><span class="detail-val">${d.condition}</span></div>
     <div class="detail-row"><span class="detail-key">Purchased</span><span class="detail-val">${d.purchaseDate}</span></div>
+    ${d.purchaseStore?`<div class="detail-row"><span class="detail-key">Store</span><span class="detail-val">${d.purchaseStore}</span></div>`:''}
+    ${d.orderNumber?`<div class="detail-row"><span class="detail-key">Order #</span><span class="detail-val" style="font-family:var(--mono);font-size:12px">${d.orderNumber}</span></div>`:''}
     ${a?`<div class="detail-row"><span class="detail-key">Assigned To</span><span class="detail-val">${a.name}</span></div>`:''}
   </div>
   <div class="modal-footer"><button class="btn btn-secondary btn-sm" onclick="showEditDeviceModal('${d.id}')">Edit</button>${d.status==='available'?`<button class="btn btn-primary" onclick="showAssignModal('${d.id}')">Assign to Employee</button>`:`<button class="btn btn-danger" onclick="returnDevice('${d.id}')">Return Device</button>`}<button class="btn btn-secondary" onclick="closeModal()">Close</button></div></div>`);
@@ -1321,13 +1323,14 @@ function showAddDeviceModal(){
     <div class="form-row"><div class="form-group"><label class="form-label">Make</label><input class="form-input" id="dmk" placeholder="Apple"/></div><div class="form-group"><label class="form-label">Model</label><input class="form-input" id="dml" placeholder='MacBook Pro 14"'/></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="dtp"><option value="laptop">Laptop</option><option value="monitor">Monitor</option><option value="phone">Phone</option><option value="keyboard">Keyboard</option><option value="mouse">Mouse</option></select></div><div class="form-group"><label class="form-label">Serial #</label><input class="form-input" id="dsr" placeholder="ABC123"/></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Condition</label><select class="form-input form-select" id="dcond"><option>new</option><option>good</option><option>fair</option><option>poor</option></select></div><div class="form-group"><label class="form-label">Purchase Date</label><input type="date" class="form-input" id="dpurch" value="${today()}"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Purchase Store</label><input class="form-input" id="dstore" placeholder="Apple Store, Amazon..."/></div><div class="form-group"><label class="form-label">Order Number</label><input class="form-input" id="dorder" placeholder="Order #"/></div></div>
   </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addDevice()">Add Device</button></div></div>`);
 }
 
 async function addDevice(){
   const mk=document.getElementById('dmk').value.trim(),ml=document.getElementById('dml').value.trim();
   if(!mk||!ml){showToast('Make and model required');return;}
-  const nd={id:uid(),name:`${mk} ${ml}`,type:document.getElementById('dtp').value,make:mk,model:ml,serial:document.getElementById('dsr').value||'N/A',status:'available',assignedTo:'',condition:document.getElementById('dcond').value,purchaseDate:document.getElementById('dpurch').value};
+  const nd={id:uid(),name:`${mk} ${ml}`,type:document.getElementById('dtp').value,make:mk,model:ml,serial:document.getElementById('dsr').value||'N/A',status:'available',assignedTo:'',condition:document.getElementById('dcond').value,purchaseDate:document.getElementById('dpurch').value,purchaseStore:document.getElementById('dstore').value,orderNumber:document.getElementById('dorder').value};
   DB.devices.push(nd);await save('devices');closeModal();showToast(`${nd.name} added`);renderInventory();
 }
 
@@ -1337,6 +1340,7 @@ function showEditDeviceModal(id){
     <div class="form-row"><div class="form-group"><label class="form-label">Make</label><input class="form-input" id="edv-mk" value="${d.make||''}"/></div><div class="form-group"><label class="form-label">Model</label><input class="form-input" id="edv-ml" value="${d.model||''}"/></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="edv-tp"><option value="laptop"${d.type==='laptop'?' selected':''}>Laptop</option><option value="monitor"${d.type==='monitor'?' selected':''}>Monitor</option><option value="phone"${d.type==='phone'?' selected':''}>Phone</option><option value="keyboard"${d.type==='keyboard'?' selected':''}>Keyboard</option><option value="mouse"${d.type==='mouse'?' selected':''}>Mouse</option></select></div><div class="form-group"><label class="form-label">Serial #</label><input class="form-input" id="edv-sr" value="${d.serial||''}"/></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Condition</label><select class="form-input form-select" id="edv-cond"><option${d.condition==='new'?' selected':''}>new</option><option${d.condition==='good'?' selected':''}>good</option><option${d.condition==='fair'?' selected':''}>fair</option><option${d.condition==='poor'?' selected':''}>poor</option></select></div><div class="form-group"><label class="form-label">Purchase Date</label><input type="date" class="form-input" id="edv-purch" value="${d.purchaseDate||''}"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Purchase Store</label><input class="form-input" id="edv-store" value="${d.purchaseStore||''}"/></div><div class="form-group"><label class="form-label">Order Number</label><input class="form-input" id="edv-order" value="${d.orderNumber||''}"/></div></div>
   </div><div class="modal-footer"><button class="btn btn-danger btn-sm" style="margin-right:auto" onclick="deleteDevice('${d.id}')">Delete</button><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEditDevice('${d.id}')">Save</button></div></div>`);
 }
 
@@ -1349,6 +1353,8 @@ async function saveEditDevice(id){
   d.serial=document.getElementById('edv-sr').value;
   d.condition=document.getElementById('edv-cond').value;
   d.purchaseDate=document.getElementById('edv-purch').value;
+  d.purchaseStore=document.getElementById('edv-store').value;
+  d.orderNumber=document.getElementById('edv-order').value;
   await save('devices');
   closeModal();showToast('Device updated');renderInventory();
 }
