@@ -782,32 +782,20 @@ function renderDashboard(){
   var onboardGroups=groupOnboardingByEmployee().slice(0,2);
   var offboardGroups=groupOffboardingByEmployee().slice(0,2);
 
-  // ── ROW 1: Upcoming start dates + Upcoming offboards ──
+  // ── ROW 1: Upcoming start dates + Active onboarding ──
   var html='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">';
   html+='<div>'+dashSectionHeader('Upcoming start dates','directory')+'<div class="card">';
   if(upcomingStarts.length>0){html+=upcomingStarts.slice(0,3).map(dashStartRow).join('');}
   else{html+=dashEmpty('No upcoming start dates');}
   html+='</div></div>';
-  html+='<div>'+dashSectionHeader('Upcoming offboards','offboarding')+'<div class="card">';
-  if(upcomingOffboards.length>0){html+=upcomingOffboards.slice(0,3).map(dashOffboardRow).join('');}
-  else{html+=dashEmpty('No upcoming offboards');}
-  html+='</div></div>';
-  html+='</div>';
-
-  // ── ROW 2: Active onboarding groups + Active offboarding groups ──
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">';
   html+='<div>'+dashSectionHeader('Active onboarding','onboarding');
   if(onboardGroups.length>0){html+=onboardGroups.map(function(emp){return dashGroupCard(emp,'onboarding');}).join('');}
   else{html+='<div class="card">'+dashEmpty('No active onboarding')+'</div>';}
   html+='</div>';
-  html+='<div>'+dashSectionHeader('Active offboarding','offboarding');
-  if(offboardGroups.length>0){html+=offboardGroups.map(function(emp){return dashGroupCard(emp,'offboarding');}).join('');}
-  else{html+='<div class="card">'+dashEmpty('No active offboarding')+'</div>';}
-  html+='</div>';
   html+='</div>';
 
-  // ── ROW 3: Upcoming interviews + Recent interviews ──
-  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
+  // ── ROW 2: Upcoming interviews + Recent interviews ──
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">';
   html+='<div>'+dashSectionHeader('Upcoming interviews','hiring')+'<div class="card">';
   if(upcomingIvs.length>0){html+=upcomingIvs.slice(0,4).map(dashUpcomingIvRow).join('');}
   else{html+=dashEmpty('No upcoming interviews');}
@@ -816,6 +804,18 @@ function renderDashboard(){
   if(recentIvs.length>0){html+=recentIvs.slice(0,4).map(dashRecentIvRow).join('');}
   else{html+=dashEmpty('No recent interviews');}
   html+='</div></div>';
+  html+='</div>';
+
+  // ── ROW 3: Upcoming offboards + Active offboarding ──
+  html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">';
+  html+='<div>'+dashSectionHeader('Upcoming offboards','offboarding')+'<div class="card">';
+  if(upcomingOffboards.length>0){html+=upcomingOffboards.slice(0,3).map(dashOffboardRow).join('');}
+  else{html+=dashEmpty('No upcoming offboards');}
+  html+='</div></div>';
+  html+='<div>'+dashSectionHeader('Active offboarding','offboarding');
+  if(offboardGroups.length>0){html+=offboardGroups.map(function(emp){return dashGroupCard(emp,'offboarding');}).join('');}
+  else{html+='<div class="card">'+dashEmpty('No active offboarding')+'</div>';}
+  html+='</div>';
   html+='</div>';
 
   p.innerHTML=html;
