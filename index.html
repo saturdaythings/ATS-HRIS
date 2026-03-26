@@ -1057,10 +1057,36 @@ function selectIvType(fieldId,type){
   event.target.classList.add('btn-active');
 }
 
+function toggleCandNameEdit(){
+  const display=document.getElementById('cand-name-display');
+  const input=document.getElementById('cand-name-input');
+  if(display.style.display==='none'){
+    display.style.display='inline';
+    input.style.display='none';
+  }else{
+    display.style.display='none';
+    input.style.display='inline';
+    input.focus();
+  }
+}
+
+async function saveCandName(candId){
+  const input=document.getElementById('cand-name-input');
+  const newName=input.value.trim();
+  if(!newName){showToast('Name required');return;}
+  const c=DB.candidates.find(x=>x.id===candId);
+  c.name=newName;
+  document.getElementById('cand-name-display').textContent=newName;
+  touch(c);
+  await save('candidates');
+  showToast('Name updated');
+  toggleCandNameEdit();
+}
+
 function showAddIvModal(candId){
   const c=DB.candidates.find(x=>x.id===candId);
   const typeButtons=IV_TYPES.map(t=>`<button type="button" class="btn btn-secondary btn-sm" onclick="selectIvType('iv-type','${t}')">${t}</button>`).join('');
-  showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Log Interview — ${c.name}</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
+  showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Log Interview — <span id="cand-name-display" onclick="toggleCandNameEdit()" style="cursor:pointer;text-decoration:underline">${c.name}</span><input type="text" id="cand-name-input" class="form-input" value="${c.name}" style="display:none;width:200px;height:24px;font-size:14px" onblur="saveCandName('${candId}')" onkeydown="if(event.key==='Enter')saveCandName('${candId}')"/></div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
     <div class="form-row"><div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="iv-date" value="${today()}"/></div><div class="form-group"><label class="form-label">Time</label><input type="time" class="form-input" id="iv-time"/></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Score</label><select class="form-input form-select" id="iv-score"><option value="">— No score —</option>${[1,2,3,4,5].map(n=>`<option value="${n}">${n} — ${SCORE_LABELS[n]}</option>`).join('')}</select></div></div>
     <div class="form-group"><label class="form-label">Type</label><div style="display:flex;gap:8px;flex-wrap:wrap">${typeButtons}<input type="hidden" id="iv-type"/></div></div>
@@ -1088,7 +1114,7 @@ function showEditIvModal(ivId, candId){
   const iv=DB.interviews.find(x=>x.id===ivId);
   const c=DB.candidates.find(x=>x.id===candId);
   const typeButtons=IV_TYPES.map(t=>`<button type="button" class="btn btn-secondary btn-sm${iv.type===t?' btn-active':''}" onclick="selectIvType('eiv-type','${t}')">${t}</button>`).join('');
-  showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Edit Interview — ${c.name}</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
+  showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Edit Interview — <span id="cand-name-display" onclick="toggleCandNameEdit()" style="cursor:pointer;text-decoration:underline">${c.name}</span><input type="text" id="cand-name-input" class="form-input" value="${c.name}" style="display:none;width:200px;height:24px;font-size:14px" onblur="saveCandName('${candId}')" onkeydown="if(event.key==='Enter')saveCandName('${candId}')"/></div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
     <div class="form-row"><div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="eiv-date" value="${iv.date}"/></div><div class="form-group"><label class="form-label">Time</label><input type="time" class="form-input" id="eiv-time" value="${iv.time||''}"/></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Score</label><select class="form-input form-select" id="eiv-score"><option value="">— No score —</option>${[1,2,3,4,5].map(n=>`<option value="${n}"${iv.score==n?' selected':''}>${n} — ${SCORE_LABELS[n]}</option>`).join('')}</select></div></div>
     <div class="form-group"><label class="form-label">Type</label><div style="display:flex;gap:8px;flex-wrap:wrap">${typeButtons}<input type="hidden" id="eiv-type" value="${iv.type||''}"/></div></div>
