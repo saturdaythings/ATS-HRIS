@@ -522,7 +522,7 @@ const SCORE_COLORS={1:'#c0392b',2:'#e67e22',3:'#f1c40f',4:'#27ae60',5:'#1a9c6e'}
 
 function stagePill(s){const m={sourced:'gray',screening:'blue',interview:'amber',offer:'purple',hired:'green'};return`<span class="pill pill-${m[s]||'gray'}">${s}</span>`;}
 function candStatusPill(s){const m={'Active':'green','On Hold':'amber','Nurturing':'blue','Hired':'purple','Closed':'red'};return`<span class="pill pill-${m[s]||'gray'}">${s}</span>`;}
-function statusPill(s){if(['active','good','new','available'].includes(s))return`<span class="pill pill-green">${s}</span>`;if(s==='onboarding')return`<span class="pill pill-blue">onboarding</span>`;if(s==='assigned')return`<span class="pill pill-purple">assigned</span>`;if(s==='pending')return`<span class="pill pill-amber">pending</span>`;return`<span class="pill pill-gray">${s||'—'}</span>`;}
+function statusPill(s){if(['active','good','new','available'].includes(s))return`<span class="pill pill-green">${s}</span>`;if(s==='onboarding')return`<span class="pill pill-blue">onboarding</span>`;if(s==='assigned')return`<span class="pill pill-purple">assigned</span>`;if(s==='pending')return`<span class="pill pill-amber">pending</span>`;if(s==='inactive')return`<span class="pill pill-gray">inactive</span>`;return`<span class="pill pill-gray">${s||'—'}</span>`;}
 function personCell(name,sub=''){return`<div class="person-cell"><div class="person-av" style="${av(name)}">${initials(name)}</div><div><div class="person-name">${name}</div>${sub?`<div class="person-sub">${sub}</div>`:''}</div></div>`;}
 function scoreDisplay(score){if(!score)return'<span style="color:var(--text3);font-size:12px">—</span>';const s=parseInt(score);return`<span style="display:inline-flex;align-items:center;gap:4px;font-size:12px"><span class="score-dot" style="background:${SCORE_COLORS[s]||'#999'}"></span>${SCORE_LABELS[s]||score}</span>`;}
 function compDisplay(c){if(!c.compAmount)return'—';return c.compType==='hourly'?`$${parseInt(c.compAmount).toLocaleString()}/hr`:`$${parseInt(c.compAmount).toLocaleString()}/yr`;}
@@ -944,7 +944,7 @@ function promoteCandidate(id){
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Promote to Employee</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
     <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Promoting <strong>${c.name}</strong> to employee. They will appear in the Directory and be marked Hired in Hiring.</p>
     <div class="form-row"><div class="form-group"><label class="form-label">Department</label><select class="form-input form-select" id="pdept"><option>Engineering</option><option>Design</option><option>Product</option><option>Data</option><option>Operations</option></select></div><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="pstart" value="${new Date(Date.now()+7*86400000).toISOString().split('T')[0]}"/></div></div>
-    <div class="form-group"><label class="form-label">Work Location</label><input class="form-input" id="ploc" value="${c.city||'Remote'}"/></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Client (if applicable)</label><input class="form-input" id="pclient" value="${c.client||''}"/></div><div class="form-group"><label class="form-label">Work Location</label><input class="form-input" id="ploc" value="${c.city||'Remote'}"/></div></div>
     <div class="form-group"><label class="form-label">Work Email</label><input class="form-input" id="pemail" value="${autoEmail}" placeholder="${autoEmail}"/></div>
   </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="doPromote('${id}')">Confirm & Promote</button></div></div>`);
 }
@@ -952,9 +952,11 @@ function promoteCandidate(id){
 async function doPromote(id){
   const c=DB.candidates.find(x=>x.id===id);
   c.candStatus='Hired';c.stage='hired';touch(c);
-  const mgr=null;
+  const client=document.getElementById('pclient').value;
   const email=document.getElementById('pemail').value.trim()||c.name.split(' ')[0].toLowerCase()+'@vtwo.co';
-  const ne={id:uid(),name:c.name,role:c.role,dept:document.getElementById('pdept').value,status:'onboarding',location:document.getElementById('ploc').value,city:c.city||'',state:c.state||'',country:c.country||'US',manager:mgr?mgr.name:'TBD',startDate:document.getElementById('pstart').value,email,phone:'—'};
+  const startDate=document.getElementById('pstart').value;
+  const status=(()=>{if(!startDate)return 'onboarding';return new Date(startDate)>new Date()?'onboarding':'active';})();
+  const ne={id:uid(),name:c.name,role:c.role,dept:document.getElementById('pdept').value,status,client:client||'',location:document.getElementById('ploc').value,city:c.city||'',state:c.state||'',country:c.country||'US',manager:'TBD',startDate,email,phone:'—'};
   DB.employees.push(ne);
   DB.activities.unshift({id:uid(),type:'hire',desc:`${c.name} promoted to employee`,at:now()});
   await save('candidates');await save('employees');await save('activities');
@@ -965,7 +967,7 @@ async function doPromote(id){
   const onboardingTracks = DB.tracks.filter(t=>t.type==='company'||t.type==='role');
   if(onboardingTracks.length>0){
     showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Start Onboarding for ${ne.name}?</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
-      <p style="font-size:13px;color:var(--text2);margin-bottom:16px">${ne.name} has been added to the Directory with status <strong>onboarding</strong>. Would you like to start an onboarding run now?</p>
+      <p style="font-size:13px;color:var(--text2);margin-bottom:16px">${ne.name} has been added to the Directory with status <strong>${ne.status}</strong>. Would you like to start an onboarding run now?</p>
       <div class="form-group"><label class="form-label">Track Template</label><select class="form-input form-select" id="quick-track">${onboardingTracks.map(t=>`<option value="${t.id}">${t.name}</option>`).join('')}</select></div>
       <div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="quick-start" value="${ne.startDate}"/></div>
     </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal();showToast('${ne.name} in Directory — toggle Show Hired & Closed in Hiring to see them')">Skip for now</button><button class="btn btn-primary" onclick="quickStartOnboarding('${ne.id}')">Start Onboarding</button></div></div>`);
@@ -1003,7 +1005,7 @@ function renderDirectory(){
       </div>
       <div style="display:flex;align-items:center;gap:8px;padding-bottom:12px">
         <div class="filter-search"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input placeholder="Search name, role, city..." oninput="filterEmps(this.value)" id="emp-search"/></div>
-        <select class="filter-select" onchange="filterEmpStatus(this.value)"><option value="">All statuses</option><option>active</option><option>onboarding</option><option>offboarding</option></select>
+        <select class="filter-select" onchange="filterEmpStatus(this.value)"><option value="">All statuses</option><option>active</option><option>onboarding</option><option>offboarding</option><option>inactive</option></select>
         <select class="filter-select" onchange="filterEmpDept(this.value)" id="dept-filter"><option value="">All departments</option>${[...new Set(DB.employees.map(e=>e.dept))].filter(Boolean).map(d=>`<option>${d}</option>`).join('')}</select>
       </div>
     </div>
@@ -1066,10 +1068,48 @@ function selectEmp(id){
     <div class="detail-section"><div class="detail-section-title">Devices (${empDevs.length})</div>
       ${empDevs.length?empDevs.map(dv=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)"><span>${dv.name}</span><span class="pill pill-gray" style="font-size:10px;font-family:var(--mono)">${dv.serial}</span></div>`).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">No devices assigned</div>'}
     </div>
+    <div class="detail-section">
+      <div class="detail-section-title">Actions</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${e.status!=='offboarding'?`<button class="btn btn-secondary btn-sm" onclick="startOffboardingFromDirectory('${e.id}')">Start Offboarding Track</button>`:''}
+        ${e.status==='offboarding'?`<span style="font-size:12px;color:var(--amber)">⚠ Offboarding in progress</span>`:''}
+      </div>
+    </div>
   </div>`;
 }
 
 function closeEmpDetail(){selectedEmpId=null;const d=document.getElementById('emp-detail');if(d)d.classList.remove('open');}
+
+function startOffboardingFromDirectory(empId){
+  const e=DB.employees.find(x=>x.id===empId);
+  const offTracks=DB.tracks.filter(t=>t.type==='role'||t.type==='company');
+  showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Start Offboarding — ${e.name}</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">This will set ${e.name}'s status to <strong>offboarding</strong> and start a checklist track.</p>
+    <div class="form-group"><label class="form-label">Offboarding Track</label><select class="form-input form-select" id="off-track">${offTracks.length?offTracks.map(t=>`<option value="${t.id}">${t.name}</option>`).join(''):'<option value="">No tracks available — create one in Tracks</option>'}</select></div>
+    <div class="form-group"><label class="form-label">Last Day</label><input type="date" class="form-input" id="off-date" value="${new Date(Date.now()+14*86400000).toISOString().split('T')[0]}"/></div>
+  </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-danger" onclick="confirmOffboard('${empId}')">Start Offboarding</button></div></div>`);
+}
+
+async function confirmOffboard(empId){
+  const e=DB.employees.find(x=>x.id===empId);
+  const trackId=document.getElementById('off-track').value;
+  const lastDay=document.getElementById('off-date').value;
+  if(!trackId){showToast('No track selected');return;}
+  // Update employee status
+  e.status='offboarding';
+  // Start offboarding run
+  const runId=uid();
+  DB.onboardingRuns.push({id:runId,employeeId:empId,trackId,type:'offboarding',status:'active',startDate:lastDay});
+  const newTasks=getTrackTasks(trackId).map(tt=>{
+    const due=new Date(lastDay);due.setDate(due.getDate()+parseInt(tt.dueDaysOffset||0));
+    return{id:uid(),runId,name:tt.name,ownerRole:tt.ownerRole,status:'pending',dueDate:due.toISOString().split('T')[0]};
+  });
+  DB.runTasks.push(...newTasks);
+  DB.activities.unshift({id:uid(),type:'offboard',desc:`${e.name} offboarding started`,at:now()});
+  await save('employees');await save('onboardingRuns');await save('runTasks');await save('activities');
+  closeModal();showToast(`${e.name} → offboarding`);
+  selectEmp(empId);refreshEmpTable();
+}
 
 function showAddEmpModal(){
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Add Employee</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
@@ -1095,7 +1135,7 @@ function showEditEmpModal(id){
   const e=DB.employees.find(x=>x.id===id);
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Edit — ${e.name}</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
     <div class="form-row"><div class="form-group"><label class="form-label">Role</label><input class="form-input" id="eer" value="${e.role}"/></div><div class="form-group"><label class="form-label">Department</label><select class="form-input form-select" id="eedept"><option${e.dept==='Engineering'?' selected':''}>Engineering</option><option${e.dept==='Design'?' selected':''}>Design</option><option${e.dept==='Product'?' selected':''}>Product</option><option${e.dept==='Data'?' selected':''}>Data</option><option${e.dept==='Operations'?' selected':''}>Operations</option></select></div></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Status</label><select class="form-input form-select" id="eestat"><option${e.status==='active'?' selected':''}>active</option><option${e.status==='onboarding'?' selected':''}>onboarding</option><option${e.status==='offboarding'?' selected':''}>offboarding</option></select></div><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="eestart" value="${e.startDate||''}"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Status</label><select class="form-input form-select" id="eestat"><option${e.status==='active'?' selected':''}>active</option><option${e.status==='onboarding'?' selected':''}>onboarding</option><option${e.status==='offboarding'?' selected':''}>offboarding</option><option${e.status==='inactive'?' selected':''}>inactive</option></select></div><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="eestart" value="${e.startDate||''}"/></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Manager</label><input class="form-input" id="eemgr" value="${e.manager||''}"/></div><div class="form-group"><label class="form-label">Email</label><input class="form-input" id="eeemail" value="${e.email||''}"/></div></div>
     <div class="form-row-3"><div class="form-group"><label class="form-label">City</label><input class="form-input" id="eecity" value="${e.city||''}"/></div><div class="form-group"><label class="form-label">State</label><input class="form-input" id="eestate" value="${e.state||''}"/></div><div class="form-group"><label class="form-label">Country</label><input class="form-input" id="eecountry" value="${e.country||'US'}"/></div></div>
   </div><div class="modal-footer"><button class="btn btn-danger btn-sm" style="margin-right:auto" onclick="deleteEmp('${e.id}')">Delete</button><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEditEmp('${e.id}')">Save</button></div></div>`);
@@ -1176,8 +1216,38 @@ function openRunDetail(id){
 async function toggleRunTask(runId,taskId){
   const t=DB.runTasks.find(x=>x.id===taskId);if(!t)return;
   t.status=t.status==='completed'?'pending':'completed';
-  await save('runTasks');showToast(t.status==='completed'?'Complete ✓':'Reopened');openRunDetail(runId);
-  if(currentPage==='onboarding')renderOnboarding();
+  await save('runTasks');
+  // Check if all tasks in this run are now complete
+  const allTasks=getRunTasks(runId);
+  const allDone=allTasks.length>0&&allTasks.every(t=>t.status==='completed');
+  if(allDone){
+    const run=DB.onboardingRuns.find(r=>r.id===runId);
+    const emp=DB.employees.find(e=>e.id===run?.employeeId);
+    if(emp){
+      const newStatus=run.type==='offboarding'?'inactive':'active';
+      const label=run.type==='offboarding'?'mark them as inactive':'mark them as active';
+      showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Track Complete!</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
+        <p style="font-size:13px;color:var(--text2);margin-bottom:16px">All tasks for <strong>${emp.name}</strong> are done. Would you like to ${label} in the Directory?</p>
+      </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Keep current status</button><button class="btn btn-primary" onclick="completeTrackStatus('${emp.id}','${newStatus}','${runId}')">Update to ${newStatus}</button></div></div>`);
+    } else {
+      openRunDetail(runId);
+    }
+  } else {
+    showToast(t.status==='completed'?'Complete ✓':'Reopened');
+    openRunDetail(runId);
+  }
+  if(currentPage==='onboarding'||currentPage==='offboarding')nav(currentPage);
+}
+
+async function completeTrackStatus(empId,newStatus,runId){
+  const e=DB.employees.find(x=>x.id===empId);
+  const run=DB.onboardingRuns.find(r=>r.id===runId);
+  e.status=newStatus;
+  if(run)run.status='completed';
+  await save('employees');await save('onboardingRuns');
+  closeModal();showToast(`${e.name} → ${newStatus}`);
+  if(currentPage==='onboarding'||currentPage==='offboarding')nav(currentPage);
+  else refreshEmpTable();
 }
 
 // ── OFFBOARDING ───────────────────────────────────────────────────────────────
