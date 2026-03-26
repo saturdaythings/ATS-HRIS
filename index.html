@@ -1393,7 +1393,7 @@ function renderOnboarding(){
       ${emp.tracks.map(track=>`
         <div class="card" style="margin-left:52px;margin-bottom:12px">
           <div style="font-weight:600;font-size:13px;margin-bottom:10px;color:var(--text)">${track.trackName} — ${track.pct}% complete</div>
-          ${track.nextSteps.length>0?`<div style="font-size:11px;color:var(--text2);font-weight:500;margin-bottom:8px">Next steps:</div><div>${track.nextSteps.map(step=>`<div style="font-size:12px;color:var(--text);padding:6px 0;border-bottom:1px solid var(--border)">${step}</div>`).join('')}</div>`:' <div style="font-size:12px;color:var(--green);font-weight:500">✓ All tasks complete</div>'}
+          ${track.nextSteps.length>0?`<div style="font-size:11px;color:var(--text2);font-weight:500;margin-bottom:8px">Next steps:</div><div>${track.nextSteps.map(step=>`<div style="font-size:12px;color:var(--text);padding:6px 0;border-bottom:1px solid var(--border)">${step}</div>`).join('')}</div>`:` <div style="font-size:12px;color:var(--green);font-weight:500">✓ All tasks complete</div>'}
         </div>
       `).join('')}
     </div>
