@@ -488,6 +488,22 @@ const DEFAULT_LISTS=[
   {id:'ls24',listKey:'specialty',value:'Quality Assurance',order:'5'},
   {id:'ls25',listKey:'specialty',value:'Operations',order:'6'},
   {id:'ls26',listKey:'specialty',value:'Other',order:'7'},
+  {id:'ls27',listKey:'dept',value:'Engineering',order:'1'},
+  {id:'ls28',listKey:'dept',value:'Product',order:'2'},
+  {id:'ls29',listKey:'dept',value:'Design',order:'3'},
+  {id:'ls30',listKey:'dept',value:'Operations',order:'4'},
+  {id:'ls31',listKey:'dept',value:'Finance',order:'5'},
+  {id:'ls32',listKey:'dept',value:'HR',order:'6'},
+  {id:'ls33',listKey:'deviceType',value:'laptop',order:'1'},
+  {id:'ls34',listKey:'deviceType',value:'monitor',order:'2'},
+  {id:'ls35',listKey:'deviceType',value:'phone',order:'3'},
+  {id:'ls36',listKey:'deviceType',value:'keyboard',order:'4'},
+  {id:'ls37',listKey:'deviceType',value:'mouse',order:'5'},
+  {id:'ls38',listKey:'ownerRole',value:'HR',order:'1'},
+  {id:'ls39',listKey:'ownerRole',value:'IT',order:'2'},
+  {id:'ls40',listKey:'ownerRole',value:'Manager',order:'3'},
+  {id:'ls41',listKey:'ownerRole',value:'Finance',order:'4'},
+  {id:'ls42',listKey:'ownerRole',value:'Employee',order:'5'},
 ];
 
 // SEED only provides default list values (dropdown options). All other tables start empty.
@@ -651,7 +667,7 @@ function dashUpcomingIvRow(iv){
   return'<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="selectedCandId=\''+iv.candId+'\';nav(\'hiring\')">'
     +'<div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;background:#E6F1FB;color:#0C447C">'+iv.initials+'</div>'
     +'<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+iv.candName+'</div>'
-    +'<div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">with '+iv.interviewer+' · '+iv.role+'</div></div>'
+    +'<div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">with '+(iv.interviewer||'TBD')+' · '+iv.role+'</div></div>'
     +'<div style="text-align:right;flex-shrink:0"><div style="font-size:11px;font-weight:500;color:var(--text)">'+dateStr+'</div>'
     +'<div style="font-size:10px;color:var(--text3);margin-top:2px">Interview #'+iv.num+'</div></div>'
     +'</div>';
@@ -664,7 +680,7 @@ function dashRecentIvRow(iv){
   return'<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="selectedCandId=\''+iv.candId+'\';nav(\'hiring\')">'
     +'<div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;background:#E6F1FB;color:#0C447C">'+iv.initials+'</div>'
     +'<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+iv.candName+'</div>'
-    +'<div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">with '+iv.interviewer+' · '+iv.role+'</div></div>'
+    +'<div style="font-size:11px;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">with '+(iv.interviewer||'TBD')+' · '+iv.role+'</div></div>'
     +'<div style="text-align:right;flex-shrink:0"><div style="font-size:11px;font-weight:500;color:var(--text)">'+dateStr+'</div>'
     +'<div style="font-size:10px;margin-top:2px">Interview #'+iv.num+' · <span style="color:'+outcomeColor+'">'+outcome+'</span></div></div>'
     +'</div>';
@@ -1135,7 +1151,7 @@ function promoteCandidate(id){
   const empOptions=DB.employees.map(e=>`<option value="${e.id}">${e.name} — ${e.role}</option>`).join('');
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Promote to Employee</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
     <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Promoting <strong>${c.name}</strong> to employee. They will appear in the Directory and be marked Hired in Hiring.</p>
-    <div class="form-row"><div class="form-group"><label class="form-label">Department</label><select class="form-input form-select" id="pdept"><option>Engineering</option><option>Design</option><option>Product</option><option>Data</option><option>Operations</option></select></div><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="pstart" value="${new Date(Date.now()+7*86400000).toISOString().split('T')[0]}"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Department</label><select class="form-input form-select" id="pdept">${getList('dept').map(d=>'<option>'+d+'</option>').join('')}</select></div><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="pstart" value="${new Date(Date.now()+7*86400000).toISOString().split('T')[0]}"/></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Manager</label><select class="form-input form-select" id="pmgr">${empOptions?'<option value="">Select manager...</option>'+empOptions:'<option value="">No other employees yet</option>'}</select></div><div class="form-group"><label class="form-label">Buddy</label><select class="form-input form-select" id="pbuddy">${empOptions?'<option value="">Select buddy...</option>'+empOptions:'<option value="">No other employees yet</option>'}</select></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Client (if applicable)</label><input class="form-input" id="pclient" value="${c.client||''}"/></div><div class="form-group"><label class="form-label">Work Location</label><input class="form-input" id="ploc" value="${c.city||'Remote'}"/></div></div>
     <div class="form-group"><label class="form-label">Work Email</label><input class="form-input" id="pemail" value="${autoEmail}" placeholder="${autoEmail}"/></div>
@@ -1283,7 +1299,7 @@ function closeEmpDetail(){selectedEmpId=null;const d=document.getElementById('em
 
 function startOffboardingFromDirectory(empId){
   const e=DB.employees.find(x=>x.id===empId);
-  const offTracks=DB.tracks.filter(t=>t.type==='role'||t.type==='company');
+  const offTracks=DB.tracks.filter(t=>t.type==='offboarding'||t.type==='role'||t.type==='company');
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Start Offboarding — ${e.name}</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
     <p style="font-size:13px;color:var(--text2);margin-bottom:16px">This will set ${e.name}'s status to <strong>offboarding</strong> and start a checklist track.</p>
     <div class="form-group"><label class="form-label">Offboarding Track</label><select class="form-input form-select" id="off-track">${offTracks.length?offTracks.map(t=>`<option value="${t.id}">${t.name}</option>`).join(''):'<option value="">No tracks available — create one in Tracks</option>'}</select></div>
@@ -1296,8 +1312,9 @@ async function confirmOffboard(empId){
   const trackId=document.getElementById('off-track').value;
   const lastDay=document.getElementById('off-date').value;
   if(!trackId){showToast('No track selected');return;}
-  // Update employee status
+  // Update employee status and last day
   e.status='offboarding';
+  e.endDate=lastDay;
   // Start offboarding run
   const runId=uid();
   DB.onboardingRuns.push({id:runId,employeeId:empId,trackId,type:'offboarding',status:'active',startDate:lastDay});
@@ -1315,7 +1332,7 @@ async function confirmOffboard(empId){
 function showAddEmpModal(){
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Add Employee</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
     <div class="form-row"><div class="form-group"><label class="form-label">First Name</label><input class="form-input" id="efn"/></div><div class="form-group"><label class="form-label">Last Name</label><input class="form-input" id="eln"/></div></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Role</label><input class="form-input" id="erole"/></div><div class="form-group"><label class="form-label">Department</label><select class="form-input form-select" id="edept"><option>Engineering</option><option>Design</option><option>Product</option><option>Data</option><option>Operations</option></select></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Role</label><input class="form-input" id="erole"/></div><div class="form-group"><label class="form-label">Department</label><select class="form-input form-select" id="edept">${getList('dept').map(d=>'<option>'+d+'</option>').join('')}</select></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="estart"/></div><div class="form-group"><label class="form-label">Manager</label><select class="form-input form-select" id="emgr"><option value="">(none)</option>${DB.employees.map(e=>`<option value="${e.name}">${e.name}</option>`).join('')}</select></div></div>
     <div class="form-row-3"><div class="form-group"><label class="form-label">City</label><input class="form-input" id="ecity2"/></div><div class="form-group"><label class="form-label">State</label><input class="form-input" id="estate2"/></div><div class="form-group"><label class="form-label">Country</label><input class="form-input" id="ecountry2" value="US"/></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Email</label><input class="form-input" id="eemail"/></div><div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="ephone"/></div></div>
@@ -1343,7 +1360,7 @@ function showDeleteEmpConfirm(id){
 function showEditEmpModal(id){
   const e=DB.employees.find(x=>x.id===id);
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Edit — ${e.name}</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
-    <div class="form-row"><div class="form-group"><label class="form-label">Role</label><input class="form-input" id="eer" value="${e.role}"/></div><div class="form-group"><label class="form-label">Department</label><select class="form-input form-select" id="eedept"><option${e.dept==='Engineering'?' selected':''}>Engineering</option><option${e.dept==='Design'?' selected':''}>Design</option><option${e.dept==='Product'?' selected':''}>Product</option><option${e.dept==='Data'?' selected':''}>Data</option><option${e.dept==='Operations'?' selected':''}>Operations</option></select></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Role</label><input class="form-input" id="eer" value="${e.role}"/></div><div class="form-group"><label class="form-label">Department</label><select class="form-input form-select" id="eedept">${getList('dept').map(d=>'<option'+(e.dept===d?' selected':'')+'>'+d+'</option>').join('')}</select></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Status</label><select class="form-input form-select" id="eestat"><option${e.status==='active'?' selected':''}>active</option><option${e.status==='onboarding'?' selected':''}>onboarding</option><option${e.status==='offboarding'?' selected':''}>offboarding</option><option${e.status==='inactive'?' selected':''}>inactive</option></select></div><div class="form-group"><label class="form-label">Start Date</label><input type="date" class="form-input" id="eestart" value="${e.startDate||''}"/></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Manager</label><input class="form-input" id="eemgr" value="${e.manager||''}"/></div><div class="form-group"><label class="form-label">Buddy</label><input class="form-input" id="eebuddy" value="${e.buddy||''}"/></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Email</label><input class="form-input" id="eeemail" value="${e.email||''}"/></div><div class="form-group"><label class="form-label">Phone</label><input class="form-input" id="eephone" value="${e.phone||''}"/></div></div>
@@ -1547,13 +1564,13 @@ function renderInventory(){
   <div class="device-grid" id="device-grid">${devCards(DB.devices)}</div>`;
 }
 
-const typeEmoji={laptop:'💻',monitor:'🖥️',phone:'📱',keyboard:'⌨️',mouse:'🖱️'};
-function devCards(list){return list.map(d=>`<div class="device-card" onclick="showDevDetail('${d.id}')"><div style="font-size:24px;margin-bottom:10px">${typeEmoji[d.type]||'📦'}</div><div style="font-weight:600;font-size:14px;margin-bottom:2px">${d.name}</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:8px">${d.serial}</div><div style="display:flex;align-items:center;justify-content:space-between">${statusPill(d.status)}${d.assignedTo?`<span style="font-size:12px;color:var(--text2)">${getEmp(d.assignedTo).name.split(' ')[0]}</span>`:''}</div></div>`).join('');}
+const typeLabel={laptop:'Laptop',monitor:'Monitor',phone:'Phone',keyboard:'Keyboard',mouse:'Mouse'};
+function devCards(list){return list.map(d=>`<div class="device-card" onclick="showDevDetail('${d.id}')"><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:8px">${typeLabel[d.type]||d.type||'Device'}</div><div style="font-weight:600;font-size:14px;margin-bottom:2px">${d.name}</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:8px">${d.serial}</div><div style="display:flex;align-items:center;justify-content:space-between">${statusPill(d.status)}${d.assignedTo?`<span style="font-size:12px;color:var(--text2)">${getEmp(d.assignedTo).name.split(' ')[0]}</span>`:''}</div></div>`).join('');}
 function filterDevs(s){const list=s?DB.devices.filter(d=>d.status===s):DB.devices;const g=document.getElementById('device-grid');if(g)g.innerHTML=devCards(list);}
 
 function showDevDetail(id){
   const d=DB.devices.find(x=>x.id===id);const a=d.assignedTo?getEmp(d.assignedTo):null;
-  showModal(`<div class="modal"><div class="modal-header"><div style="display:flex;align-items:center;gap:10px"><span style="font-size:24px">${typeEmoji[d.type]||'📦'}</span><div><div class="modal-title">${d.name}</div><div style="font-size:12px;color:var(--text2);font-family:var(--mono)">${d.serial}</div></div></div><button class="detail-close" onclick="closeModal()">×</button></div>
+  showModal(`<div class="modal"><div class="modal-header"><div style="display:flex;align-items:center;gap:10px"><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:4px 8px;background:var(--surface2);border-radius:var(--radius)">${typeLabel[d.type]||d.type||'Device'}</div><div><div class="modal-title">${d.name}</div><div style="font-size:12px;color:var(--text2);font-family:var(--mono)">${d.serial}</div></div></div><button class="detail-close" onclick="closeModal()">×</button></div>
   <div class="modal-body">
     <div class="detail-row"><span class="detail-key">Make / Model</span><span class="detail-val">${d.make} ${d.model}</span></div>
     <div class="detail-row"><span class="detail-key">Status</span>${statusPill(d.status)}</div>
@@ -1587,7 +1604,17 @@ async function assignDev(devId){
   closeModal();showToast(`${d.name} → ${e.name}`);renderInventory();
 }
 
-async function returnDevice(devId){
+function returnDevice(devId){
+  const d=DB.devices.find(x=>x.id===devId);
+  const a=DB.assignments.find(a=>a.deviceId===devId&&a.status==='active');
+  const empName=a?DB.employees.find(e=>e.id===a.employeeId)?.name||'employee':'employee';
+  showModal('<div class="modal"><div class="modal-header"><div class="modal-title">Return Device</div><button class="detail-close" onclick="closeModal()">×</button></div>'
+    +'<div class="modal-body"><p style="margin:0 0 8px">Return <strong>'+d.name+'</strong> from <strong>'+empName+'</strong>?</p>'
+    +'<p style="margin:0;color:var(--text3);font-size:13px">Device will be marked available and assignment closed.</p></div>'
+    +'<div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>'
+    +'<button class="btn btn-primary" onclick="doReturnDevice(\''+devId+'\')">Return Device</button></div></div>');
+}
+async function doReturnDevice(devId){
   const d=DB.devices.find(x=>x.id===devId);d.status='available';d.assignedTo='';
   const i=DB.assignments.findIndex(a=>a.deviceId===devId&&a.status==='active');if(i>=0)DB.assignments[i].status='returned';
   await save('devices');await save('assignments');closeModal();showToast('Device returned');renderInventory();
@@ -1600,9 +1627,10 @@ function showAddDeviceModal(){
       <textarea class="form-input" id="d-paste" rows="3" placeholder="Paste product description, e.g.:\n14-inch MacBook Pro - Apple M5 chip - 16GB Memory - 512GB SSD - Space Black\nSerial: SDFJY2FDJMT\nModel:MDE04LL/A SKU:6565871" onpaste="setTimeout(function(){parseDeviceDescription(document.getElementById('d-paste').value);},0)" oninput="parseDeviceDescription(this.value)"></textarea>
     </div>
     <div class="form-row"><div class="form-group"><label class="form-label">Make</label><input class="form-input" id="dmk" placeholder="Apple"/></div><div class="form-group"><label class="form-label">Model</label><input class="form-input" id="dml" placeholder='MacBook Pro 14"'/></div></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="dtp"><option value="laptop">Laptop</option><option value="monitor">Monitor</option><option value="phone">Phone</option><option value="keyboard">Keyboard</option><option value="mouse">Mouse</option></select></div><div class="form-group"><label class="form-label">Serial #</label><input class="form-input" id="dsr" placeholder="ABC123"/></div></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Condition</label><select class="form-input form-select" id="dcond"><option>new</option><option>good</option><option>fair</option><option>poor</option></select></div><div class="form-group"><label class="form-label">Purchase Date</label><input type="date" class="form-input" id="dpurch" value="${today()}"/></div></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Purchase Store</label><input class="form-input" id="dstore" placeholder="Apple Store, Amazon..."/></div><div class="form-group"><label class="form-label">Order Number</label><input class="form-input" id="dorder" placeholder="Order #"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Model Number</label><input class="form-input" id="dmnum" placeholder="MDE04LL/A"/></div><div class="form-group"><label class="form-label">Serial #</label><input class="form-input" id="dsr" placeholder="ABC123"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="dtp"><option value="laptop">Laptop</option><option value="monitor">Monitor</option><option value="phone">Phone</option><option value="keyboard">Keyboard</option><option value="mouse">Mouse</option></select></div><div class="form-group"><label class="form-label">Condition</label><select class="form-input form-select" id="dcond"><option>new</option><option>good</option><option>fair</option><option>poor</option></select></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Purchase Date</label><input type="date" class="form-input" id="dpurch" value="${today()}"/></div><div class="form-group"><label class="form-label">Purchase Store</label><input class="form-input" id="dstore" placeholder="Apple Store, Amazon..."/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Order Number</label><input class="form-input" id="dorder" placeholder="Order #"/></div></div>
     <div class="form-group"><label class="form-label">Specs / Description</label><textarea class="form-input" id="dspecs" rows="2" placeholder="Full product description or specs"></textarea></div>
   </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addDevice()">Add Device</button></div></div>`);
 }
@@ -1610,7 +1638,7 @@ function showAddDeviceModal(){
 async function addDevice(){
   const mk=document.getElementById('dmk').value.trim(),ml=document.getElementById('dml').value.trim();
   if(!mk||!ml){showToast('Make and model required');return;}
-  const nd={id:uid(),name:`${mk} ${ml}`,type:document.getElementById('dtp').value,make:mk,model:ml,serial:document.getElementById('dsr').value||'N/A',status:'available',assignedTo:'',condition:document.getElementById('dcond').value,purchaseDate:document.getElementById('dpurch').value,purchaseStore:document.getElementById('dstore').value,orderNumber:document.getElementById('dorder').value,specs:document.getElementById('dspecs').value};
+  const nd={id:uid(),name:`${mk} ${ml}`,type:document.getElementById('dtp').value,make:mk,model:ml,modelNumber:document.getElementById('dmnum').value,serial:document.getElementById('dsr').value||'N/A',status:'available',assignedTo:'',condition:document.getElementById('dcond').value,purchaseDate:document.getElementById('dpurch').value,purchaseStore:document.getElementById('dstore').value,orderNumber:document.getElementById('dorder').value,specs:document.getElementById('dspecs').value};
   DB.devices.push(nd);await save('devices');closeModal();showToast(`${nd.name} added`);renderInventory();
 }
 
@@ -1618,9 +1646,10 @@ function showEditDeviceModal(id){
   const d=DB.devices.find(x=>x.id===id);
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Edit Device</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
     <div class="form-row"><div class="form-group"><label class="form-label">Make</label><input class="form-input" id="edv-mk" value="${d.make||''}"/></div><div class="form-group"><label class="form-label">Model</label><input class="form-input" id="edv-ml" value="${d.model||''}"/></div></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="edv-tp"><option value="laptop"${d.type==='laptop'?' selected':''}>Laptop</option><option value="monitor"${d.type==='monitor'?' selected':''}>Monitor</option><option value="phone"${d.type==='phone'?' selected':''}>Phone</option><option value="keyboard"${d.type==='keyboard'?' selected':''}>Keyboard</option><option value="mouse"${d.type==='mouse'?' selected':''}>Mouse</option></select></div><div class="form-group"><label class="form-label">Serial #</label><input class="form-input" id="edv-sr" value="${d.serial||''}"/></div></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Condition</label><select class="form-input form-select" id="edv-cond"><option${d.condition==='new'?' selected':''}>new</option><option${d.condition==='good'?' selected':''}>good</option><option${d.condition==='fair'?' selected':''}>fair</option><option${d.condition==='poor'?' selected':''}>poor</option></select></div><div class="form-group"><label class="form-label">Purchase Date</label><input type="date" class="form-input" id="edv-purch" value="${d.purchaseDate||''}"/></div></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Purchase Store</label><input class="form-input" id="edv-store" value="${d.purchaseStore||''}"/></div><div class="form-group"><label class="form-label">Order Number</label><input class="form-input" id="edv-order" value="${d.orderNumber||''}"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Model Number</label><input class="form-input" id="edv-mnum" value="${d.modelNumber||''}"/></div><div class="form-group"><label class="form-label">Serial #</label><input class="form-input" id="edv-sr" value="${d.serial||''}"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="edv-tp"><option value="laptop"${d.type==='laptop'?' selected':''}>Laptop</option><option value="monitor"${d.type==='monitor'?' selected':''}>Monitor</option><option value="phone"${d.type==='phone'?' selected':''}>Phone</option><option value="keyboard"${d.type==='keyboard'?' selected':''}>Keyboard</option><option value="mouse"${d.type==='mouse'?' selected':''}>Mouse</option></select></div><div class="form-group"><label class="form-label">Condition</label><select class="form-input form-select" id="edv-cond"><option${d.condition==='new'?' selected':''}>new</option><option${d.condition==='good'?' selected':''}>good</option><option${d.condition==='fair'?' selected':''}>fair</option><option${d.condition==='poor'?' selected':''}>poor</option></select></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Purchase Date</label><input type="date" class="form-input" id="edv-purch" value="${d.purchaseDate||''}"/></div><div class="form-group"><label class="form-label">Purchase Store</label><input class="form-input" id="edv-store" value="${d.purchaseStore||''}"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Order Number</label><input class="form-input" id="edv-order" value="${d.orderNumber||''}"/></div></div>
     <div class="form-group"><label class="form-label">Specs / Description</label><textarea class="form-input" id="edv-specs" rows="2">${d.specs||''}</textarea></div>
   </div><div class="modal-footer"><button class="btn btn-danger btn-sm" style="margin-right:auto" onclick="deleteDevice('${d.id}')">Delete</button><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEditDevice('${d.id}')">Save</button></div></div>`);
 }
@@ -1630,6 +1659,7 @@ async function saveEditDevice(id){
   d.make=document.getElementById('edv-mk').value;
   d.model=document.getElementById('edv-ml').value;
   d.name=`${d.make} ${d.model}`;
+  d.modelNumber=document.getElementById('edv-mnum').value;
   d.type=document.getElementById('edv-tp').value;
   d.serial=document.getElementById('edv-sr').value;
   d.condition=document.getElementById('edv-cond').value;
@@ -1641,10 +1671,16 @@ async function saveEditDevice(id){
   closeModal();showToast('Device updated');renderInventory();
 }
 
-async function deleteDevice(id){
-  if(!confirm('Delete this device?'))return;
+function deleteDevice(id){
   const d=DB.devices.find(x=>x.id===id);
   if(d.status==='assigned'){showToast('Return device before deleting');return;}
+  showModal('<div class="modal"><div class="modal-header"><div class="modal-title">Delete Device</div><button class="detail-close" onclick="closeModal()">×</button></div>'
+    +'<div class="modal-body"><p style="margin:0 0 8px">Delete <strong>'+d.name+'</strong>?</p>'
+    +'<p style="margin:0;color:var(--text3);font-size:13px">This cannot be undone.</p></div>'
+    +'<div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>'
+    +'<button class="btn btn-danger" onclick="doDeleteDevice(\''+id+'\')">Delete Device</button></div></div>');
+}
+async function doDeleteDevice(id){
   DB.devices=DB.devices.filter(x=>x.id!==id);
   await save('devices');
   closeModal();showToast('Device deleted');renderInventory();
@@ -1725,8 +1761,8 @@ function parseDeviceDescription(text){
 function renderAssignments(){
   const active=DB.assignments.filter(a=>a.status==='active');
   document.getElementById('page').innerHTML=`<div class="page-header"><div><div class="page-title">Assignments</div><div class="page-subtitle">${active.length} active</div></div></div>
-  <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Device</th><th>Serial</th><th>Assigned</th><th>Status</th></tr></thead>
-  <tbody>${active.map(a=>{const e=getEmp(a.employeeId),d=getDev(a.deviceId);return`<tr><td>${personCell(e.name)}</td><td>${d.name}</td><td style="font-family:var(--mono);font-size:12px">${d.serial||'—'}</td><td>${relTime(a.assignedAt)}</td><td>${statusPill(a.status)}</td></tr>`;}).join('')}</tbody></table></div>`;
+  <div class="table-wrap"><table><thead><tr><th>Employee</th><th>Device</th><th>Serial</th><th>Assigned</th><th>Status</th><th></th></tr></thead>
+  <tbody>${active.map(a=>{const e=getEmp(a.employeeId),d=getDev(a.deviceId);return'<tr><td>'+personCell(e.name)+'</td><td>'+d.name+'</td><td style="font-family:var(--mono);font-size:12px">'+(d.serial||'—')+'</td><td>'+relTime(a.assignedAt)+'</td><td>'+statusPill(a.status)+'</td><td><button class="btn btn-secondary btn-sm" onclick="returnDevice(\''+d.id+'\')">Return</button></td></tr>';}).join('')}</tbody></table></div>`;
 }
 
 // ── TRACKS ────────────────────────────────────────────────────────────────────
@@ -1774,7 +1810,7 @@ async function deleteTask(taskId,trackId){DB.tasks=DB.tasks.filter(x=>x.id!==tas
 function showAddTaskModal(trackId){
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Add Task</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
     <div class="form-group"><label class="form-label">Task Name</label><input class="form-input" id="tname" placeholder="e.g. Complete I-9 paperwork"/></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Owner Role</label><select class="form-input form-select" id="towner"><option>HR</option><option>IT</option><option>Manager</option><option>Finance</option><option>Employee</option></select></div><div class="form-group"><label class="form-label">Due (days from start date)</label><input type="number" class="form-input" id="tdays" value="1" placeholder="1"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Owner Role</label><select class="form-input form-select" id="towner">${getList('ownerRole').map(r=>'<option>'+r+'</option>').join('')}</select></div><div class="form-group"><label class="form-label">Due (days from start date)</label><input type="number" class="form-input" id="tdays" value="1" placeholder="1"/></div></div>
   </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addTask('${trackId}')">Add Task</button></div></div>`);
 }
 
@@ -1788,7 +1824,7 @@ function showEditTrackModal(id){
   const t=DB.tracks.find(x=>x.id===id);
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Edit Track</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
     <div class="form-group"><label class="form-label">Track Name</label><input class="form-input" id="etname" value="${t.name}"/></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="ettype"><option${t.type==='company'?' selected':''}>company</option><option${t.type==='role'?' selected':''}>role</option><option${t.type==='client'?' selected':''}>client</option></select></div><div class="form-group"><label class="form-label">Auto-apply</label><select class="form-input form-select" id="etauto"><option value="true"${t.autoApply==='true'||t.autoApply===true?' selected':''}>Yes</option><option value="false"${t.autoApply!=='true'&&t.autoApply!==true?' selected':''}>No</option></select></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="ettype"><option${t.type==='company'?' selected':''}>company</option><option${t.type==='role'?' selected':''}>role</option><option${t.type==='client'?' selected':''}>client</option><option${t.type==='offboarding'?' selected':''}>offboarding</option></select></div><div class="form-group"><label class="form-label">Auto-apply</label><select class="form-input form-select" id="etauto"><option value="true"${t.autoApply==='true'||t.autoApply===true?' selected':''}>Yes</option><option value="false"${t.autoApply!=='true'&&t.autoApply!==true?' selected':''}>No</option></select></div></div>
   </div><div class="modal-footer"><button class="btn btn-danger btn-sm" style="margin-right:auto" onclick="deleteTrack('${t.id}')">Delete Track</button><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveTrack('${t.id}')">Save</button></div></div>`);
 }
 
@@ -1798,7 +1834,7 @@ async function deleteTrack(id){if(!confirm('Delete this track and all its tasks?
 function showAddTrackModal(){
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">New Track</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
     <div class="form-group"><label class="form-label">Track Name</label><input class="form-input" id="ntname" placeholder="e.g. Design Onboarding"/></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="nttype"><option>company</option><option>role</option><option>client</option></select></div><div class="form-group"><label class="form-label">Auto-apply</label><select class="form-input form-select" id="ntauto"><option value="false">No</option><option value="true">Yes</option></select></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="nttype"><option>company</option><option>role</option><option>client</option><option>offboarding</option></select></div><div class="form-group"><label class="form-label">Auto-apply</label><select class="form-input form-select" id="ntauto"><option value="false">No</option><option value="true">Yes</option></select></div></div>
   </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addTrack()">Create</button></div></div>`);
 }
 
@@ -1847,7 +1883,7 @@ function settingsTab(el,tab){
   if(tab==='dropdowns')renderDropdownsTab();else renderDataTab();
 }
 
-const LIST_KEYS=[{key:'candStatus',label:'Candidate Status'},{key:'empType',label:'Employment Type'},{key:'source',label:'Source'},{key:'seniority',label:'Seniority'},{key:'specialty',label:'Specialty'}];
+const LIST_KEYS=[{key:'candStatus',label:'Candidate Status'},{key:'empType',label:'Employment Type'},{key:'source',label:'Source'},{key:'seniority',label:'Seniority'},{key:'specialty',label:'Specialty'},{key:'dept',label:'Department'},{key:'deviceType',label:'Device Type'},{key:'ownerRole',label:'Task Owner Role'}];
 
 function renderDropdownsTab(){
   const c=document.getElementById('settings-content');
