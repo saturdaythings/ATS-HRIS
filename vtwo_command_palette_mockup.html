@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>V.Two Ops — Command Palette Mockup</title>
+<style>
+  :root {
+    --text: #1a1a1a;
+    --text2: #555;
+    --text3: #999;
+    --border: #e5e5e5;
+    --surface: #fff;
+    --bg: #f7f7f5;
+    --accent: #4F46E5;
+    --accent-light: #EEF2FF;
+    --accent-text: #3730A3;
+    --radius: 8px;
+    --radius-lg: 12px;
+    --green: #1D9E75;
+    --red: #E24B4A;
+    --amber: #BA7517;
+    --mono: 'SF Mono', 'Fira Code', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; }
+
+  /* ── APP SHELL ── */
+  .shell { display: grid; grid-template-columns: 200px 1fr; height: 100vh; }
+  .sidebar { background: var(--surface); border-right: 1px solid var(--border); padding: 0; display: flex; flex-direction: column; }
+  .sidebar-logo { padding: 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 8px; }
+  .logo-mark { width: 28px; height: 28px; background: var(--text); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 11px; font-weight: 600; }
+  .logo-label { font-size: 13px; font-weight: 600; }
+  .sidebar-section { padding: 12px 8px; }
+  .sidebar-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; padding: 0 8px 6px; }
+  .nav-item { display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: var(--radius); font-size: 13px; color: var(--text2); cursor: pointer; }
+  .nav-item:hover { background: var(--bg); }
+  .nav-item.active { background: var(--accent-light); color: var(--accent-text); font-weight: 500; }
+
+  .main { position: relative; overflow: hidden; display: flex; flex-direction: column; }
+  .topbar { padding: 14px 24px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; background: var(--surface); }
+  .topbar-title { font-size: 15px; font-weight: 600; }
+
+  /* ── FAB ── */
+  .fab {
+    position: fixed; bottom: 24px; right: 24px;
+    width: 44px; height: 44px; border-radius: 50%;
+    background: var(--text); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; z-index: 100; border: none;
+    font-size: 22px; font-weight: 300; line-height: 1;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+    transition: transform 0.15s;
+  }
+  .fab:hover { transform: scale(1.08); }
+  .fab-hint { position: fixed; bottom: 28px; right: 76px; font-size: 11px; color: var(--text3); background: var(--surface); border: 1px solid var(--border); padding: 4px 8px; border-radius: 6px; }
+  .kbd { display: inline-flex; align-items: center; font-size: 10px; padding: 2px 5px; border: 1px solid var(--border); border-radius: 4px; color: var(--text3); background: var(--bg); font-family: var(--mono); gap: 2px; }
+
+  /* ── OVERLAY ── */
+  .overlay {
+    display: none; position: fixed; inset: 0;
+    background: rgba(0,0,0,0.22);
+    z-index: 200; align-items: flex-start; justify-content: center;
+    padding-top: 80px;
+  }
+  .overlay.open { display: flex; }
+
+  /* ── PALETTE ── */
+  .palette {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); width: 520px;
+    overflow: hidden; max-height: 70vh; display: flex; flex-direction: column;
+  }
+  .palette-search {
+    display: flex; align-items: center; gap: 10px;
+    padding: 13px 16px; border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .palette-search svg { flex-shrink: 0; color: var(--text3); }
+  .palette-input {
+    border: none; outline: none; background: transparent;
+    font-size: 14px; color: var(--text); flex: 1;
+    font-family: inherit;
+  }
+  .palette-input::placeholder { color: var(--text3); }
+  .palette-body { overflow-y: auto; }
+  .palette-group-label {
+    font-size: 10px; color: var(--text3); font-weight: 600;
+    letter-spacing: 0.07em; text-transform: uppercase;
+    padding: 10px 16px 4px;
+  }
+  .palette-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 9px 16px; cursor: pointer;
+    transition: background 0.08s;
+  }
+  .palette-item:hover, .palette-item.selected { background: var(--bg); }
+  .item-icon {
+    width: 30px; height: 30px; border-radius: 7px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .item-icon svg { width: 15px; height: 15px; }
+  .ic-blue { background: #E6F1FB; color: #185FA5; }
+  .ic-teal { background: #E1F5EE; color: #0F6E56; }
+  .ic-amber { background: #FAEEDA; color: #854F0B; }
+  .ic-green { background: #EAF3DE; color: #3B6D11; }
+  .ic-purple { background: #EEEDFE; color: #3C3489; }
+  .ic-red { background: #FCEBEB; color: #A32D2D; }
+  .ic-gray { background: #F1EFE8; color: #5F5E5A; }
+  .item-label { font-size: 13px; color: var(--text); flex: 1; }
+  .item-hint { font-size: 11px; color: var(--text3); }
+  .palette-divider { height: 1px; background: var(--border); margin: 4px 0; }
+
+  /* ── STEP PANEL ── */
+  .step-panel {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius-lg); width: 480px;
+    overflow: hidden;
+  }
+  .step-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 13px 16px; border-bottom: 1px solid var(--border);
+  }
+  .step-back {
+    width: 26px; height: 26px; border-radius: 6px;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0; background: transparent;
+    color: var(--text2);
+  }
+  .step-title { font-size: 13px; font-weight: 600; flex: 1; }
+  .step-progress { font-size: 11px; color: var(--text3); }
+  .step-body { padding: 16px; }
+  .form-label { font-size: 11px; color: var(--text2); margin-bottom: 5px; display: block; font-weight: 500; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+  .form-group { margin-bottom: 12px; }
+  .form-group:last-child { margin-bottom: 0; }
+  .form-input-mock {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 7px 10px; font-size: 13px; color: var(--text);
+    width: 100%; background: var(--surface);
+  }
+  .form-input-mock.placeholder { color: var(--text3); }
+  .form-select-mock {
+    border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 7px 10px; font-size: 13px; color: var(--text);
+    width: 100%; background: var(--surface);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%23999' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");
+    background-repeat: no-repeat; background-position: right 10px center;
+  }
+  .quick-btns { display: flex; gap: 6px; }
+  .qbtn {
+    padding: 6px 14px; border: 1px solid var(--border);
+    border-radius: var(--radius); font-size: 12px;
+    color: var(--text2); cursor: pointer; background: var(--surface);
+    transition: all 0.1s;
+  }
+  .qbtn.selected { border-color: var(--accent); color: var(--accent); background: var(--accent-light); font-weight: 500; }
+  .step-footer {
+    padding: 12px 16px; border-top: 1px solid var(--border);
+    display: flex; justify-content: flex-end; gap: 8px;
+    background: var(--bg);
+  }
+  .btn { padding: 7px 16px; border-radius: var(--radius); font-size: 13px; cursor: pointer; border: 1px solid transparent; font-family: inherit; }
+  .btn-primary { background: var(--text); color: #fff; border-color: var(--text); }
+  .btn-secondary { background: transparent; color: var(--text2); border-color: var(--border); }
+
+  /* ── SUMMARY ── */
+  .summary-row { display: flex; justify-content: space-between; padding: 7px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+  .summary-key { color: var(--text3); }
+  .summary-val { color: var(--text); font-weight: 500; }
+
+  /* ── SECTION TABS ── */
+  .section-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .stab { padding: 10px 0; margin-right: 20px; font-size: 13px; color: var(--text3); border-bottom: 2px solid transparent; cursor: pointer; }
+  .stab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
+
+  /* ── PAGE CONTENT ── */
+  .page { padding: 24px; flex: 1; overflow-y: auto; }
+  .page-title { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .page-sub { font-size: 13px; color: var(--text3); margin-bottom: 20px; }
+
+  /* ── NOTES ── */
+  .note { background: #FAEEDA; border: 1px solid #FAC775; border-radius: var(--radius); padding: 10px 14px; font-size: 12px; color: #633806; margin-bottom: 16px; }
+  .note strong { font-weight: 600; }
+
+  /* ── COVERAGE TABLE ── */
+  .coverage { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .coverage th { text-align: left; padding: 8px 12px; background: var(--bg); border-bottom: 2px solid var(--border); font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; }
+  .coverage td { padding: 8px 12px; border-bottom: 1px solid var(--border); vertical-align: top; }
+  .coverage tr:hover td { background: var(--bg); }
+  .yes { color: var(--green); font-weight: 600; }
+  .no { color: var(--red); font-weight: 600; }
+  .partial { color: var(--amber); font-weight: 600; }
+  .tag { display: inline-block; font-size: 10px; padding: 2px 7px; border-radius: 10px; font-weight: 500; }
+  .tag-people { background: #E6F1FB; color: #185FA5; }
+  .tag-interviews { background: #EEEDFE; color: #3C3489; }
+  .tag-devices { background: #FAEEDA; color: #854F0B; }
+  .tag-onboarding { background: #EAF3DE; color: #3B6D11; }
+  .tag-offboarding { background: #FCEBEB; color: #A32D2D; }
+  .tag-tracks { background: #E1F5EE; color: #0F6E56; }
+  .tag-settings { background: #F1EFE8; color: #5F5E5A; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- SIDEBAR -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-mark">V2</div>
+      <span class="logo-label">V.Two Ops</span>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Workspace</div>
+      <div class="nav-item active">Dashboard</div>
+      <div class="nav-item">Hiring</div>
+      <div class="nav-item">Directory</div>
+      <div class="nav-item">Onboarding</div>
+      <div class="nav-item">Offboarding</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Devices</div>
+      <div class="nav-item">Inventory</div>
+      <div class="nav-item">Assignments</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-label">Admin</div>
+      <div class="nav-item">Tracks</div>
+      <div class="nav-item">Settings</div>
+    </div>
+  </div>
+
+  <!-- MAIN -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title">Command Palette — Reference Mockup</div>
+      <span style="font-size:12px;color:var(--text3)">Not clickable — for Claude Code reference only</span>
+    </div>
+    <div class="page">
+
+      <div class="note">
+        <strong>For Claude Code:</strong> This file is a visual reference only. All interactions shown here must be implemented in index.html using existing CSS variables, class names, and function patterns. Match this layout and grouping exactly. No emojis anywhere. String concatenation only for HTML building.
+      </div>
+
+      <div class="section-tabs">
+        <div class="stab active">Palette (closed state)</div>
+        <div class="stab">Palette (open — action list)</div>
+        <div class="stab">Step flow — Add candidate</div>
+        <div class="stab">Step flow — Schedule interview</div>
+        <div class="stab">Step flow — Promote</div>
+        <div class="stab">Coverage map</div>
+      </div>
+
+      <!-- ── SECTION 1: PALETTE CLOSED ── -->
+      <div style="margin-bottom:40px">
+        <p style="font-size:12px;color:var(--text3);margin-bottom:14px">Floating + button appears fixed bottom-right on every page. Cmd+K also triggers it.</p>
+        <div style="position:relative;height:120px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-lg);overflow:hidden;">
+          <div style="position:absolute;bottom:20px;right:20px;width:44px;height:44px;border-radius:50%;background:var(--text);color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:300;cursor:pointer;">+</div>
+          <div style="position:absolute;bottom:28px;right:72px;font-size:11px;color:var(--text3);background:var(--surface);border:1px solid var(--border);padding:4px 8px;border-radius:6px;">
+            <span class="kbd">⌘</span><span class="kbd">K</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION 2: PALETTE OPEN ── -->
+      <div style="margin-bottom:40px">
+        <p style="font-size:12px;color:var(--text3);margin-bottom:14px">Full action list. Typing filters in real time. Arrow keys navigate. Enter selects.</p>
+        <div class="palette" style="position:relative;max-height:none;">
+          <div class="palette-search">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="4.5"/><path d="M11 11l2.5 2.5" stroke-linecap="round"/></svg>
+            <input class="palette-input" placeholder="What do you want to do?" readonly/>
+            <span class="kbd">⌘K</span>
+          </div>
+          <div class="palette-body">
+            <div class="palette-group-label">People</div>
+            <div class="palette-item selected">
+              <div class="item-icon ic-blue"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="5" r="2.5"/><path d="M3 13c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5"/></svg></div>
+              <span class="item-label">Add candidate</span>
+              <span class="item-hint">Hiring</span>
+            </div>
+            <div class="palette-item">
+              <div class="item-icon ic-blue"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 8h10M9 5l4 3-4 3"/></svg></div>
+              <span class="item-label">Edit candidate</span>
+              <span class="item-hint">Hiring</span>
+            </div>
+            <div class="palette-item">
+              <div class="item-icon ic-blue"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M8 5v6"/></svg></div>
+              <span class="item-label">Move candidate stage</span>
+              <span class="item-hint">Hiring</span>
+            </div>
+            <div class="palette-item">
+              <div class="item-icon ic-teal"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="5" r="2.5"/><path d="M3 13c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5"/><path d="M12 7l1.5 1.5L16 6"/></svg></div>
+              <span class="item-label">Promote candidate to employee</span>
+              <span class="item-hint">Hiring</span>
+            </div>
+            <div class="palette-item">
+              <div class="item-icon ic-red"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="5" r="2.5"/><path d="M3 13c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5"/><path d="M13 7l2 2M15 7l-2 2"/></svg></div>
+              <span class="item-label">Delete candidate</span>
+              <span class="item-hint">Hiring</span>
+            </div>
+            <div class="palette-divider"></div>
+            <div class="palette-group-label">Employees</div>
+            <div class="palette-item">
+              <div class="item-icon ic-blue"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="5" r="2.5"/><path d="M3 13c0-2.8 2.2-4.5 5-4.5s5 1.7 5 4.5"/></svg></div>
+              <span class="item-label">Add employee</span>
+              <span class="item-hint">Directory</span>
+            </div>
+            <div class="palette-item">
+              <div class="item-icon ic-blue"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 12l2-2 8-8 2 2-8 8-2 2-2 0 0-2z"/></svg></div>
+              <span class="item-label">Edit employee</span>
+              <span class="item-hint">Directory</span>
+            </div>
+            <div class="palette-item">
+              <div class="item-icon ic-red"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 5h10M6 5V3h4v2M6 8v5M10 8v5"/><rect x="2" y="5" width="12" height="9" rx="1"/></svg></div>
+              <span class="item-label">Delete employee</span>
+              <span class="item-hint">Directory</span>
+            </div>
+            <div class="palette-divider"></div>
+            <div class="palette-group-label">Interviews</div>
+            <div class="palette-item">
+              <div class="item-icon ic-purple"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M5 2v2M11 2v2M2 7h12"/></svg></div>
+              <span class="item-label">Schedule interview</span>
+              <span class="item-hint">Hiring</span>
+            </div>
+            <div class="palette-item">
+              <div class="item-icon ic-purple"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="3" width="12" height="11" rx="1.5"/><path d="M5 2v2M11 2v2M2 7h12M5 10h6"/></svg></div>
+              <span class="item-label">Schedule multiple interviews</span>
+              <span class="item-hint">Hiring</span>
+            </div>
+            <div class="palette-item">
+              <div class="item-icon ic-purple"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 12l2-2 8-8 2 2-8 8-2 2-2 0 0-2z"/></svg></div>
+              <span class="item-label">Edit interview</span>
+              <span class="item-hint">Hiring</span>
+            </div>
+            <div class="palette-item">
+              <div class="item-icon ic-red"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 5h10M6 5V3h4v2"/><rect x="2" y="5" width="12" height="9" rx="1"/></svg></div>
+              <span class="item-label">Delete interview</span>
+              <span class="item-hint">Hiring</span>
+            </div>
+            <div class="palette-divider"></div>
+            <div class="palette-group-label">Devices</div>
+            <div class="palette-item">
+              <div class="item-icon ic-amber"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="4" width="12" height="8" rx="1.5"/><path d="M6 12v2M10 12v2M4 14h8"/></svg></div>
+              <span class="item-label">Add device</span>
+              <span class="item-hint">Inventory</span>
+            </div>
+            <div class="palette-item">
+              <div class="item-icon ic-amber"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="4" width="12" height="8" rx="1.5"/><path d="M6 12v2M10 12v2M4 14h8M8 7l2 1-2 1"/></svg></div>
+              <span class="item-label">Assign device</span>
+              <span class="item-hint">Inventory</span>
+            </div>
+            <div class="palette-item">
+              <div class="item-icon ic-amber"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="4" width="12" height="8" rx="1.5"/><path d="M6 12v2M10 12v2M4 14h8M8 7l-2 1 2 1"/></svg></div>
+              <span class="item-label">Return device</span>
+              <span class="item-hint">Inventory</span>
+            </div>
+            <div class="palette-item">
+              <div class="item-icon ic-amber"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 12l2-2 8-8 2 2-8 8-2 2-2 0 0-2z"/></svg></div>
+              <span class="item-label">Edit device</span>
+              <span class="item-hint">Inventory</span>
+            </div>
+            <div class="palette-item">
+              <div class="item-icon ic-red"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 5h10M6 5V3h4v2"/><rect x="2" y="5" width="12" height="9" rx="1"/></svg></div>
+              <span class="item-label">Delete device</span>
+              <span class="item-hint">Inventory</span>
+            </div>
+            <div class="palette-divider"></div>
+            <div class="palette-group-label">Onboarding &amp; Offboarding</div>
+            <div class="palette-item">
+              <div class="item-icon ic-green"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 8h10M9 5l4 3-4 3"/></svg></div>
+              <span class="item-label">Start onboarding run</span>
+              <span class="item-hint">Onboarding</span>
+            </div>
+            <div class="palette-item">
+              <div class="item-icon ic-red"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M13 8H3M7 5L3 8l4 3"/></svg></div>
+              <span class="item-label">Start offboarding run</span>
+              <span class="item-hint">Offboarding</span>
+            </div>
+            <div class="palette-divider"></div>
+            <div class="palette-group-label">Tracks</div>
+            <div class="palette-item">
+              <div class="item-icon ic-teal"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6M8 5v6"/></svg></div>
+              <span class="item-label">Add track</span>
+              <span class="item-hint">Tracks</span>
+            </div>
+            <div class="palette-item">
+              <div class="item-icon ic-teal"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8h6"/></svg></div>
+              <span class="item-label">Add task to track</span>
+              <span class="item-hint">Tracks</span>
+            </div>
+            <div class="palette-divider"></div>
+            <div class="palette-group-label">Settings</div>
+            <div class="palette-item">
+              <div class="item-icon ic-gray"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><circle cx="8" cy="8" r="2"/><path d="M8 2v1M8 13v1M2 8h1M13 8h1M3.8 3.8l.7.7M11.5 11.5l.7.7M11.5 3.8l-.7.7M4.5 11.5l-.7.7"/></svg></div>
+              <span class="item-label">Manage dropdown lists</span>
+              <span class="item-hint">Settings</span>
+            </div>
+            <div class="palette-item">
+              <div class="item-icon ic-gray"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M3 4h10M3 8h7M3 12h5"/></svg></div>
+              <span class="item-label">Export data</span>
+              <span class="item-hint">Settings</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION 3: ADD CANDIDATE STEP FLOW ── -->
+      <div style="margin-bottom:40px">
+        <p style="font-size:12px;color:var(--text3);margin-bottom:14px">Step flow — Add candidate (3 steps). Back button, step counter, Next/Cancel on every step.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:start">
+          <!-- Step 1 -->
+          <div class="step-panel">
+            <div class="step-header">
+              <button class="step-back">
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 2L4 6l4 4"/></svg>
+              </button>
+              <span class="step-title">Add candidate</span>
+              <span class="step-progress">Step 1 of 3</span>
+            </div>
+            <div class="step-body">
+              <div class="form-row">
+                <div><div class="form-label">First name</div><div class="form-input-mock">Jane</div></div>
+                <div><div class="form-label">Last name</div><div class="form-input-mock">Smith</div></div>
+              </div>
+              <div class="form-group"><div class="form-label">Role</div><div class="form-input-mock">Senior Engineer</div></div>
+              <div class="form-row">
+                <div><div class="form-label">Seniority</div><div class="form-select-mock">Mid</div></div>
+                <div><div class="form-label">Source</div><div class="form-select-mock">LinkedIn</div></div>
+              </div>
+              <div class="form-row">
+                <div><div class="form-label">City</div><div class="form-input-mock">San Francisco</div></div>
+                <div><div class="form-label">State</div><div class="form-input-mock">CA</div></div>
+              </div>
+            </div>
+            <div class="step-footer">
+              <button class="btn btn-secondary">Cancel</button>
+              <button class="btn btn-primary">Next →</button>
+            </div>
+          </div>
+          <!-- Step 2 -->
+          <div class="step-panel">
+            <div class="step-header">
+              <button class="step-back"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 2L4 6l4 4"/></svg></button>
+              <span class="step-title">Add candidate</span>
+              <span class="step-progress">Step 2 of 3</span>
+            </div>
+            <div class="step-body">
+              <div class="form-row">
+                <div><div class="form-label">Specialty</div><div class="form-select-mock">Engineering</div></div>
+                <div><div class="form-label">Employment type</div><div class="form-select-mock">FTE</div></div>
+              </div>
+              <div class="form-row">
+                <div><div class="form-label">Comp type</div><div class="form-select-mock">Salary</div></div>
+                <div><div class="form-label">Amount ($)</div><div class="form-input-mock">140000</div></div>
+              </div>
+              <div class="form-group"><div class="form-label">Resume link</div><div class="form-input-mock placeholder">https://sharepoint...</div></div>
+              <div class="form-group"><div class="form-label">Notes</div><div class="form-input-mock placeholder" style="height:52px;padding-top:8px">Optional notes...</div></div>
+            </div>
+            <div class="step-footer">
+              <button class="btn btn-secondary">Back</button>
+              <button class="btn btn-primary">Next →</button>
+            </div>
+          </div>
+          <!-- Step 3: Summary -->
+          <div class="step-panel">
+            <div class="step-header">
+              <button class="step-back"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 2L4 6l4 4"/></svg></button>
+              <span class="step-title">Confirm &amp; save</span>
+              <span class="step-progress">Step 3 of 3</span>
+            </div>
+            <div class="step-body">
+              <div class="summary-row"><span class="summary-key">Name</span><span class="summary-val">Jane Smith</span></div>
+              <div class="summary-row"><span class="summary-key">Role</span><span class="summary-val">Senior Engineer</span></div>
+              <div class="summary-row"><span class="summary-key">Seniority</span><span class="summary-val">Mid</span></div>
+              <div class="summary-row"><span class="summary-key">Source</span><span class="summary-val">LinkedIn</span></div>
+              <div class="summary-row"><span class="summary-key">Location</span><span class="summary-val">San Francisco, CA</span></div>
+              <div class="summary-row"><span class="summary-key">Specialty</span><span class="summary-val">Engineering</span></div>
+              <div class="summary-row"><span class="summary-key">Comp</span><span class="summary-val">$140,000 / year</span></div>
+            </div>
+            <div class="step-footer">
+              <button class="btn btn-secondary">Back</button>
+              <button class="btn btn-primary">Confirm &amp; Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION 4: SCHEDULE INTERVIEW ── -->
+      <div style="margin-bottom:40px">
+        <p style="font-size:12px;color:var(--text3);margin-bottom:14px">Step flow — Schedule interview (2 steps).</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:start">
+          <div class="step-panel">
+            <div class="step-header">
+              <button class="step-back"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 2L4 6l4 4"/></svg></button>
+              <span class="step-title">Schedule interview</span>
+              <span class="step-progress">Step 1 of 3</span>
+            </div>
+            <div class="step-body">
+              <div class="form-group"><div class="form-label">Candidate</div><div class="form-select-mock">Jamie Liu</div></div>
+            </div>
+            <div class="step-footer">
+              <button class="btn btn-secondary">Cancel</button>
+              <button class="btn btn-primary">Next →</button>
+            </div>
+          </div>
+          <div class="step-panel">
+            <div class="step-header">
+              <button class="step-back"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 2L4 6l4 4"/></svg></button>
+              <span class="step-title">Schedule interview</span>
+              <span class="step-progress">Step 2 of 3</span>
+            </div>
+            <div class="step-body">
+              <div class="form-row">
+                <div><div class="form-label">Date</div><div class="form-input-mock">Mar 28, 2026</div></div>
+                <div><div class="form-label">Time</div><div class="form-input-mock">10:00 AM</div></div>
+              </div>
+              <div class="form-group">
+                <div class="form-label">Type</div>
+                <div class="quick-btns">
+                  <div class="qbtn">Phone</div>
+                  <div class="qbtn selected">Video</div>
+                  <div class="qbtn">Onsite</div>
+                </div>
+              </div>
+              <div class="form-group"><div class="form-label">Interviewer(s)</div><div class="form-input-mock placeholder">Jordan Lee, Nina Patel</div></div>
+              <div class="form-group"><div class="form-label">Score</div><div class="form-select-mock">— No score —</div></div>
+              <div class="form-group"><div class="form-label">Notes</div><div class="form-input-mock placeholder" style="height:52px;padding-top:8px">Key observations...</div></div>
+            </div>
+            <div class="step-footer">
+              <button class="btn btn-secondary">Back</button>
+              <button class="btn btn-primary">Next →</button>
+            </div>
+          </div>
+          <div class="step-panel">
+            <div class="step-header">
+              <button class="step-back"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 2L4 6l4 4"/></svg></button>
+              <span class="step-title">Confirm &amp; save</span>
+              <span class="step-progress">Step 3 of 3</span>
+            </div>
+            <div class="step-body">
+              <div class="summary-row"><span class="summary-key">Candidate</span><span class="summary-val">Jamie Liu</span></div>
+              <div class="summary-row"><span class="summary-key">Date</span><span class="summary-val">Mar 28, 2026</span></div>
+              <div class="summary-row"><span class="summary-key">Time</span><span class="summary-val">10:00 AM</span></div>
+              <div class="summary-row"><span class="summary-key">Type</span><span class="summary-val">Video</span></div>
+              <div class="summary-row"><span class="summary-key">Interviewer(s)</span><span class="summary-val">Jordan Lee, Nina Patel</span></div>
+            </div>
+            <div class="step-footer">
+              <button class="btn btn-secondary">Back</button>
+              <button class="btn btn-primary">Confirm &amp; Save</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECTION 5: PROMOTE ── -->
+      <div style="margin-bottom:40px">
+        <p style="font-size:12px;color:var(--text3);margin-bottom:14px">Step flow — Promote to employee (2 steps). V.Two Buddy required.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;align-items:start">
+          <div class="step-panel">
+            <div class="step-header">
+              <button class="step-back"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 2L4 6l4 4"/></svg></button>
+              <span class="step-title">Promote to employee</span>
+              <span class="step-progress">Step 1 of 3</span>
+            </div>
+            <div class="step-body">
+              <div class="form-group"><div class="form-label">Candidate</div><div class="form-select-mock">Priya Rao</div></div>
+            </div>
+            <div class="step-footer">
+              <button class="btn btn-secondary">Cancel</button>
+              <button class="btn btn-primary">Next →</button>
+            </div>
+          </div>
+          <div class="step-panel">
+            <div class="step-header">
+              <button class="step-back"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 2L4 6l4 4"/></svg></button>
+              <span class="step-title">Promote to employee</span>
+              <span class="step-progress">Step 2 of 3</span>
+            </div>
+            <div class="step-body">
+              <div class="form-row">
+                <div><div class="form-label">Department</div><div class="form-select-mock">Engineering</div></div>
+                <div><div class="form-label">Start date</div><div class="form-input-mock">Apr 1, 2026</div></div>
+              </div>
+              <div class="form-group"><div class="form-label">Work email</div><div class="form-input-mock">priya@vtwo.co</div></div>
+              <div class="form-group"><div class="form-label">Manager <span style="color:var(--text3);font-weight:400">(optional)</span></div><div class="form-select-mock">Jordan Mills</div></div>
+              <div class="form-group">
+                <div class="form-label">V.Two Buddy <span style="color:var(--red);font-size:10px">required</span></div>
+                <div class="form-select-mock">Oliver K</div>
+              </div>
+              <div class="form-group"><div class="form-label">Client <span style="color:var(--text3);font-weight:400">(optional)</span></div><div class="form-input-mock placeholder">Client name...</div></div>
+            </div>
+            <div class="step-footer">
+              <button class="btn btn-secondary">Back</button>
+              <button class="btn btn-primary">Next →</button>
+            </div>
+          </div>
+          <div class="step-panel">
+            <div class="step-header">
+              <button class="step-back"><svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M8 2L4 6l4 4"/></svg></button>
+              <span class="step-title">Confirm &amp; promote</span>
+              <span class="step-progress">Step 3 of 3</span>
+            </div>
+            <div class="step-body">
+              <div class="summary-row"><span class="summary-key">Name</span><span class="summary-val">Priya Rao</span></div>
+              <div class="summary-row"><span class="summary-key">Department</span><span class="summary-val">Engineering</span></div>
+              <div class="summary-row"><span class="summary-key">Start date</span><span class="summary-val">Apr 1, 2026</span></div>
+              <div class="summary-row"><span class="summary-key">Email</span><span class="summary-val">priya@vtwo.co</span></div>
+              <div class="summary-row"><span class="summary-key">Manager</span><span class="summary-val">Jordan Mills</span></div>
+              <div class="summary-row"><span class="summary-key">V.Two Buddy</span><span class="summary-val">Oliver K</span></div>
+            </div>
+            <div class="step-footer">
+              <button class="btn btn-secondary">Back</button>
+              <button class="btn btn-primary">Confirm &amp; Promote</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── COVERAGE MAP ── -->
+      <div style="margin-bottom:40px">
+        <p style="font-size:12px;color:var(--text3);margin-bottom:14px">Every action available in the app — all must be reachable via the palette.</p>
+        <table class="coverage">
+          <thead><tr><th>Section</th><th>Action</th><th>In palette</th><th>Steps</th></tr></thead>
+          <tbody>
+            <tr><td><span class="tag tag-people">Hiring</span></td><td>Add candidate</td><td class="yes">Yes</td><td>3 steps</td></tr>
+            <tr><td><span class="tag tag-people">Hiring</span></td><td>Edit candidate</td><td class="yes">Yes</td><td>Pick candidate → edit form → save</td></tr>
+            <tr><td><span class="tag tag-people">Hiring</span></td><td>Move stage</td><td class="yes">Yes</td><td>Pick candidate → pick stage → save</td></tr>
+            <tr><td><span class="tag tag-people">Hiring</span></td><td>Set candidate status</td><td class="yes">Yes</td><td>Pick candidate → pick status → save</td></tr>
+            <tr><td><span class="tag tag-people">Hiring</span></td><td>Promote to employee</td><td class="yes">Yes</td><td>3 steps</td></tr>
+            <tr><td><span class="tag tag-people">Hiring</span></td><td>Delete candidate</td><td class="yes">Yes</td><td>Pick candidate → confirm modal → delete</td></tr>
+            <tr><td><span class="tag tag-interviews">Interviews</span></td><td>Schedule interview</td><td class="yes">Yes</td><td>3 steps</td></tr>
+            <tr><td><span class="tag tag-interviews">Interviews</span></td><td>Schedule multiple interviews</td><td class="yes">Yes</td><td>Pick candidate → how many → N interview screens → review → save</td></tr>
+            <tr><td><span class="tag tag-interviews">Interviews</span></td><td>Edit interview</td><td class="yes">Yes</td><td>Pick candidate → pick interview → edit form → save</td></tr>
+            <tr><td><span class="tag tag-interviews">Interviews</span></td><td>Delete interview</td><td class="yes">Yes</td><td>Pick candidate → pick interview → confirm → delete</td></tr>
+            <tr><td><span class="tag tag-people">Directory</span></td><td>Add employee</td><td class="yes">Yes</td><td>2 steps</td></tr>
+            <tr><td><span class="tag tag-people">Directory</span></td><td>Edit employee</td><td class="yes">Yes</td><td>Pick employee → edit form → save</td></tr>
+            <tr><td><span class="tag tag-people">Directory</span></td><td>Delete employee</td><td class="yes">Yes</td><td>Pick employee → confirm → delete</td></tr>
+            <tr><td><span class="tag tag-devices">Inventory</span></td><td>Add device</td><td class="yes">Yes</td><td>Paste parser + form → confirm → save</td></tr>
+            <tr><td><span class="tag tag-devices">Inventory</span></td><td>Edit device</td><td class="yes">Yes</td><td>Pick device → edit form → save</td></tr>
+            <tr><td><span class="tag tag-devices">Inventory</span></td><td>Delete device</td><td class="yes">Yes</td><td>Pick device → confirm → delete</td></tr>
+            <tr><td><span class="tag tag-devices">Inventory</span></td><td>Assign device</td><td class="yes">Yes</td><td>Pick device → pick employee → confirm</td></tr>
+            <tr><td><span class="tag tag-devices">Inventory</span></td><td>Return device</td><td class="yes">Yes</td><td>Pick device (assigned only) → confirm</td></tr>
+            <tr><td><span class="tag tag-onboarding">Onboarding</span></td><td>Start onboarding run</td><td class="yes">Yes</td><td>Pick employee → pick track → start date → confirm</td></tr>
+            <tr><td><span class="tag tag-offboarding">Offboarding</span></td><td>Start offboarding run</td><td class="yes">Yes</td><td>Pick employee → pick track → last day → confirm</td></tr>
+            <tr><td><span class="tag tag-tracks">Tracks</span></td><td>Add track</td><td class="yes">Yes</td><td>Name → type → auto-apply → confirm</td></tr>
+            <tr><td><span class="tag tag-tracks">Tracks</span></td><td>Edit track</td><td class="yes">Yes</td><td>Pick track → edit form → save</td></tr>
+            <tr><td><span class="tag tag-tracks">Tracks</span></td><td>Delete track</td><td class="yes">Yes</td><td>Pick track → confirm → delete</td></tr>
+            <tr><td><span class="tag tag-tracks">Tracks</span></td><td>Add task to track</td><td class="yes">Yes</td><td>Pick track → task name + owner + days → save</td></tr>
+            <tr><td><span class="tag tag-tracks">Tracks</span></td><td>Edit task</td><td class="yes">Yes</td><td>Pick track → pick task → edit → save</td></tr>
+            <tr><td><span class="tag tag-tracks">Tracks</span></td><td>Delete task</td><td class="yes">Yes</td><td>Pick track → pick task → confirm → delete</td></tr>
+            <tr><td><span class="tag tag-settings">Settings</span></td><td>Manage dropdown lists</td><td class="yes">Yes</td><td>Nav to Settings → Dropdowns tab</td></tr>
+            <tr><td><span class="tag tag-settings">Settings</span></td><td>Export data</td><td class="yes">Yes</td><td>Trigger exportData() directly</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+</body>
+</html>
