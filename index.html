@@ -283,6 +283,47 @@ tr.selected td{background:var(--accent-light)}
   .device-grid{grid-template-columns:1fr}
   .page{padding:12px}
 }
+/* ── COMMAND PALETTE ──────────────────────────────────────────────────────── */
+#cp-fab{position:fixed;bottom:24px;right:24px;width:44px;height:44px;border-radius:50%;background:#1a1a18;color:#fff;font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,.25);z-index:300;cursor:pointer;transition:background .12s;border:none;font-family:var(--font)}
+#cp-fab:hover{background:#333}
+#cp-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:400;display:flex;align-items:flex-start;justify-content:center;padding-top:80px}
+#cp-content{width:560px;max-width:calc(100vw - 32px);background:var(--surface);border-radius:var(--radius-lg);box-shadow:0 8px 40px rgba(0,0,0,.18);overflow:hidden;display:flex;flex-direction:column;max-height:calc(100vh - 160px)}
+.cp-search-wrap{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.cp-input{width:100%;border:none;outline:none;font-size:15px;color:var(--text);background:transparent;font-family:var(--font)}
+.cp-input::placeholder{color:var(--text3)}
+.cp-body{overflow-y:auto;padding:8px 0;max-height:360px}
+.cp-group-label{padding:6px 16px 2px;font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.8px;text-transform:uppercase}
+.cp-item{display:flex;align-items:center;gap:10px;padding:8px 16px;cursor:pointer;transition:background .08s}
+.cp-item:hover,.cp-item.selected{background:var(--bg)}
+.cp-item-icon{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.ic-blue{background:#E6F1FB;color:#185FA5}
+.ic-teal{background:#E1F5EE;color:#0F6E56}
+.ic-amber{background:#FAEEDA;color:#854F0B}
+.ic-green{background:#EAF3DE;color:#3B6D11}
+.ic-purple{background:#EEEDFE;color:#3C3489}
+.ic-red{background:#FCEBEB;color:#A32D2D}
+.ic-gray{background:#F1EFE8;color:#5F5E5A}
+.cp-item-text{flex:1;min-width:0}
+.cp-item-title{font-size:13px;font-weight:500;color:var(--text)}
+.cp-item-sub{font-size:11px;color:var(--text3);margin-top:1px}
+.cp-step-header{padding:14px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.cp-step-back{width:28px;height:28px;border-radius:6px;background:var(--bg);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;color:var(--text2)}
+.cp-step-back:hover{background:var(--border)}
+.cp-step-title{font-weight:600;font-size:14px;flex:1}
+.cp-step-progress{font-size:11px;color:var(--text3)}
+.cp-step-body{padding:20px 16px;overflow-y:auto;flex:1}
+.cp-step-footer{padding:12px 16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.cp-form-row{margin-bottom:14px}
+.cp-form-row label{display:block;font-size:12px;font-weight:500;color:var(--text2);margin-bottom:4px}
+.cp-form-2col{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+.cp-form-2col .cp-form-row{margin-bottom:0}
+.cp-qbtn-row{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.cp-qbtn{padding:4px 10px;border-radius:20px;border:1px solid var(--border);font-size:12px;background:var(--surface);color:var(--text2);cursor:pointer;transition:all .1s;font-family:var(--font)}
+.cp-qbtn.active{background:var(--accent-light);color:var(--accent-text);border-color:var(--accent)}
+.cp-summary-table{width:100%;border-collapse:collapse}
+.cp-summary-table td{padding:6px 0;font-size:13px;vertical-align:top}
+.cp-summary-table td:first-child{color:var(--text2);width:120px;padding-right:12px}
+.cp-empty{padding:32px 16px;text-align:center;color:var(--text3);font-size:13px}
 </style>
 </head>
 <body>
@@ -363,6 +404,29 @@ tr.selected td{background:var(--accent-light)}
 <div class="sidebar-overlay" onclick="closeSidebar()"></div>
 <div id="modal-root"></div>
 <div class="toast" id="toast"></div>
+
+<!-- Command Palette -->
+<button id="cp-fab" onclick="openCP()" title="Command palette (Cmd+K)">+</button>
+<div id="cp-overlay" style="display:none" onclick="if(event.target===this)closeCP()">
+  <div id="cp-content">
+    <div id="cp-list-panel">
+      <div class="cp-search-wrap">
+        <input id="cp-input" class="cp-input" type="text" placeholder="Search actions..." oninput="cpSearch(this.value)" onkeydown="cpKeyDown(event)" autocomplete="off">
+      </div>
+      <div id="cp-body" class="cp-body"></div>
+    </div>
+    <div id="cp-step-panel" style="display:none;flex-direction:column">
+      <div id="cp-step-header" class="cp-step-header"></div>
+      <div id="cp-step-body" class="cp-step-body"></div>
+      <div class="cp-step-footer">
+        <button class="btn btn-secondary btn-sm" onclick="cpCancel()">Cancel</button>
+        <div style="flex:1"></div>
+        <button id="cp-back-btn" class="btn btn-secondary btn-sm" onclick="cpBack()" style="display:none">Back</button>
+        <button id="cp-next-btn" class="btn btn-primary btn-sm" onclick="cpNext()">Next</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script src="config.js"></script>
 <script>
@@ -1967,6 +2031,1153 @@ function exportData(){
   const blob=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
   const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`vtwo-ops-${today()}.json`;a.click();showToast('Exported');
 }
+
+// ── COMMAND PALETTE ───────────────────────────────────────────────────────────
+var cp={open:false,mode:'list',actionId:null,step:1,data:{},selIdx:0,filtered:[]};
+
+var CP_ACTIONS=[
+  {id:'add-cand',title:'Add candidate',sub:'New hire to pipeline',group:'Candidates',color:'ic-blue',svg:'person'},
+  {id:'edit-cand',title:'Edit candidate',sub:'Update candidate details',group:'Candidates',color:'ic-blue',svg:'edit'},
+  {id:'move-stage',title:'Move stage',sub:'Change pipeline stage',group:'Candidates',color:'ic-blue',svg:'arrow'},
+  {id:'set-cand-status',title:'Set candidate status',sub:'Active, On Hold, Nurturing...',group:'Candidates',color:'ic-amber',svg:'list'},
+  {id:'promote-to-employee',title:'Promote to employee',sub:'Hire a candidate',group:'Candidates',color:'ic-green',svg:'check'},
+  {id:'delete-cand',title:'Delete candidate',sub:'Remove from pipeline',group:'Candidates',color:'ic-red',svg:'trash'},
+  {id:'schedule-multi-iv',title:'Schedule interviews',sub:'Schedule 1-3 interviews for a candidate',group:'Candidates',color:'ic-purple',svg:'cal'},
+  {id:'add-emp',title:'Add employee',sub:'Add to directory',group:'Employees',color:'ic-teal',svg:'person'},
+  {id:'edit-emp',title:'Edit employee',sub:'Update employee details',group:'Employees',color:'ic-teal',svg:'edit'},
+  {id:'offboard-emp',title:'Offboard employee',sub:'Start offboarding workflow',group:'Employees',color:'ic-amber',svg:'exit'},
+  {id:'delete-emp',title:'Delete employee',sub:'Remove from directory',group:'Employees',color:'ic-red',svg:'trash'},
+  {id:'add-iv',title:'Add interview',sub:'Log interview for a candidate',group:'Interviews',color:'ic-purple',svg:'cal'},
+  {id:'edit-iv',title:'Edit interview',sub:'Update interview record',group:'Interviews',color:'ic-purple',svg:'edit'},
+  {id:'delete-iv',title:'Delete interview',sub:'Remove interview record',group:'Interviews',color:'ic-red',svg:'trash'},
+  {id:'add-device',title:'Add device',sub:'Register new equipment',group:'Devices',color:'ic-gray',svg:'laptop'},
+  {id:'edit-device',title:'Edit device',sub:'Update device details',group:'Devices',color:'ic-gray',svg:'edit'},
+  {id:'assign-device',title:'Assign device',sub:'Assign device to employee',group:'Devices',color:'ic-teal',svg:'check'},
+  {id:'return-device',title:'Return device',sub:'Mark device as returned',group:'Devices',color:'ic-amber',svg:'arrow'},
+  {id:'delete-device',title:'Delete device',sub:'Remove device from inventory',group:'Devices',color:'ic-red',svg:'trash'},
+  {id:'start-run',title:'Start onboarding',sub:'Start an onboarding run for an employee',group:'Onboarding',color:'ic-green',svg:'check'},
+  {id:'edit-run-task',title:'Edit run task',sub:'Update a task in an active run',group:'Onboarding',color:'ic-green',svg:'edit'},
+  {id:'add-track',title:'Add track',sub:'Create new onboarding track',group:'Tracks',color:'ic-blue',svg:'track'},
+  {id:'edit-track',title:'Edit track',sub:'Update track details',group:'Tracks',color:'ic-blue',svg:'edit'},
+  {id:'add-task',title:'Add task to track',sub:'Add a task to an onboarding track',group:'Tracks',color:'ic-blue',svg:'list'},
+  {id:'edit-task',title:'Edit task',sub:'Update a task in a track',group:'Tracks',color:'ic-blue',svg:'edit'},
+  {id:'delete-task',title:'Delete task',sub:'Remove task from track',group:'Tracks',color:'ic-red',svg:'trash'},
+  {id:'delete-track',title:'Delete track',sub:'Remove track and all its tasks',group:'Tracks',color:'ic-red',svg:'trash'},
+  {id:'export-data',title:'Export data',sub:'Download full JSON backup',group:'Settings',color:'ic-gray',svg:'gear'},
+];
+
+var CPSVG={
+  person:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="5" r="3"/><path d="M2 14c0-3.3 2.7-6 6-6s6 2.7 6 6"/></svg>',
+  arrow:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 8h10M9 4l4 4-4 4"/></svg>',
+  cal:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="3" width="12" height="11" rx="2"/><path d="M5 1v3M11 1v3M2 7h12"/></svg>',
+  edit:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>',
+  trash:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 4h12M6 4V2h4v2M5 4v9a1 1 0 001 1h4a1 1 0 001-1V4"/></svg>',
+  laptop:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="3" width="12" height="8" rx="1.5"/><path d="M0 13h16"/></svg>',
+  check:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M2 8l4 4 8-8"/></svg>',
+  exit:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M10 2h4v12h-4M7 11l-4-3 4-3M3 8h8"/></svg>',
+  track:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><rect x="2" y="2" width="5" height="5" rx="1"/><rect x="9" y="2" width="5" height="5" rx="1"/><rect x="2" y="9" width="5" height="5" rx="1"/><path d="M11.5 9v2.5H14"/></svg>',
+  gear:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="8" cy="8" r="2.5"/><path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.2 3.2l1.4 1.4M11.4 11.4l1.4 1.4M3.2 12.8l1.4-1.4M11.4 4.6l1.4-1.4"/></svg>',
+  list:'<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 4h10M3 8h10M3 12h7"/></svg>',
+  back:'<svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M10 3L5 8l5 5"/></svg>',
+};
+
+function cpIcon(svg,color){
+  return '<span class="cp-item-icon '+color+'">'+CPSVG[svg]+'</span>';
+}
+
+function openCP(){
+  cp.open=true;cp.mode='list';cp.actionId=null;cp.step=1;cp.data={};cp.selIdx=0;
+  document.getElementById('cp-overlay').style.display='flex';
+  document.getElementById('cp-list-panel').style.display='block';
+  document.getElementById('cp-step-panel').style.display='none';
+  cpSearch('');
+  setTimeout(function(){document.getElementById('cp-input').focus();},50);
+  document.addEventListener('keydown',cpGlobalKey);
+}
+
+function closeCP(){
+  cp.open=false;
+  document.getElementById('cp-overlay').style.display='none';
+  document.removeEventListener('keydown',cpGlobalKey);
+}
+
+function cpGlobalKey(e){
+  if(e.key==='Escape')closeCP();
+}
+
+document.addEventListener('keydown',function(e){
+  if((e.metaKey||e.ctrlKey)&&e.key==='k'){e.preventDefault();if(cp.open)closeCP();else openCP();}
+});
+
+function cpGetFiltered(q){
+  if(!q)return CP_ACTIONS;
+  var lq=q.toLowerCase();
+  return CP_ACTIONS.filter(function(a){
+    return a.title.toLowerCase().indexOf(lq)>=0||a.sub.toLowerCase().indexOf(lq)>=0||a.group.toLowerCase().indexOf(lq)>=0;
+  });
+}
+
+function cpSearch(q){
+  cp.filtered=cpGetFiltered(q);
+  cp.selIdx=0;
+  cpRenderList();
+}
+
+function cpGroupItems(){
+  var groups={};
+  var groupOrder=[];
+  cp.filtered.forEach(function(a,i){
+    if(!groups[a.group]){groups[a.group]=[];groupOrder.push(a.group);}
+    groups[a.group].push({action:a,idx:i});
+  });
+  return{groups:groups,groupOrder:groupOrder};
+}
+
+function cpRenderList(){
+  var body=document.getElementById('cp-body');
+  if(!cp.filtered.length){body.innerHTML='<div class="cp-empty">No actions found</div>';return;}
+  var grouped=cpGroupItems();
+  var html='';
+  grouped.groupOrder.forEach(function(g){
+    html+='<div class="cp-group-label">'+g+'</div>';
+    grouped.groups[g].forEach(function(item){
+      var a=item.action;
+      var cls='cp-item'+(item.idx===cp.selIdx?' selected':'');
+      html+='<div class="'+cls+'" onclick="cpSelectAction(\''+a.id+'\')">'+
+        cpIcon(a.svg,a.color)+
+        '<div class="cp-item-text">'+
+        '<div class="cp-item-title">'+a.title+'</div>'+
+        '<div class="cp-item-sub">'+a.sub+'</div>'+
+        '</div></div>';
+    });
+  });
+  body.innerHTML=html;
+}
+
+function cpKeyDown(e){
+  if(e.key==='ArrowDown'){
+    e.preventDefault();
+    cp.selIdx=Math.min(cp.selIdx+1,cp.filtered.length-1);
+    cpRenderList();cpScrollToSelected();
+  }else if(e.key==='ArrowUp'){
+    e.preventDefault();
+    cp.selIdx=Math.max(cp.selIdx-1,0);
+    cpRenderList();cpScrollToSelected();
+  }else if(e.key==='Enter'){
+    if(cp.filtered[cp.selIdx])cpSelectAction(cp.filtered[cp.selIdx].id);
+  }else if(e.key==='Escape'){
+    closeCP();
+  }
+}
+
+function cpScrollToSelected(){
+  var body=document.getElementById('cp-body');
+  var sel=body.querySelector('.cp-item.selected');
+  if(sel)sel.scrollIntoView({block:'nearest'});
+}
+
+function cpSelectAction(id){
+  cp.actionId=id;cp.step=1;cp.data={};
+  if(selectedCandId)cp.data.candId=selectedCandId;
+  if(selectedEmpId)cp.data.empId=selectedEmpId;
+  cp.mode='step';
+  document.getElementById('cp-list-panel').style.display='none';
+  var sp=document.getElementById('cp-step-panel');
+  sp.style.display='flex';sp.style.flexDirection='column';
+  cpRenderStep();
+}
+
+function cpBack(){
+  if(cp.step>1){cp.step--;cpRenderStep();}
+  else{
+    cp.mode='list';
+    document.getElementById('cp-list-panel').style.display='block';
+    document.getElementById('cp-step-panel').style.display='none';
+    document.getElementById('cp-input').focus();
+  }
+}
+
+function cpCancel(){closeCP();}
+
+async function cpNext(){
+  var flow=CP_FLOWS[cp.actionId];if(!flow)return;
+  flow.readStep(cp.step,cp.data);
+  var total=flow.totalSteps(cp.data);
+  if(cp.step<total){cp.step++;cpRenderStep();}
+  else{
+    try{await flow.save(cp.data);closeCP();showToast(flow.successMsg||'Saved');}
+    catch(err){showToast('Error: '+err.message);console.error(err);}
+  }
+}
+
+function cpRenderStep(){
+  var flow=CP_FLOWS[cp.actionId];if(!flow)return;
+  var total=flow.totalSteps(cp.data);
+  var action=CP_ACTIONS.find(function(a){return a.id===cp.actionId;});
+  document.getElementById('cp-step-header').innerHTML=
+    '<button class="cp-step-back" onclick="cpBack()">'+CPSVG.back+'</button>'+
+    '<div class="cp-step-title">'+(action?action.title:'')+'</div>'+
+    '<div class="cp-step-progress">'+cp.step+' / '+total+'</div>';
+  document.getElementById('cp-step-body').innerHTML=flow.renderStep(cp.step,cp.data)||'';
+  document.getElementById('cp-next-btn').textContent=(cp.step===total)?(flow.confirmLabel||'Confirm'):'Next';
+  document.getElementById('cp-back-btn').style.display=cp.step>1?'inline-flex':'none';
+  setTimeout(function(){
+    var first=document.getElementById('cp-step-body').querySelector('input,select,textarea');
+    if(first)first.focus();
+  },40);
+}
+
+// ── PALETTE FIELD HELPERS ──────────────────────────────────────────────────────
+function gv(id){var el=document.getElementById(id);return el?el.value:'';}
+
+function cpCandOpts(selectedId){
+  var opts='<option value="">-- Select candidate --</option>';
+  DB.candidates.forEach(function(c){
+    opts+='<option value="'+c.id+'"'+(c.id===selectedId?' selected':'')+'>'+c.name+' ('+c.stage+')</option>';
+  });
+  return opts;
+}
+
+function cpEmpOpts(selectedId,includeEmpty){
+  var opts=includeEmpty?'<option value="">-- None --</option>':'<option value="">-- Select employee --</option>';
+  DB.employees.forEach(function(e){
+    opts+='<option value="'+e.id+'"'+(e.id===selectedId?' selected':'')+'>'+e.name+'</option>';
+  });
+  return opts;
+}
+
+function cpDevOpts(selectedId,filterStatus){
+  var opts='<option value="">-- Select device --</option>';
+  var devs=filterStatus?DB.devices.filter(function(d){return d.status===filterStatus;}):DB.devices;
+  devs.forEach(function(d){
+    opts+='<option value="'+d.id+'"'+(d.id===selectedId?' selected':'')+'>'+d.name+' ('+d.status+')</option>';
+  });
+  return opts;
+}
+
+function cpTrackOpts(selectedId){
+  var opts='<option value="">-- Select track --</option>';
+  DB.tracks.forEach(function(t){
+    opts+='<option value="'+t.id+'"'+(t.id===selectedId?' selected':'')+'>'+t.name+'</option>';
+  });
+  return opts;
+}
+
+function cpIvOpts(candId,selectedId){
+  var ivs=DB.interviews.filter(function(i){return i.candidateId===candId;});
+  var opts='<option value="">-- Select interview --</option>';
+  ivs.forEach(function(iv){
+    opts+='<option value="'+iv.id+'"'+(iv.id===selectedId?' selected':'')+'>'+iv.type+' on '+iv.date+'</option>';
+  });
+  return opts;
+}
+
+function cpRunOpts(selectedId){
+  var opts='<option value="">-- Select run --</option>';
+  DB.onboardingRuns.forEach(function(r){
+    var emp=getEmp(r.employeeId);
+    opts+='<option value="'+r.id+'"'+(r.id===selectedId?' selected':'')+'>'+emp.name+' - '+r.type+'</option>';
+  });
+  return opts;
+}
+
+function cpRunTaskOpts(runId,selectedId){
+  var tasks=DB.runTasks.filter(function(t){return t.runId===runId;});
+  var opts='<option value="">-- Select task --</option>';
+  tasks.forEach(function(t){
+    opts+='<option value="'+t.id+'"'+(t.id===selectedId?' selected':'')+'>'+t.name+' ('+t.status+')</option>';
+  });
+  return opts;
+}
+
+function cpTrackTaskOpts(trackId,selectedId){
+  var tasks=DB.tasks.filter(function(t){return t.trackId===trackId;});
+  var opts='<option value="">-- Select task --</option>';
+  tasks.forEach(function(t){
+    opts+='<option value="'+t.id+'"'+(t.id===selectedId?' selected':'')+'>'+t.name+'</option>';
+  });
+  return opts;
+}
+
+function cpSummaryRow(label,val){
+  return '<tr><td>'+label+'</td><td><strong>'+(val||'—')+'</strong></td></tr>';
+}
+
+function cpFormRow(label,inputHtml){
+  return '<div class="cp-form-row"><label>'+label+'</label>'+inputHtml+'</div>';
+}
+
+function cpInput(id,placeholder,value,type){
+  return '<input class="form-input" id="'+id+'" type="'+(type||'text')+'" placeholder="'+(placeholder||'')+'" value="'+(value!=null?value:'')+'">';
+}
+
+function cpSelect(id,optionsHtml){
+  return '<select class="form-input form-select" id="'+id+'">'+optionsHtml+'</select>';
+}
+
+// ── CP FLOWS ───────────────────────────────────────────────────────────────────
+var CP_FLOWS={};
+
+// add-cand
+CP_FLOWS['add-cand']={
+  totalSteps:function(){return 3;},
+  successMsg:'Candidate added',
+  renderStep:function(step,data){
+    if(step===1){
+      var srcOpts='';
+      getList('candidateSource').forEach(function(s){srcOpts+='<option'+(s===data.source?' selected':'')+'>'+s+'</option>';});
+      return '<div class="cp-form-2col">'+
+        cpFormRow('First name',cpInput('cp-fn','First name',data.fn||''))+
+        cpFormRow('Last name',cpInput('cp-ln','Last name',data.ln||''))+
+        '</div>'+
+        cpFormRow('Role / title',cpInput('cp-role','e.g. Software Engineer',data.role||''))+
+        cpFormRow('Source',cpSelect('cp-source',srcOpts));
+    }
+    if(step===2){
+      var senOpts='';getList('seniority').forEach(function(s){senOpts+='<option'+(s===data.seniority?' selected':'')+'>'+s+'</option>';});
+      var empOpts='';getList('empType').forEach(function(s){empOpts+='<option'+(s===data.empType?' selected':'')+'>'+s+'</option>';});
+      var ctOpts='<option'+(data.compType==='salary'?' selected':'')+'>salary</option><option'+(data.compType==='hourly'?' selected':'')+'>hourly</option>';
+      return cpFormRow('Seniority',cpSelect('cp-seniority',senOpts))+
+        cpFormRow('Employment type',cpSelect('cp-empType',empOpts))+
+        '<div class="cp-form-2col">'+
+        cpFormRow('Comp type',cpSelect('cp-compType',ctOpts))+
+        cpFormRow('Amount',cpInput('cp-compAmount','e.g. 120000',data.compAmount||'','number'))+
+        '</div>'+
+        '<div class="cp-form-2col">'+
+        cpFormRow('City',cpInput('cp-city','City',data.city||''))+
+        cpFormRow('Country',cpInput('cp-country','Country',data.country||'US'))+
+        '</div>'+
+        cpFormRow('Resume link',cpInput('cp-resume','https://',data.resumeLink||'','url'));
+    }
+    if(step===3){
+      return '<div style="font-size:12px;color:var(--text3);margin-bottom:16px">Review</div>'+
+        '<table class="cp-summary-table">'+
+        cpSummaryRow('Name',(data.fn||'')+' '+(data.ln||''))+
+        cpSummaryRow('Role',data.role)+
+        cpSummaryRow('Source',data.source)+
+        cpSummaryRow('Seniority',data.seniority)+
+        cpSummaryRow('Emp type',data.empType)+
+        cpSummaryRow('Location',(data.city||'')+(data.country?', '+data.country:''))+
+        '</table>';
+    }
+  },
+  readStep:function(step,data){
+    if(step===1){data.fn=gv('cp-fn');data.ln=gv('cp-ln');data.role=gv('cp-role');data.source=gv('cp-source');}
+    if(step===2){data.seniority=gv('cp-seniority');data.empType=gv('cp-empType');data.compType=gv('cp-compType');data.compAmount=gv('cp-compAmount');data.city=gv('cp-city');data.country=gv('cp-country');data.resumeLink=gv('cp-resume');}
+  },
+  save:async function(data){
+    var nc={id:uid(),name:(data.fn+' '+data.ln).trim(),role:data.role,seniority:data.seniority,specialty:'',source:data.source,stage:'sourced',candStatus:getList('candStatus')[0]||'Active',empType:data.empType,compType:data.compType,compAmount:data.compAmount,city:data.city,state:'',country:data.country||'US',client:'',resumeLink:data.resumeLink,addedAt:now(),updatedAt:now(),notes:''};
+    DB.candidates.push(nc);
+    DB.activities.unshift({id:uid(),type:'add',desc:nc.name+' added to pipeline',at:now()});
+    await save('candidates');await save('activities');
+    if(currentPage==='hiring')refreshHiringView();
+  }
+};
+
+// edit-cand
+CP_FLOWS['edit-cand']={
+  totalSteps:function(){return 3;},
+  successMsg:'Candidate updated',
+  renderStep:function(step,data){
+    if(step===1){return cpFormRow('Candidate',cpSelect('cp-candId',cpCandOpts(data.candId)));}
+    if(step===2){
+      var c=DB.candidates.find(function(x){return x.id===data.candId;})||{};
+      var fn=data.fn!=null?data.fn:(c.name?c.name.split(' ')[0]:'');
+      var ln=data.ln!=null?data.ln:(c.name?c.name.split(' ').slice(1).join(' '):'');
+      var srcOpts='';getList('candidateSource').forEach(function(s){srcOpts+='<option'+(s===(data.source||c.source)?' selected':'')+'>'+s+'</option>';});
+      var senOpts='';getList('seniority').forEach(function(s){senOpts+='<option'+(s===(data.seniority||c.seniority)?' selected':'')+'>'+s+'</option>';});
+      return '<div class="cp-form-2col">'+
+        cpFormRow('First name',cpInput('cp-fn','First name',fn))+
+        cpFormRow('Last name',cpInput('cp-ln','Last name',ln))+
+        '</div>'+
+        cpFormRow('Role',cpInput('cp-role','Role',data.role||c.role||''))+
+        cpFormRow('Source',cpSelect('cp-source',srcOpts))+
+        cpFormRow('Seniority',cpSelect('cp-seniority',senOpts))+
+        '<div class="cp-form-2col">'+
+        cpFormRow('City',cpInput('cp-city','City',data.city||c.city||''))+
+        cpFormRow('Country',cpInput('cp-country','Country',data.country||c.country||'US'))+
+        '</div>';
+    }
+    if(step===3){
+      return '<div style="font-size:12px;color:var(--text3);margin-bottom:16px">Review changes</div>'+
+        '<table class="cp-summary-table">'+
+        cpSummaryRow('Name',(data.fn||'')+' '+(data.ln||''))+
+        cpSummaryRow('Role',data.role)+
+        cpSummaryRow('Source',data.source)+
+        cpSummaryRow('Seniority',data.seniority)+
+        '</table>';
+    }
+  },
+  readStep:function(step,data){
+    if(step===1){data.candId=gv('cp-candId');}
+    if(step===2){data.fn=gv('cp-fn');data.ln=gv('cp-ln');data.role=gv('cp-role');data.source=gv('cp-source');data.seniority=gv('cp-seniority');data.city=gv('cp-city');data.country=gv('cp-country');}
+  },
+  save:async function(data){
+    var c=DB.candidates.find(function(x){return x.id===data.candId;});
+    if(!c)throw new Error('Candidate not found');
+    c.name=(data.fn+' '+data.ln).trim();c.role=data.role;c.source=data.source;c.seniority=data.seniority;c.city=data.city;c.country=data.country;touch(c);
+    await save('candidates');
+    if(currentPage==='hiring')refreshHiringView();
+  }
+};
+
+// move-stage
+CP_FLOWS['move-stage']={
+  totalSteps:function(){return 2;},
+  successMsg:'Stage updated',
+  renderStep:function(step,data){
+    if(step===1){
+      var stOpts='';STAGES.forEach(function(s){stOpts+='<option'+(s===data.stage?' selected':'')+'>'+s+'</option>';});
+      return cpFormRow('Candidate',cpSelect('cp-candId',cpCandOpts(data.candId)))+
+        cpFormRow('New stage',cpSelect('cp-stage',stOpts));
+    }
+    if(step===2){
+      var c=DB.candidates.find(function(x){return x.id===data.candId;})||{name:'?'};
+      return '<table class="cp-summary-table">'+cpSummaryRow('Candidate',c.name)+cpSummaryRow('New stage',data.stage)+'</table>';
+    }
+  },
+  readStep:function(step,data){if(step===1){data.candId=gv('cp-candId');data.stage=gv('cp-stage');}},
+  save:async function(data){await moveStage(data.candId,data.stage);}
+};
+
+// set-cand-status
+CP_FLOWS['set-cand-status']={
+  totalSteps:function(){return 2;},
+  successMsg:'Status updated',
+  renderStep:function(step,data){
+    if(step===1){
+      var statuses=getList('candStatus').filter(function(s){return s!=='Hired';});
+      var csOpts='';statuses.forEach(function(s){csOpts+='<option'+(s===data.candStatus?' selected':'')+'>'+s+'</option>';});
+      return cpFormRow('Candidate',cpSelect('cp-candId',cpCandOpts(data.candId)))+
+        cpFormRow('Status',cpSelect('cp-candStatus',csOpts));
+    }
+    if(step===2){
+      var c=DB.candidates.find(function(x){return x.id===data.candId;})||{name:'?'};
+      return '<table class="cp-summary-table">'+cpSummaryRow('Candidate',c.name)+cpSummaryRow('Status',data.candStatus)+'</table>';
+    }
+  },
+  readStep:function(step,data){if(step===1){data.candId=gv('cp-candId');data.candStatus=gv('cp-candStatus');}},
+  save:async function(data){await setCandStatus(data.candId,data.candStatus);}
+};
+
+// promote-to-employee
+CP_FLOWS['promote-to-employee']={
+  totalSteps:function(){return 3;},
+  successMsg:'Promoted to employee',
+  confirmLabel:'Promote',
+  renderStep:function(step,data){
+    if(step===1){
+      var openCands=DB.candidates.filter(function(c){return c.stage!=='hired';});
+      var candOpts='<option value="">-- Select candidate --</option>';
+      openCands.forEach(function(c){candOpts+='<option value="'+c.id+'"'+(c.id===data.candId?' selected':'')+'>'+c.name+'</option>';});
+      return cpFormRow('Candidate',cpSelect('cp-candId',candOpts))+
+        cpFormRow('Start date',cpInput('cp-startDate','',data.startDate||today(),'date'))+
+        cpFormRow('Work email',cpInput('cp-email','name@vtwo.co',data.email||'','email'));
+    }
+    if(step===2){
+      var deptOpts='';getList('department').forEach(function(s){deptOpts+='<option'+(s===data.dept?' selected':'')+'>'+s+'</option>';});
+      return cpFormRow('Department',cpSelect('cp-dept',deptOpts))+
+        cpFormRow('Location',cpInput('cp-location','City or Remote',data.location||''))+
+        cpFormRow('Manager',cpSelect('cp-mgr',cpEmpOpts(data.mgrId,true)))+
+        cpFormRow('Buddy',cpSelect('cp-buddy',cpEmpOpts(data.buddyId,true)))+
+        cpFormRow('Client',cpInput('cp-client','Client name',data.client||''));
+    }
+    if(step===3){
+      var c=DB.candidates.find(function(x){return x.id===data.candId;})||{name:'?'};
+      return '<div style="font-size:12px;color:var(--text3);margin-bottom:16px">Confirm promotion</div>'+
+        '<table class="cp-summary-table">'+
+        cpSummaryRow('Candidate',c.name)+
+        cpSummaryRow('Start date',data.startDate)+
+        cpSummaryRow('Email',data.email)+
+        cpSummaryRow('Department',data.dept)+
+        cpSummaryRow('Location',data.location)+
+        '</table>';
+    }
+  },
+  readStep:function(step,data){
+    if(step===1){data.candId=gv('cp-candId');data.startDate=gv('cp-startDate');data.email=gv('cp-email');}
+    if(step===2){data.dept=gv('cp-dept');data.location=gv('cp-location');data.mgrId=gv('cp-mgr');data.buddyId=gv('cp-buddy');data.client=gv('cp-client');}
+  },
+  save:async function(data){
+    var c=DB.candidates.find(function(x){return x.id===data.candId;});
+    if(!c)throw new Error('Candidate not found');
+    c.candStatus='Hired';c.stage='hired';touch(c);
+    var mgrEmp=data.mgrId?DB.employees.find(function(x){return x.id===data.mgrId;}):null;
+    var buddyEmp=data.buddyId?DB.employees.find(function(x){return x.id===data.buddyId;}):null;
+    var mgrName=mgrEmp?mgrEmp.name:'TBD';
+    var buddyName=buddyEmp?buddyEmp.name:'';
+    var status=(!data.startDate||new Date(data.startDate)>new Date())?'onboarding':'active';
+    var ne={id:uid(),name:c.name,role:c.role,dept:data.dept,status:status,client:data.client,location:data.location,city:c.city||'',state:c.state||'',country:c.country||'US',manager:mgrName,buddy:buddyName,startDate:data.startDate,email:data.email,phone:'—'};
+    DB.employees.push(ne);
+    DB.activities.unshift({id:uid(),type:'hire',desc:c.name+' promoted to employee',at:now()});
+    await save('candidates');await save('employees');await save('activities');
+    if(currentPage==='hiring')refreshHiringView();
+    if(currentPage==='directory')renderDirectory();
+  }
+};
+
+// delete-cand
+CP_FLOWS['delete-cand']={
+  totalSteps:function(){return 2;},
+  successMsg:'Candidate deleted',
+  confirmLabel:'Delete',
+  renderStep:function(step,data){
+    if(step===1){return cpFormRow('Candidate',cpSelect('cp-candId',cpCandOpts(data.candId)));}
+    if(step===2){
+      var c=DB.candidates.find(function(x){return x.id===data.candId;})||{name:'?'};
+      return '<div style="color:var(--red);font-weight:500;margin-bottom:12px">This will permanently delete the candidate and all their interviews.</div>'+
+        '<table class="cp-summary-table">'+cpSummaryRow('Candidate',c.name)+'</table>';
+    }
+  },
+  readStep:function(step,data){if(step===1){data.candId=gv('cp-candId');}},
+  save:async function(data){
+    DB.candidates=DB.candidates.filter(function(x){return x.id!==data.candId;});
+    DB.interviews=DB.interviews.filter(function(x){return x.candidateId!==data.candId;});
+    await save('candidates');await save('interviews');
+    if(currentPage==='hiring')refreshHiringView();
+  }
+};
+
+// schedule-multi-iv
+CP_FLOWS['schedule-multi-iv']={
+  totalSteps:function(data){return data.count?2+parseInt(data.count):3;},
+  successMsg:'Interviews scheduled',
+  renderStep:function(step,data){
+    if(step===1){
+      var cntOpts='<option'+(data.count==='1'?' selected':'')+' value="1">1</option><option'+(data.count==='2'?' selected':'')+' value="2">2</option><option'+(data.count==='3'?' selected':'')+' value="3">3</option>';
+      return cpFormRow('Candidate',cpSelect('cp-candId',cpCandOpts(data.candId)))+
+        cpFormRow('Number of interviews',cpSelect('cp-count',cntOpts));
+    }
+    if(step===2){
+      return '<div style="font-size:13px;color:var(--text2)">You are scheduling <strong>'+(data.count||1)+'</strong> interview(s). Fill in details for each on the next steps.</div>';
+    }
+    var ivIdx=step-3;
+    if(ivIdx>=0){
+      var ivTypeOpts='';IV_TYPES.forEach(function(t){ivTypeOpts+='<option'+((data['ivType'+ivIdx]||'')==t?' selected':'')+'>'+t+'</option>';});
+      return '<div style="font-size:12px;color:var(--text3);margin-bottom:12px">Interview '+(ivIdx+1)+' of '+data.count+'</div>'+
+        cpFormRow('Type',cpSelect('cp-iv-type-'+ivIdx,ivTypeOpts))+
+        cpFormRow('Interviewer',cpInput('cp-iv-int-'+ivIdx,'Name',data['ivInt'+ivIdx]||''))+
+        cpFormRow('Date',cpInput('cp-iv-date-'+ivIdx,'',data['ivDate'+ivIdx]||today(),'date'));
+    }
+    return '';
+  },
+  readStep:function(step,data){
+    if(step===1){data.candId=gv('cp-candId');data.count=gv('cp-count');}
+    var ivIdx=step-3;
+    if(ivIdx>=0){data['ivType'+ivIdx]=gv('cp-iv-type-'+ivIdx);data['ivInt'+ivIdx]=gv('cp-iv-int-'+ivIdx);data['ivDate'+ivIdx]=gv('cp-iv-date-'+ivIdx);}
+  },
+  save:async function(data){
+    var count=parseInt(data.count||1);
+    for(var i=0;i<count;i++){
+      DB.interviews.push({id:uid(),candidateId:data.candId,type:data['ivType'+i]||'Phone',interviewer:data['ivInt'+i]||'',date:data['ivDate'+i]||today(),score:null,notes:'',createdAt:now()});
+    }
+    await save('interviews');
+    if(currentPage==='hiring')refreshHiringView();
+  }
+};
+
+// add-emp
+CP_FLOWS['add-emp']={
+  totalSteps:function(){return 3;},
+  successMsg:'Employee added',
+  renderStep:function(step,data){
+    if(step===1){
+      return '<div class="cp-form-2col">'+
+        cpFormRow('First name',cpInput('cp-fn','First name',data.fn||''))+
+        cpFormRow('Last name',cpInput('cp-ln','Last name',data.ln||''))+
+        '</div>'+
+        cpFormRow('Role / title',cpInput('cp-role','e.g. Software Engineer',data.role||''))+
+        cpFormRow('Work email',cpInput('cp-email','name@vtwo.co',data.email||'','email'));
+    }
+    if(step===2){
+      var deptOpts='';getList('department').forEach(function(s){deptOpts+='<option'+(s===data.dept?' selected':'')+'>'+s+'</option>';});
+      return cpFormRow('Department',cpSelect('cp-dept',deptOpts))+
+        cpFormRow('Start date',cpInput('cp-startDate','',data.startDate||today(),'date'))+
+        '<div class="cp-form-2col">'+
+        cpFormRow('City',cpInput('cp-city','City',data.city||''))+
+        cpFormRow('Country',cpInput('cp-country','Country',data.country||'US'))+
+        '</div>'+
+        cpFormRow('Manager',cpSelect('cp-mgr',cpEmpOpts(data.mgrId,true)));
+    }
+    if(step===3){
+      return '<div style="font-size:12px;color:var(--text3);margin-bottom:16px">Review</div>'+
+        '<table class="cp-summary-table">'+
+        cpSummaryRow('Name',(data.fn||'')+' '+(data.ln||''))+
+        cpSummaryRow('Role',data.role)+
+        cpSummaryRow('Email',data.email)+
+        cpSummaryRow('Department',data.dept)+
+        cpSummaryRow('Start date',data.startDate)+
+        cpSummaryRow('Location',(data.city||'')+(data.country?', '+data.country:''))+
+        '</table>';
+    }
+  },
+  readStep:function(step,data){
+    if(step===1){data.fn=gv('cp-fn');data.ln=gv('cp-ln');data.role=gv('cp-role');data.email=gv('cp-email');}
+    if(step===2){data.dept=gv('cp-dept');data.startDate=gv('cp-startDate');data.city=gv('cp-city');data.country=gv('cp-country');data.mgrId=gv('cp-mgr');}
+  },
+  save:async function(data){
+    var fn=data.fn||'';var ln=data.ln||'';
+    var mgrEmp=data.mgrId?DB.employees.find(function(x){return x.id===data.mgrId;}):null;
+    var mgr=mgrEmp?mgrEmp.name:'';
+    var ne={id:uid(),name:(fn+' '+ln).trim(),role:data.role,dept:data.dept,status:'active',location:data.city||'Remote',city:data.city,state:'',country:data.country||'US',manager:mgr,startDate:data.startDate,email:data.email||(fn.toLowerCase()+'@vtwo.co'),phone:'—'};
+    DB.employees.push(ne);
+    DB.activities.unshift({id:uid(),type:'hire',desc:ne.name+' added to directory',at:now()});
+    await save('employees');await save('activities');
+    if(currentPage==='directory')renderDirectory();
+  }
+};
+
+// edit-emp
+CP_FLOWS['edit-emp']={
+  totalSteps:function(){return 3;},
+  successMsg:'Employee updated',
+  renderStep:function(step,data){
+    if(step===1){return cpFormRow('Employee',cpSelect('cp-empId',cpEmpOpts(data.empId,false)));}
+    if(step===2){
+      var e=DB.employees.find(function(x){return x.id===data.empId;})||{};
+      var fn=data.fn!=null?data.fn:(e.name?e.name.split(' ')[0]:'');
+      var ln=data.ln!=null?data.ln:(e.name?e.name.split(' ').slice(1).join(' '):'');
+      var deptOpts='';getList('department').forEach(function(s){deptOpts+='<option'+(s===(data.dept||e.dept)?' selected':'')+'>'+s+'</option>';});
+      var stOpts='<option'+(('active'===(data.status||e.status))?' selected':'')+'>active</option><option'+(('onboarding'===(data.status||e.status))?' selected':'')+'>onboarding</option><option'+(('inactive'===(data.status||e.status))?' selected':'')+'>inactive</option>';
+      return '<div class="cp-form-2col">'+
+        cpFormRow('First name',cpInput('cp-fn','First name',fn))+
+        cpFormRow('Last name',cpInput('cp-ln','Last name',ln))+
+        '</div>'+
+        cpFormRow('Role',cpInput('cp-role','Role',data.role||e.role||''))+
+        cpFormRow('Department',cpSelect('cp-dept',deptOpts))+
+        cpFormRow('Location',cpInput('cp-location','City or Remote',data.location||e.location||''))+
+        cpFormRow('Status',cpSelect('cp-status',stOpts));
+    }
+    if(step===3){
+      return '<div style="font-size:12px;color:var(--text3);margin-bottom:16px">Review changes</div>'+
+        '<table class="cp-summary-table">'+
+        cpSummaryRow('Name',(data.fn||'')+' '+(data.ln||''))+
+        cpSummaryRow('Role',data.role)+
+        cpSummaryRow('Department',data.dept)+
+        cpSummaryRow('Status',data.status)+
+        '</table>';
+    }
+  },
+  readStep:function(step,data){
+    if(step===1){data.empId=gv('cp-empId');}
+    if(step===2){data.fn=gv('cp-fn');data.ln=gv('cp-ln');data.role=gv('cp-role');data.dept=gv('cp-dept');data.location=gv('cp-location');data.status=gv('cp-status');}
+  },
+  save:async function(data){
+    var e=DB.employees.find(function(x){return x.id===data.empId;});
+    if(!e)throw new Error('Employee not found');
+    e.name=(data.fn+' '+data.ln).trim();e.role=data.role;e.dept=data.dept;e.location=data.location;e.status=data.status;
+    await save('employees');
+    if(currentPage==='directory')renderDirectory();
+  }
+};
+
+// offboard-emp
+CP_FLOWS['offboard-emp']={
+  totalSteps:function(){return 2;},
+  successMsg:'Offboarding started',
+  confirmLabel:'Start offboarding',
+  renderStep:function(step,data){
+    if(step===1){
+      return cpFormRow('Employee',cpSelect('cp-empId',cpEmpOpts(data.empId,false)))+
+        cpFormRow('Last day',cpInput('cp-lastDay','',data.lastDay||today(),'date'));
+    }
+    if(step===2){
+      var e=DB.employees.find(function(x){return x.id===data.empId;})||{name:'?'};
+      return '<table class="cp-summary-table">'+cpSummaryRow('Employee',e.name)+cpSummaryRow('Last day',data.lastDay)+'</table>';
+    }
+  },
+  readStep:function(step,data){if(step===1){data.empId=gv('cp-empId');data.lastDay=gv('cp-lastDay');}},
+  save:async function(data){
+    var e=DB.employees.find(function(x){return x.id===data.empId;});
+    if(!e)throw new Error('Employee not found');
+    e.status='inactive';e.lastDay=data.lastDay;
+    var offTrack=DB.tracks.find(function(t){return t.type==='offboarding';});
+    if(offTrack){
+      var runId=uid();
+      DB.onboardingRuns.push({id:runId,employeeId:data.empId,trackId:offTrack.id,type:'offboarding',status:'active',startDate:today()});
+      var newTasks=getTrackTasks(offTrack.id).map(function(tt){
+        var due=new Date(today());due.setDate(due.getDate()+parseInt(tt.dueDaysOffset||0));
+        return{id:uid(),runId:runId,name:tt.name,ownerRole:tt.ownerRole,status:'pending',dueDate:due.toISOString().split('T')[0]};
+      });
+      DB.runTasks.push.apply(DB.runTasks,newTasks);
+      await save('onboardingRuns');await save('runTasks');
+    }
+    await save('employees');
+    if(currentPage==='directory')renderDirectory();
+    if(currentPage==='offboarding')renderOffboarding();
+  }
+};
+
+// delete-emp
+CP_FLOWS['delete-emp']={
+  totalSteps:function(){return 2;},
+  successMsg:'Employee deleted',
+  confirmLabel:'Delete',
+  renderStep:function(step,data){
+    if(step===1){return cpFormRow('Employee',cpSelect('cp-empId',cpEmpOpts(data.empId,false)));}
+    if(step===2){
+      var e=DB.employees.find(function(x){return x.id===data.empId;})||{name:'?'};
+      return '<div style="color:var(--red);font-weight:500;margin-bottom:12px">This will permanently delete the employee record.</div>'+
+        '<table class="cp-summary-table">'+cpSummaryRow('Employee',e.name)+'</table>';
+    }
+  },
+  readStep:function(step,data){if(step===1){data.empId=gv('cp-empId');}},
+  save:async function(data){doDeleteEmp(data.empId);}
+};
+
+// add-iv
+CP_FLOWS['add-iv']={
+  totalSteps:function(){return 2;},
+  successMsg:'Interview added',
+  renderStep:function(step,data){
+    if(step===1){
+      var ivTypeOpts='';IV_TYPES.forEach(function(t){ivTypeOpts+='<option'+(t===data.ivType?' selected':'')+'>'+t+'</option>';});
+      return cpFormRow('Candidate',cpSelect('cp-candId',cpCandOpts(data.candId)))+
+        cpFormRow('Type',cpSelect('cp-ivType',ivTypeOpts))+
+        cpFormRow('Interviewer',cpInput('cp-interviewer','Name',data.interviewer||''))+
+        cpFormRow('Date',cpInput('cp-ivDate','',data.ivDate||today(),'date'));
+    }
+    if(step===2){
+      var c=DB.candidates.find(function(x){return x.id===data.candId;})||{name:'?'};
+      return '<table class="cp-summary-table">'+
+        cpSummaryRow('Candidate',c.name)+
+        cpSummaryRow('Type',data.ivType)+
+        cpSummaryRow('Interviewer',data.interviewer)+
+        cpSummaryRow('Date',data.ivDate)+
+        '</table>';
+    }
+  },
+  readStep:function(step,data){if(step===1){data.candId=gv('cp-candId');data.ivType=gv('cp-ivType');data.interviewer=gv('cp-interviewer');data.ivDate=gv('cp-ivDate');}},
+  save:async function(data){
+    DB.interviews.push({id:uid(),candidateId:data.candId,type:data.ivType,interviewer:data.interviewer,date:data.ivDate,score:null,notes:'',createdAt:now()});
+    await save('interviews');
+    if(currentPage==='hiring')refreshHiringView();
+  }
+};
+
+// edit-iv
+CP_FLOWS['edit-iv']={
+  totalSteps:function(){return 3;},
+  successMsg:'Interview updated',
+  renderStep:function(step,data){
+    if(step===1){return cpFormRow('Candidate',cpSelect('cp-candId',cpCandOpts(data.candId)));}
+    if(step===2){return cpFormRow('Interview',cpSelect('cp-ivId',cpIvOpts(data.candId,data.ivId)));}
+    if(step===3){
+      var iv=DB.interviews.find(function(x){return x.id===data.ivId;})||{};
+      var ivTypeOpts='';IV_TYPES.forEach(function(t){ivTypeOpts+='<option'+(t===(data.ivType||iv.type)?' selected':'')+'>'+t+'</option>';});
+      var scoreOpts='<option value="">--</option>';
+      [['1','No hire'],['2','Lean no'],['3','Maybe'],['4','Lean yes'],['5','Strong hire']].forEach(function(p){
+        scoreOpts+='<option value="'+p[0]+'"'+(String(data.score||iv.score||'')==p[0]?' selected':'')+'>'+p[1]+'</option>';
+      });
+      return cpFormRow('Type',cpSelect('cp-ivType',ivTypeOpts))+
+        cpFormRow('Interviewer',cpInput('cp-interviewer','Name',data.interviewer||iv.interviewer||''))+
+        cpFormRow('Date',cpInput('cp-ivDate','',data.ivDate||iv.date||today(),'date'))+
+        cpFormRow('Score',cpSelect('cp-score',scoreOpts));
+    }
+  },
+  readStep:function(step,data){
+    if(step===1){data.candId=gv('cp-candId');}
+    if(step===2){data.ivId=gv('cp-ivId');}
+    if(step===3){data.ivType=gv('cp-ivType');data.interviewer=gv('cp-interviewer');data.ivDate=gv('cp-ivDate');data.score=gv('cp-score');}
+  },
+  save:async function(data){
+    var iv=DB.interviews.find(function(x){return x.id===data.ivId;});
+    if(!iv)throw new Error('Interview not found');
+    iv.type=data.ivType;iv.interviewer=data.interviewer;iv.date=data.ivDate;if(data.score)iv.score=parseInt(data.score);
+    await save('interviews');
+    if(currentPage==='hiring')refreshHiringView();
+  }
+};
+
+// delete-iv
+CP_FLOWS['delete-iv']={
+  totalSteps:function(){return 3;},
+  successMsg:'Interview deleted',
+  confirmLabel:'Delete',
+  renderStep:function(step,data){
+    if(step===1){return cpFormRow('Candidate',cpSelect('cp-candId',cpCandOpts(data.candId)));}
+    if(step===2){return cpFormRow('Interview',cpSelect('cp-ivId',cpIvOpts(data.candId,data.ivId)));}
+    if(step===3){
+      var iv=DB.interviews.find(function(x){return x.id===data.ivId;})||{type:'?',date:'?'};
+      return '<div style="color:var(--red);font-weight:500;margin-bottom:12px">Delete this interview?</div>'+
+        '<table class="cp-summary-table">'+cpSummaryRow('Interview',iv.type+' on '+iv.date)+'</table>';
+    }
+  },
+  readStep:function(step,data){
+    if(step===1){data.candId=gv('cp-candId');}
+    if(step===2){data.ivId=gv('cp-ivId');}
+  },
+  save:async function(data){deleteIv(data.ivId,data.candId);}
+};
+
+// add-device
+CP_FLOWS['add-device']={
+  totalSteps:function(){return 2;},
+  successMsg:'Device added',
+  renderStep:function(step,data){
+    if(step===1){
+      var devTypeOpts='';getList('deviceType').forEach(function(s){devTypeOpts+='<option'+(s===data.devType?' selected':'')+'>'+s+'</option>';});
+      return cpFormRow('Device name',cpInput('cp-devName','e.g. MacBook Pro 14"',data.devName||''))+
+        cpFormRow('Type',cpSelect('cp-devType',devTypeOpts))+
+        cpFormRow('Model',cpInput('cp-model','Model',data.model||''))+
+        cpFormRow('Serial number',cpInput('cp-serial','Serial',data.serial||''))+
+        cpFormRow('Purchase date',cpInput('cp-purchaseDate','',data.purchaseDate||today(),'date'));
+    }
+    if(step===2){
+      return '<table class="cp-summary-table">'+
+        cpSummaryRow('Name',data.devName)+
+        cpSummaryRow('Type',data.devType)+
+        cpSummaryRow('Model',data.model)+
+        cpSummaryRow('Serial',data.serial)+
+        '</table>';
+    }
+  },
+  readStep:function(step,data){if(step===1){data.devName=gv('cp-devName');data.devType=gv('cp-devType');data.model=gv('cp-model');data.serial=gv('cp-serial');data.purchaseDate=gv('cp-purchaseDate');}},
+  save:async function(data){
+    DB.devices.push({id:uid(),name:data.devName,type:data.devType,model:data.model,serial:data.serial,status:'available',assignedTo:null,purchaseDate:data.purchaseDate,location:'Office',notes:''});
+    await save('devices');
+    if(currentPage==='inventory')renderInventory();
+  }
+};
+
+// edit-device
+CP_FLOWS['edit-device']={
+  totalSteps:function(){return 3;},
+  successMsg:'Device updated',
+  renderStep:function(step,data){
+    if(step===1){return cpFormRow('Device',cpSelect('cp-devId',cpDevOpts(data.devId,null)));}
+    if(step===2){
+      var d=DB.devices.find(function(x){return x.id===data.devId;})||{};
+      var devTypeOpts='';getList('deviceType').forEach(function(s){devTypeOpts+='<option'+(s===(data.devType||d.type)?' selected':'')+'>'+s+'</option>';});
+      return cpFormRow('Device name',cpInput('cp-devName','Name',data.devName||d.name||''))+
+        cpFormRow('Type',cpSelect('cp-devType',devTypeOpts))+
+        cpFormRow('Model',cpInput('cp-model','Model',data.model||d.model||''))+
+        cpFormRow('Location',cpInput('cp-location','Location',data.location||d.location||''));
+    }
+    if(step===3){
+      return '<table class="cp-summary-table">'+
+        cpSummaryRow('Name',data.devName)+
+        cpSummaryRow('Type',data.devType)+
+        cpSummaryRow('Model',data.model)+
+        '</table>';
+    }
+  },
+  readStep:function(step,data){
+    if(step===1){data.devId=gv('cp-devId');}
+    if(step===2){data.devName=gv('cp-devName');data.devType=gv('cp-devType');data.model=gv('cp-model');data.location=gv('cp-location');}
+  },
+  save:async function(data){
+    var d=DB.devices.find(function(x){return x.id===data.devId;});
+    if(!d)throw new Error('Device not found');
+    d.name=data.devName;d.type=data.devType;d.model=data.model;d.location=data.location;
+    await save('devices');
+    if(currentPage==='inventory')renderInventory();
+  }
+};
+
+// assign-device
+CP_FLOWS['assign-device']={
+  totalSteps:function(){return 2;},
+  successMsg:'Device assigned',
+  renderStep:function(step,data){
+    if(step===1){
+      return cpFormRow('Device (available only)',cpSelect('cp-devId',cpDevOpts(data.devId,'available')))+
+        cpFormRow('Employee',cpSelect('cp-empId',cpEmpOpts(data.empId,false)));
+    }
+    if(step===2){
+      var d=DB.devices.find(function(x){return x.id===data.devId;})||{name:'?'};
+      var e=DB.employees.find(function(x){return x.id===data.empId;})||{name:'?'};
+      return '<table class="cp-summary-table">'+cpSummaryRow('Device',d.name)+cpSummaryRow('Assign to',e.name)+'</table>';
+    }
+  },
+  readStep:function(step,data){if(step===1){data.devId=gv('cp-devId');data.empId=gv('cp-empId');}},
+  save:async function(data){
+    var d=DB.devices.find(function(x){return x.id===data.devId;});
+    var e=DB.employees.find(function(x){return x.id===data.empId;});
+    if(!d||!e)throw new Error('Device or employee not found');
+    d.status='assigned';d.assignedTo=data.empId;
+    DB.assignments.push({id:uid(),employeeId:data.empId,deviceId:data.devId,assignedAt:now(),status:'active'});
+    DB.activities.unshift({id:uid(),type:'device',desc:d.name+' assigned to '+e.name,at:now()});
+    await save('devices');await save('assignments');await save('activities');
+    if(currentPage==='inventory')renderInventory();
+    if(currentPage==='assignments')renderAssignments();
+  }
+};
+
+// return-device
+CP_FLOWS['return-device']={
+  totalSteps:function(){return 2;},
+  successMsg:'Device returned',
+  renderStep:function(step,data){
+    if(step===1){return cpFormRow('Device (assigned only)',cpSelect('cp-devId',cpDevOpts(data.devId,'assigned')));}
+    if(step===2){
+      var d=DB.devices.find(function(x){return x.id===data.devId;})||{name:'?'};
+      return '<table class="cp-summary-table">'+cpSummaryRow('Device',d.name)+'</table>';
+    }
+  },
+  readStep:function(step,data){if(step===1){data.devId=gv('cp-devId');}},
+  save:async function(data){await doReturnDevice(data.devId);}
+};
+
+// delete-device
+CP_FLOWS['delete-device']={
+  totalSteps:function(){return 2;},
+  successMsg:'Device deleted',
+  confirmLabel:'Delete',
+  renderStep:function(step,data){
+    if(step===1){return cpFormRow('Device',cpSelect('cp-devId',cpDevOpts(data.devId,null)));}
+    if(step===2){
+      var d=DB.devices.find(function(x){return x.id===data.devId;})||{name:'?'};
+      return '<div style="color:var(--red);font-weight:500;margin-bottom:12px">Delete this device?</div>'+
+        '<table class="cp-summary-table">'+cpSummaryRow('Device',d.name)+'</table>';
+    }
+  },
+  readStep:function(step,data){if(step===1){data.devId=gv('cp-devId');}},
+  save:async function(data){await doDeleteDevice(data.devId);}
+};
+
+// start-run
+CP_FLOWS['start-run']={
+  totalSteps:function(){return 2;},
+  successMsg:'Onboarding started',
+  renderStep:function(step,data){
+    if(step===1){
+      var onbTracks=DB.tracks.filter(function(t){return t.type==='onboarding'||!t.type;});
+      var tOpts='<option value="">-- Select track --</option>';
+      onbTracks.forEach(function(t){tOpts+='<option value="'+t.id+'"'+(t.id===data.trackId?' selected':'')+'>'+t.name+'</option>';});
+      return cpFormRow('Employee',cpSelect('cp-empId',cpEmpOpts(data.empId,false)))+
+        cpFormRow('Track',cpSelect('cp-trackId',tOpts))+
+        cpFormRow('Start date',cpInput('cp-startDate','',data.startDate||today(),'date'));
+    }
+    if(step===2){
+      var e=DB.employees.find(function(x){return x.id===data.empId;})||{name:'?'};
+      var t=DB.tracks.find(function(x){return x.id===data.trackId;})||{name:'?'};
+      return '<table class="cp-summary-table">'+
+        cpSummaryRow('Employee',e.name)+
+        cpSummaryRow('Track',t.name)+
+        cpSummaryRow('Start date',data.startDate)+
+        '</table>';
+    }
+  },
+  readStep:function(step,data){if(step===1){data.empId=gv('cp-empId');data.trackId=gv('cp-trackId');data.startDate=gv('cp-startDate');}},
+  save:async function(data){
+    var runId=uid();
+    DB.onboardingRuns.push({id:runId,employeeId:data.empId,trackId:data.trackId,type:'onboarding',status:'active',startDate:data.startDate});
+    var newTasks=getTrackTasks(data.trackId).map(function(tt){
+      var due=new Date(data.startDate);due.setDate(due.getDate()+parseInt(tt.dueDaysOffset||0));
+      return{id:uid(),runId:runId,name:tt.name,ownerRole:tt.ownerRole,status:'pending',dueDate:due.toISOString().split('T')[0]};
+    });
+    DB.runTasks.push.apply(DB.runTasks,newTasks);
+    await save('onboardingRuns');await save('runTasks');
+    if(currentPage==='onboarding')renderOnboarding();
+  }
+};
+
+// edit-run-task
+CP_FLOWS['edit-run-task']={
+  totalSteps:function(){return 3;},
+  successMsg:'Task updated',
+  renderStep:function(step,data){
+    if(step===1){return cpFormRow('Onboarding run',cpSelect('cp-runId',cpRunOpts(data.runId)));}
+    if(step===2){return cpFormRow('Task',cpSelect('cp-taskId',cpRunTaskOpts(data.runId,data.taskId)));}
+    if(step===3){
+      var t=DB.runTasks.find(function(x){return x.id===data.taskId;})||{};
+      var stOpts='<option'+(('pending'===(data.taskStatus||t.status))?' selected':'')+'>pending</option><option'+(('in-progress'===(data.taskStatus||t.status))?' selected':'')+'>in-progress</option><option'+(('done'===(data.taskStatus||t.status))?' selected':'')+'>done</option>';
+      return cpFormRow('Status',cpSelect('cp-taskStatus',stOpts))+
+        cpFormRow('Due date',cpInput('cp-dueDate','',data.dueDate||t.dueDate||today(),'date'))+
+        cpFormRow('Notes',cpInput('cp-taskNotes','Notes',data.taskNotes||t.notes||''));
+    }
+  },
+  readStep:function(step,data){
+    if(step===1){data.runId=gv('cp-runId');}
+    if(step===2){data.taskId=gv('cp-taskId');}
+    if(step===3){data.taskStatus=gv('cp-taskStatus');data.dueDate=gv('cp-dueDate');data.taskNotes=gv('cp-taskNotes');}
+  },
+  save:async function(data){
+    var t=DB.runTasks.find(function(x){return x.id===data.taskId;});
+    if(!t)throw new Error('Task not found');
+    t.status=data.taskStatus;t.dueDate=data.dueDate;t.notes=data.taskNotes;
+    await save('runTasks');
+    if(currentPage==='onboarding')renderOnboarding();
+    if(currentPage==='offboarding')renderOffboarding();
+  }
+};
+
+// add-track
+CP_FLOWS['add-track']={
+  totalSteps:function(){return 2;},
+  successMsg:'Track created',
+  renderStep:function(step,data){
+    if(step===1){
+      var tTypeOpts='<option'+(data.trackType==='onboarding'?' selected':'')+'>onboarding</option><option'+(data.trackType==='offboarding'?' selected':'')+'>offboarding</option>';
+      return cpFormRow('Track name',cpInput('cp-trackName','e.g. Engineering Onboarding',data.trackName||''))+
+        cpFormRow('Type',cpSelect('cp-trackType',tTypeOpts))+
+        cpFormRow('Description',cpInput('cp-trackDesc','Brief description',data.trackDesc||''));
+    }
+    if(step===2){
+      return '<table class="cp-summary-table">'+
+        cpSummaryRow('Name',data.trackName)+
+        cpSummaryRow('Type',data.trackType)+
+        cpSummaryRow('Description',data.trackDesc)+
+        '</table>';
+    }
+  },
+  readStep:function(step,data){if(step===1){data.trackName=gv('cp-trackName');data.trackType=gv('cp-trackType');data.trackDesc=gv('cp-trackDesc');}},
+  save:async function(data){
+    var nt={id:uid(),name:data.trackName,type:data.trackType,description:data.trackDesc,createdAt:now()};
+    DB.tracks.push(nt);
+    selectedTrackId=nt.id;
+    await save('tracks');
+    if(currentPage==='tracks')renderTracks();
+  }
+};
+
+// edit-track
+CP_FLOWS['edit-track']={
+  totalSteps:function(){return 3;},
+  successMsg:'Track updated',
+  renderStep:function(step,data){
+    if(step===1){return cpFormRow('Track',cpSelect('cp-trackId',cpTrackOpts(data.trackId)));}
+    if(step===2){
+      var t=DB.tracks.find(function(x){return x.id===data.trackId;})||{};
+      var tTypeOpts='<option'+(('onboarding'===(data.trackType||t.type))?' selected':'')+'>onboarding</option><option'+(('offboarding'===(data.trackType||t.type))?' selected':'')+'>offboarding</option>';
+      return cpFormRow('Track name',cpInput('cp-trackName','Name',data.trackName||t.name||''))+
+        cpFormRow('Type',cpSelect('cp-trackType',tTypeOpts))+
+        cpFormRow('Description',cpInput('cp-trackDesc','Description',data.trackDesc||t.description||''));
+    }
+    if(step===3){
+      return '<table class="cp-summary-table">'+cpSummaryRow('Name',data.trackName)+cpSummaryRow('Type',data.trackType)+'</table>';
+    }
+  },
+  readStep:function(step,data){
+    if(step===1){data.trackId=gv('cp-trackId');}
+    if(step===2){data.trackName=gv('cp-trackName');data.trackType=gv('cp-trackType');data.trackDesc=gv('cp-trackDesc');}
+  },
+  save:async function(data){
+    var t=DB.tracks.find(function(x){return x.id===data.trackId;});
+    if(!t)throw new Error('Track not found');
+    t.name=data.trackName;t.type=data.trackType;t.description=data.trackDesc;
+    await save('tracks');
+    if(currentPage==='tracks')renderTracks();
+  }
+};
+
+// add-task
+CP_FLOWS['add-task']={
+  totalSteps:function(){return 2;},
+  successMsg:'Task added',
+  renderStep:function(step,data){
+    if(step===1){
+      var roleOpts='';getList('ownerRole').forEach(function(s){roleOpts+='<option'+(s===data.ownerRole?' selected':'')+'>'+s+'</option>';});
+      return cpFormRow('Track',cpSelect('cp-trackId',cpTrackOpts(data.trackId)))+
+        cpFormRow('Task name',cpInput('cp-taskName','e.g. IT equipment setup',data.taskName||''))+
+        cpFormRow('Owner role',cpSelect('cp-ownerRole',roleOpts))+
+        cpFormRow('Due (days from start)',cpInput('cp-dueDays','0',data.dueDays||'0','number'));
+    }
+    if(step===2){
+      var t=DB.tracks.find(function(x){return x.id===data.trackId;})||{name:'?'};
+      return '<table class="cp-summary-table">'+
+        cpSummaryRow('Track',t.name)+
+        cpSummaryRow('Task',data.taskName)+
+        cpSummaryRow('Owner',data.ownerRole)+
+        cpSummaryRow('Due offset',data.dueDays+' days')+
+        '</table>';
+    }
+  },
+  readStep:function(step,data){if(step===1){data.trackId=gv('cp-trackId');data.taskName=gv('cp-taskName');data.ownerRole=gv('cp-ownerRole');data.dueDays=gv('cp-dueDays');}},
+  save:async function(data){
+    var taskCount=getTrackTasks(data.trackId).length;
+    DB.tasks.push({id:uid(),trackId:data.trackId,name:data.taskName,ownerRole:data.ownerRole,dueDaysOffset:parseInt(data.dueDays||0),order:taskCount+1});
+    await save('tasks');
+    if(currentPage==='tracks')renderTracks();
+  }
+};
+
+// edit-task
+CP_FLOWS['edit-task']={
+  totalSteps:function(){return 3;},
+  successMsg:'Task updated',
+  renderStep:function(step,data){
+    if(step===1){return cpFormRow('Track',cpSelect('cp-trackId',cpTrackOpts(data.trackId)));}
+    if(step===2){return cpFormRow('Task',cpSelect('cp-taskId',cpTrackTaskOpts(data.trackId,data.taskId)));}
+    if(step===3){
+      var t=DB.tasks.find(function(x){return x.id===data.taskId;})||{};
+      var roleOpts='';getList('ownerRole').forEach(function(s){roleOpts+='<option'+(s===(data.ownerRole||t.ownerRole)?' selected':'')+'>'+s+'</option>';});
+      return cpFormRow('Task name',cpInput('cp-taskName','Name',data.taskName||t.name||''))+
+        cpFormRow('Owner role',cpSelect('cp-ownerRole',roleOpts))+
+        cpFormRow('Due (days from start)',cpInput('cp-dueDays','0',data.dueDays!=null?String(data.dueDays):String(t.dueDaysOffset||0),'number'));
+    }
+  },
+  readStep:function(step,data){
+    if(step===1){data.trackId=gv('cp-trackId');}
+    if(step===2){data.taskId=gv('cp-taskId');}
+    if(step===3){data.taskName=gv('cp-taskName');data.ownerRole=gv('cp-ownerRole');data.dueDays=gv('cp-dueDays');}
+  },
+  save:async function(data){
+    var t=DB.tasks.find(function(x){return x.id===data.taskId;});
+    if(!t)throw new Error('Task not found');
+    t.name=data.taskName;t.ownerRole=data.ownerRole;t.dueDaysOffset=parseInt(data.dueDays||0);
+    await save('tasks');
+    if(currentPage==='tracks')renderTracks();
+  }
+};
+
+// delete-task
+CP_FLOWS['delete-task']={
+  totalSteps:function(){return 3;},
+  successMsg:'Task deleted',
+  confirmLabel:'Delete',
+  renderStep:function(step,data){
+    if(step===1){return cpFormRow('Track',cpSelect('cp-trackId',cpTrackOpts(data.trackId)));}
+    if(step===2){return cpFormRow('Task',cpSelect('cp-taskId',cpTrackTaskOpts(data.trackId,data.taskId)));}
+    if(step===3){
+      var t=DB.tasks.find(function(x){return x.id===data.taskId;})||{name:'?'};
+      return '<div style="color:var(--red);font-weight:500;margin-bottom:12px">Delete this task?</div>'+
+        '<table class="cp-summary-table">'+cpSummaryRow('Task',t.name)+'</table>';
+    }
+  },
+  readStep:function(step,data){
+    if(step===1){data.trackId=gv('cp-trackId');}
+    if(step===2){data.taskId=gv('cp-taskId');}
+  },
+  save:async function(data){deleteTask(data.taskId,data.trackId);}
+};
+
+// delete-track
+CP_FLOWS['delete-track']={
+  totalSteps:function(){return 2;},
+  successMsg:'Track deleted',
+  confirmLabel:'Delete',
+  renderStep:function(step,data){
+    if(step===1){return cpFormRow('Track',cpSelect('cp-trackId',cpTrackOpts(data.trackId)));}
+    if(step===2){
+      var t=DB.tracks.find(function(x){return x.id===data.trackId;})||{name:'?'};
+      var taskCount=getTrackTasks(data.trackId).length;
+      return '<div style="color:var(--red);font-weight:500;margin-bottom:12px">Delete track and its '+taskCount+' task(s)?</div>'+
+        '<table class="cp-summary-table">'+cpSummaryRow('Track',t.name)+'</table>';
+    }
+  },
+  readStep:function(step,data){if(step===1){data.trackId=gv('cp-trackId');}},
+  save:async function(data){
+    DB.tracks=DB.tracks.filter(function(x){return x.id!==data.trackId;});
+    DB.tasks=DB.tasks.filter(function(x){return x.trackId!==data.trackId;});
+    selectedTrackId=DB.tracks.length?DB.tracks[0].id:null;
+    await save('tracks');await save('tasks');
+    if(currentPage==='tracks')renderTracks();
+  }
+};
+
+// export-data
+CP_FLOWS['export-data']={
+  totalSteps:function(){return 1;},
+  successMsg:'Exported',
+  confirmLabel:'Export',
+  renderStep:function(){
+    return '<div style="font-size:13px;color:var(--text2)">Download a full JSON backup of all your data.</div>';
+  },
+  readStep:function(){},
+  save:async function(){exportData();}
+};
 
 // ── BOOT ──────────────────────────────────────────────────────────────────────
 (async()=>{
