@@ -1275,7 +1275,7 @@ function renderDirectory(){
       <div style="flex:1;overflow-y:auto" id="emp-list">
         <div class="table-wrap" style="border-radius:0;border-left:0;border-right:0">
           <table><thead><tr>
-            ${['name','role','dept','status','location','startDate','manager'].map(col=>`<th onclick="empSortBy('${col}')" class="${empSort.col===col?'sorted':''}">${{name:'Employee',role:'Role',dept:'Dept',status:'Status',location:'Location',startDate:'Start Date',manager:'Manager'}[col]}${empSort.col===col?`<span class="sort-arrow">${empSort.dir===1?'↑':'↓'}</span>`:''}</th>`).join('')}
+            ${['name','role','dept','status','location','phone','startDate','manager','buddy'].map(col=>`<th onclick="empSortBy('${col}')" class="${empSort.col===col?'sorted':''}">${{name:'Employee',role:'Role',dept:'Dept',status:'Status',location:'Location',phone:'Phone',startDate:'Start Date',manager:'Manager',buddy:'Buddy'}[col]}${empSort.col===col?`<span class="sort-arrow">${empSort.dir===1?'↑':'↓'}</span>`:''}</th>`).join('')}
           </tr></thead>
           <tbody id="emp-tbody">${empRows(DB.employees)}</tbody></table>
         </div>
@@ -1304,7 +1304,7 @@ function refreshEmpTable(){
 function empRows(list){
   return list.map(e=>`<tr class="clickable${selectedEmpId===e.id?' selected':''}" onclick="selectEmp('${e.id}')">
     <td>${personCell(e.name,e.email)}</td><td>${e.role}</td><td>${e.dept||'—'}</td>
-    <td>${statusPill(e.status)}</td><td>${e.state||'—'}</td><td>${e.startDate||'—'}</td><td>${e.manager||'—'}</td>
+    <td>${statusPill(e.status)}</td><td>${e.location||e.city||'—'}</td><td>${e.phone||'—'}</td><td>${e.startDate||'—'}</td><td>${e.manager||'—'}</td><td>${e.buddy||'—'}</td>
   </tr>`).join('');
 }
 
