@@ -689,7 +689,7 @@ function renderDashboard(){
     return{empId:emp.id,empName:emp.name,role:emp.role,daysSince,pct,completedTasks,totalTasks,dotColor,initials:(emp.name.match(/\b\w/g)||[]).join('')};
   }).filter(Boolean);
   // Upcoming start dates
-  const upcomingStarts=DB.employees.filter(e=>e.startDate&&new Date(e.startDate)>new Date()&&e.status==='active').map(e=>{
+  const upcomingStarts=DB.employees.filter(e=>e.startDate&&new Date(e.startDate)>new Date()).map(e=>{
     const daysAway=Math.ceil((new Date(e.startDate)-new Date())/86400000);
     return{empId:e.id,empName:e.name,role:e.role,startDate:e.startDate,daysAway,initials:(e.name.match(/\b\w/g)||[]).join('')};
   }).sort((a,b)=>new Date(a.startDate)-new Date(b.startDate));
