@@ -1,6 +1,6 @@
 # V.Two ATS/HRIS
 
-A single-file ATS (Applicant Tracking System) and HRIS (Human Resources Information System) prototype built with vanilla JavaScript and Google Sheets as the backend.
+A single-file ATS (Applicant Tracking System) and HRIS (Human Resources Information System) built with vanilla JavaScript and Google Sheets as the backend. Deployable to Cloudflare Pages with zero server infrastructure.
 
 ## Features
 
@@ -11,22 +11,41 @@ A single-file ATS (Applicant Tracking System) and HRIS (Human Resources Informat
 - **Reporting** — Pipeline analytics and source tracking
 - **Onboarding Tracks** — Reusable task templates for new hires
 
-## Setup
+## Stack
 
-1. Copy `config.example.js` to `config.js` and add your Google Sheets credentials
-2. Open `index.html` in a browser
-3. All data is stored in Google Sheets (no server required)
+- **Frontend**: Single `index.html` (vanilla JS, no build step, no framework)
+- **Database**: Google Sheets (native Google Sheets API, OAuth 2.0)
+- **Hosting**: Cloudflare Pages (free tier, auto-deploys from GitHub)
+- **Auth**: Google Service Account with JWT signing via Web Crypto API
 
-## Architecture
+## Quick Start (Local)
 
-- Single HTML file with embedded JavaScript and CSS
-- Mock data for demo purposes
-- Direct Google Sheets API integration for persistence
-- Responsive split-panel UI for detail views
+```bash
+cp config.example.js config.js  # Add your Google Sheets service account credentials
+python3 -m http.server 8080
+# Open http://localhost:8080
+```
+
+## Deployment (Cloudflare Pages)
+
+See **ARCHITECTURE.md** for full deployment instructions, including:
+- Creating a Google Sheet and sharing with service account
+- Setting up Cloudflare Pages environment variables
+- Auto-deploy workflow via GitHub
 
 ## Files
 
-- `index.html` — Complete working application
-- `config.example.js` — Template for credentials
-- `config.js` — Local credentials (git-ignored)
-- `.gitignore` — Excludes config.js from version control
+- `index.html` — Complete working application (140KB, all-in-one)
+- `build.js` — Cloudflare Pages build script (injects credentials at deploy time)
+- `config.example.js` — Template for local development
+- `config.js` — Generated at build time (Cloudflare) or manually for local (git-ignored)
+- `ARCHITECTURE.md` — Complete technical reference
+- `.gitignore` — Excludes credentials from version control
+
+## Architecture & Design Decisions
+
+See **ARCHITECTURE.md** for:
+- How authentication works (service account JWT flow)
+- Constraints and scaling limits (1-5 concurrent users)
+- When to graduate to a full backend
+- Deployment pattern (reusable for other internal tools)
