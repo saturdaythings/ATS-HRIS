@@ -570,8 +570,8 @@ async function loadAll(){
     try{
       const rows=await sheetsGet(SHEET_NAMES[key]);
       if(rows.length>0){DB[key]=rows;}
-      else{DB[key]=SEED[key]||[];if(DB[key].length)await sheetsSet(SHEET_NAMES[key],DB[key]);}
-    }catch(e){console.warn(key,e);DB[key]=SEED[key]||[];}
+      else{DB[key]=[];}
+    }catch(e){console.warn(key,e);DB[key]=[];}
   }));
   setSyncState('ok');
 }
