@@ -1377,27 +1377,34 @@ async function deleteEmp(id){
 }
 
 // ── ONBOARDING ────────────────────────────────────────────────────────────────
+function buildTrackCard(track,doneColor){
+  var stepsHtml='';
+  if(track.nextSteps.length>0){
+    stepsHtml='<div style="font-size:11px;color:var(--text2);font-weight:500;margin-bottom:8px">Next steps:</div><div>'+track.nextSteps.map(function(step){return'<div style="font-size:12px;color:var(--text);padding:6px 0;border-bottom:1px solid var(--border)">'+step+'</div>';}).join('')+'</div>';
+  }else{
+    stepsHtml='<div style="font-size:12px;color:'+doneColor+';font-weight:500">All tasks complete</div>';
+  }
+  return'<div class="card" style="margin-left:52px;margin-bottom:12px"><div style="font-weight:600;font-size:13px;margin-bottom:10px;color:var(--text)">'+track.trackName+' — '+track.pct+'% complete</div>'+stepsHtml+'</div>';
+}
+function buildGroupCard(emp,bgColor,textColor){
+  var ini=(emp.empName.match(/\b\w/g)||[]).join('');
+  var html='<div style="margin-bottom:24px"><div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;padding:12px;background:var(--bg);border-radius:var(--radius-lg)"><div style="width:40px;height:40px;border-radius:50%;background:'+bgColor+';color:'+textColor+';display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;flex-shrink:0">'+ini+'</div><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--text)">'+emp.empName+'</div><div style="font-size:12px;color:var(--text2)">'+emp.role+'</div></div></div>';
+  return html;
+}
 function renderOnboarding(){
   const p=document.getElementById('page');
   const groups=groupOnboardingByEmployee();
-  p.innerHTML=`<div class="page-header"><div><div class="page-title">Onboarding</div><div class="page-subtitle">${groups.length} active</div></div><button class="btn btn-primary" onclick="showStartRunModal('onboarding')">+ Start Run</button></div>
-  ${groups.length>0?groups.map(emp=>`
-    <div style="margin-bottom:24px">
-      <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;padding:12px;background:var(--bg);border-radius:var(--radius-lg)">
-        <div style="width:40px;height:40px;border-radius:50%;background:var(--accent-light);color:var(--accent-text);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;flex-shrink:0">${(emp.empName.match(/\b\w/g)||[]).join('')}</div>
-        <div style="flex:1">
-          <div style="font-size:14px;font-weight:600;color:var(--text)">${emp.empName}</div>
-          <div style="font-size:12px;color:var(--text2)">${emp.role}</div>
-        </div>
-      </div>
-      ${emp.tracks.map(track=>`
-        <div class="card" style="margin-left:52px;margin-bottom:12px">
-          <div style="font-weight:600;font-size:13px;margin-bottom:10px;color:var(--text)">${track.trackName} — ${track.pct}% complete</div>
-          ${track.nextSteps.length>0?`<div style="font-size:11px;color:var(--text2);font-weight:500;margin-bottom:8px">Next steps:</div><div>${track.nextSteps.map(step=>`<div style="font-size:12px;color:var(--text);padding:6px 0;border-bottom:1px solid var(--border)">${step}</div>`).join('')}</div>`:`<div style="font-size:12px;color:var(--green);font-weight:500">All tasks complete</div>`}
-        </div>
-      `).join('')}
-    </div>
-  `).join(''):`<div style="padding:20px;text-align:center;color:var(--text3)">No active onboarding runs</div>`}`;
+  var html='<div class="page-header"><div><div class="page-title">Onboarding</div><div class="page-subtitle">'+groups.length+' active</div></div><button class="btn btn-primary" onclick="showStartRunModal(\'onboarding\')">+ Start Run</button></div>';
+  if(groups.length>0){
+    groups.forEach(function(emp){
+      html+=buildGroupCard(emp,'var(--accent-light)','var(--accent-text)');
+      emp.tracks.forEach(function(track){html+=buildTrackCard(track,'var(--green)');});
+      html+='</div>';
+    });
+  }else{
+    html+='<div style="padding:20px;text-align:center;color:var(--text3)">No active onboarding runs</div>';
+  }
+  p.innerHTML=html;
 }
 
 function showStartRunModal(type){
@@ -1488,24 +1495,17 @@ async function completeTrackStatus(empId,newStatus,runId){
 function renderOffboarding(){
   const p=document.getElementById('page');
   const groups=groupOffboardingByEmployee();
-  p.innerHTML=`<div class="page-header"><div><div class="page-title">Offboarding</div><div class="page-subtitle">${groups.length} active</div></div><button class="btn btn-primary" onclick="showStartRunModal('offboarding')">+ Start Run</button></div>
-  ${groups.length>0?groups.map(emp=>`
-    <div style="margin-bottom:24px">
-      <div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;padding:12px;background:var(--bg);border-radius:var(--radius-lg)">
-        <div style="width:40px;height:40px;border-radius:50%;background:var(--red-light);color:var(--red);display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;flex-shrink:0">${(emp.empName.match(/\b\w/g)||[]).join('')}</div>
-        <div style="flex:1">
-          <div style="font-size:14px;font-weight:600;color:var(--text)">${emp.empName}</div>
-          <div style="font-size:12px;color:var(--text2)">${emp.role}</div>
-        </div>
-      </div>
-      ${emp.tracks.map(track=>`
-        <div class="card" style="margin-left:52px;margin-bottom:12px">
-          <div style="font-weight:600;font-size:13px;margin-bottom:10px;color:var(--text)">${track.trackName} — ${track.pct}% complete</div>
-          ${track.nextSteps.length>0?`<div style="font-size:11px;color:var(--text2);font-weight:500;margin-bottom:8px">Next steps:</div><div>${track.nextSteps.map(step=>`<div style="font-size:12px;color:var(--text);padding:6px 0;border-bottom:1px solid var(--border)">${step}</div>`).join('')}</div>`:`<div style="font-size:12px;color:var(--red);font-weight:500">✓ All tasks complete</div>`}
-        </div>
-      `).join('')}
-    </div>
-  `).join(''):`<div style="padding:20px;text-align:center;color:var(--text3)">No active offboarding runs</div>`}`;
+  var html='<div class="page-header"><div><div class="page-title">Offboarding</div><div class="page-subtitle">'+groups.length+' active</div></div><button class="btn btn-primary" onclick="showStartRunModal(\'offboarding\')">+ Start Run</button></div>';
+  if(groups.length>0){
+    groups.forEach(function(emp){
+      html+=buildGroupCard(emp,'var(--red-light)','var(--red)');
+      emp.tracks.forEach(function(track){html+=buildTrackCard(track,'var(--red)');});
+      html+='</div>';
+    });
+  }else{
+    html+='<div style="padding:20px;text-align:center;color:var(--text3)">No active offboarding runs</div>';
+  }
+  p.innerHTML=html;
 }
 
 // ── INVENTORY ─────────────────────────────────────────────────────────────────
