@@ -10,6 +10,7 @@ A single-file ATS (Applicant Tracking System) and HRIS (Human Resources Informat
 - **Device Inventory** — Equipment management and assignment tracking
 - **Reporting** — Pipeline analytics and source tracking
 - **Onboarding Tracks** — Reusable task templates for new hires
+- **Command Palette** — 28 actions via `+` button or Cmd+K: add/edit/delete candidates, employees, interviews, devices, onboarding runs, and tracks without navigating away from any page
 
 ## Stack
 
