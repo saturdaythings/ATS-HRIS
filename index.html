@@ -283,6 +283,21 @@ tr.selected td{background:var(--accent-light)}
   .device-grid{grid-template-columns:1fr}
   .page{padding:12px}
 }
+/* ── GLOBAL SEARCH ───────────────────────────────────────────────────────── */
+.gs-wrap{position:relative;display:flex;align-items:center;gap:6px}
+.gs-icon-btn{background:none;border:none;cursor:pointer;color:var(--text2);padding:4px;display:flex;align-items:center;justify-content:center;border-radius:var(--radius)}
+.gs-icon-btn:hover{background:var(--bg)}
+.gs-input{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:5px 10px;font-size:13px;font-family:var(--font);color:var(--text);outline:none;width:0;transition:width .2s,opacity .2s;opacity:0;pointer-events:none}
+.gs-input.open{width:220px;opacity:1;pointer-events:auto}
+.gs-input:focus{border-color:var(--accent)}
+.gs-dropdown{position:absolute;top:calc(100% + 6px);right:0;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);box-shadow:0 8px 24px rgba(0,0,0,.12);width:340px;z-index:500;overflow:hidden;display:none}
+.gs-dropdown.open{display:block}
+.gs-group{padding:6px 0}
+.gs-group-label{font-size:10px;font-weight:600;color:var(--text3);letter-spacing:.8px;text-transform:uppercase;padding:4px 14px}
+.gs-item{padding:8px 14px;cursor:pointer;font-size:13px;display:flex;align-items:center;gap:8px;transition:background .08s}
+.gs-item:hover{background:var(--bg)}
+.gs-item-name{font-weight:500;color:var(--text)}
+.gs-item-sub{font-size:11px;color:var(--text3)}
 /* ── COMMAND PALETTE ──────────────────────────────────────────────────────── */
 #cp-fab{position:fixed;bottom:24px;right:24px;width:44px;height:44px;border-radius:50%;background:#1a1a18;color:#fff;font-size:22px;line-height:1;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 12px rgba(0,0,0,.25);z-index:300;cursor:pointer;transition:background .12s;border:none;font-family:var(--font)}
 #cp-fab:hover{background:#333}
@@ -350,6 +365,10 @@ tr.selected td{background:var(--accent-light)}
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 13v-1.5a3 3 0 00-3-3H5a3 3 0 00-3 3V13"/><circle cx="8" cy="5" r="2.5"/></svg>
       Directory
     </div>
+    <div class="nav-item" onclick="nav('activity')">
+      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 8h3l2-5 3 10 2-5h3"/></svg>
+      Activity
+    </div>
     <div class="nav-item" onclick="nav('onboarding')">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 8H3M13 4H3M9 12H3"/></svg>
       Onboarding
@@ -388,6 +407,14 @@ tr.selected td{background:var(--accent-light)}
     <button class="hamburger" onclick="toggleSidebar()">☰</button>
     <div class="topbar-title" id="topbar-title">Dashboard</div>
     <div style="flex:1"></div>
+    <span onclick="openCP()" title="Open command palette" style="font-size:11px;color:var(--text3);border:1px solid var(--border);padding:2px 6px;border-radius:4px;font-family:var(--mono);cursor:pointer;user-select:none">&#8984; K</span>
+    <div class="gs-wrap" id="gs-wrap">
+      <button class="gs-icon-btn" onclick="toggleGlobalSearch()" title="Search (/)">
+        <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
+      </button>
+      <input class="gs-input" id="gs-input" type="text" placeholder="Search..." oninput="gsSearch(this.value)" onkeydown="if(event.key==='Escape')closeGlobalSearch()"/>
+      <div class="gs-dropdown" id="gs-dropdown"></div>
+    </div>
     <div class="sync-status" id="sync-status"><div class="sync-dot" id="sync-dot"></div><span id="sync-text">Loading...</span></div>
     <div class="avatar" style="margin-left:12px">KM</div>
   </div>
@@ -396,8 +423,8 @@ tr.selected td{background:var(--accent-light)}
     <div class="bottom-nav-item active" data-page="dashboard" onclick="nav('dashboard')">Home</div>
     <div class="bottom-nav-item" data-page="hiring" onclick="nav('hiring')">Hiring</div>
     <div class="bottom-nav-item" data-page="directory" onclick="nav('directory')">Directory</div>
-    <div class="bottom-nav-item" data-page="onboarding" onclick="nav('onboarding')">Tracks</div>
-    <div class="bottom-nav-item" data-page="inventory" onclick="nav('inventory')">Devices</div>
+    <div class="bottom-nav-item" data-page="onboarding" onclick="nav('onboarding')">Onboarding</div>
+    <div class="bottom-nav-item" data-page="offboarding" onclick="nav('offboarding')">Offboarding</div>
   </nav>
 </div>
 </div>
@@ -620,8 +647,6 @@ const getCandIvs=id=>DB.interviews.filter(i=>i.candidateId===id);
 const getTrackTasks=id=>DB.tasks.filter(t=>t.trackId===id);
 const getRunTasks=id=>DB.runTasks.filter(t=>t.runId===id);
 
-const IV_TYPES=['Phone','Video','Onsite'];
-
 function stagePill(s){const m={sourced:'gray',screening:'blue',interview:'amber',offer:'purple',hired:'green'};return`<span class="pill pill-${m[s]||'gray'}">${s}</span>`;}
 function candStatusPill(s){const m={'Active':'green','On Hold':'amber','Nurturing':'blue','Hired':'purple','Closed':'red'};return`<span class="pill pill-${m[s]||'gray'}">${s}</span>`;}
 function statusPill(s){if(['active','good','new','available'].includes(s))return`<span class="pill pill-green">${s}</span>`;if(s==='onboarding')return`<span class="pill pill-blue">onboarding</span>`;if(s==='assigned')return`<span class="pill pill-purple">assigned</span>`;if(s==='pending')return`<span class="pill pill-amber">pending</span>`;if(s==='inactive')return`<span class="pill pill-gray">inactive</span>`;return`<span class="pill pill-gray">${s||'—'}</span>`;}
@@ -637,7 +662,7 @@ function renderEmpty(title,sub=''){return`<div class="empty-state"><div class="e
 function fmtSelect(opts,val,id,cls='form-input form-select'){return`<select class="${cls}" id="${id}">${opts.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join('')}</select>`;}
 
 // ── NAV ───────────────────────────────────────────────────────────────────────
-const TITLES={dashboard:'Dashboard',hiring:'Hiring',directory:'Directory',onboarding:'Onboarding',offboarding:'Offboarding',inventory:'Inventory',assignments:'Assignments',tracks:'Tracks',settings:'Settings'};
+const TITLES={dashboard:'Dashboard',hiring:'Hiring',directory:'Directory',activity:'Activity',onboarding:'Onboarding',offboarding:'Offboarding',inventory:'Inventory',assignments:'Assignments',tracks:'Tracks',settings:'Settings'};
 let currentPage='';
 
 function toggleSidebar(){
@@ -663,7 +688,7 @@ function nav(page){
   const p=document.getElementById('page');
   p.style.cssText='flex:1;overflow-y:auto;padding:28px 28px 40px';
   p.innerHTML='';
-  ({dashboard:renderDashboard,hiring:renderHiring,directory:renderDirectory,onboarding:renderOnboarding,offboarding:renderOffboarding,inventory:renderInventory,assignments:renderAssignments,tracks:renderTracks,settings:renderSettings}[page]||function(){})();
+  ({dashboard:renderDashboard,hiring:renderHiring,directory:renderDirectory,activity:renderActivity,onboarding:renderOnboarding,offboarding:renderOffboarding,inventory:renderInventory,assignments:renderAssignments,tracks:renderTracks,settings:renderSettings}[page]||function(){})();
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
@@ -713,13 +738,19 @@ function dashStartRow(e){
 function dashOffboardRow(e){
   var ini=(e.empName.match(/\b\w/g)||[]).join('');
   var dateStr=e.endDate?new Date(e.endDate).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'}):'TBD';
-  var daysAway=e.daysAway!==undefined?e.daysAway+' days away':'';
+  var daysLeft=e.daysAway!==undefined?e.daysAway:null;
+  var urgencyColor='#185FA5';
+  if(daysLeft!==null){
+    if(daysLeft<=7){urgencyColor='var(--red)';}
+    else if(daysLeft<=14){urgencyColor='var(--amber)';}
+  }
+  var daysLabel=daysLeft!==null?daysLeft+' days left':'';
   return'<div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="nav(\'offboarding\')">'
     +'<div style="display:flex;align-items:center;gap:8px">'
     +'<div style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:500;flex-shrink:0;background:var(--red-light);color:var(--red)">'+ini+'</div>'
     +'<div><div style="font-size:12px;font-weight:500;color:var(--text)">'+e.empName+'</div><div style="font-size:11px;color:var(--text3)">'+e.role+'</div></div>'
     +'</div>'
-    +'<div style="text-align:right"><div style="font-size:11px;font-weight:500;color:var(--red)">'+dateStr+'</div><div style="font-size:10px;color:var(--text3)">'+daysAway+'</div></div>'
+    +'<div style="text-align:right"><div style="font-size:11px;font-weight:500;color:var(--red)">'+dateStr+'</div><div style="font-size:10px;color:'+urgencyColor+';font-weight:500">'+daysLabel+'</div></div>'
     +'</div>';
 }
 function dashGroupCard(emp,navTarget){
@@ -923,26 +954,33 @@ function refreshHiringView(){
   else renderCandTable(list,main);
 }
 
+var kanDragId=null;
+function kanDragStart(e,candId){kanDragId=candId;e.dataTransfer.effectAllowed='move';}
+async function kanDrop(e,stage){e.preventDefault();if(!kanDragId)return;await moveStage(kanDragId,stage);kanDragId=null;}
+
 function renderKanban(list,container){
-  container.innerHTML=`<div class="kanban">${STAGES.map(stage=>{
-    const cols=list.filter(c=>c.stage===stage);
-    return`<div class="kanban-col">
-      <div class="kanban-col-header"><span class="kanban-col-name">${stage}</span><span class="kanban-count">${cols.length}</span></div>
-      ${cols.map(c=>{
-        const ivCount=getCandIvs(c.id).length;
-        return`<div class="kanban-card${selectedCandId===c.id?' selected':''}" onclick="selectCand('${c.id}')">
-          <div class="kanban-name">${c.name}</div>
-          <div class="kanban-role">${c.role}</div>
-          <div class="kanban-meta">${candStatusPill(c.candStatus)}${c.specialty?`<span class="pill pill-gray" style="font-size:10px">${c.specialty}</span>`:''}</div>
-          <div class="kanban-footer">
-            <span style="font-size:11px;color:var(--text3)">${locDisplay(c)}</span>
-            ${ivCount?`<span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:3px"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 1"/></svg>${ivCount}</span>`:''}
-          </div>
-          <div style="font-size:10px;color:var(--text3);margin-top:4px">${relTime(c.updatedAt)}</div>
-        </div>`;
-      }).join('')}
-    </div>`;
-  }).join('')}</div>`;
+  var colsHtml='';
+  STAGES.forEach(function(stage){
+    var cols=list.filter(function(c){return c.stage===stage;});
+    var cardsHtml='';
+    cols.forEach(function(c){
+      var ivCount=getCandIvs(c.id).length;
+      var ivBadge=ivCount?'<span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:3px"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 1"/></svg>'+ivCount+'</span>':'';
+      var specialtyPill=c.specialty?'<span class="pill pill-gray" style="font-size:10px">'+c.specialty+'</span>':'';
+      cardsHtml+='<div class="kanban-card'+(selectedCandId===c.id?' selected':'')+'" draggable="true" ondragstart="kanDragStart(event,\''+c.id+'\')" onclick="selectCand(\''+c.id+'\')">'
+        +'<div class="kanban-name">'+c.name+'</div>'
+        +'<div class="kanban-role">'+c.role+'</div>'
+        +'<div class="kanban-meta">'+candStatusPill(c.candStatus)+specialtyPill+'</div>'
+        +'<div class="kanban-footer"><span style="font-size:11px;color:var(--text3)">'+locDisplay(c)+'</span>'+ivBadge+'</div>'
+        +'<div style="font-size:10px;color:var(--text3);margin-top:4px">'+relTime(c.updatedAt)+'</div>'
+        +'</div>';
+    });
+    colsHtml+='<div class="kanban-col" ondragover="event.preventDefault()" ondrop="kanDrop(event,\''+stage+'\')">'
+      +'<div class="kanban-col-header"><span class="kanban-col-name">'+stage+'</span><span class="kanban-count">'+cols.length+'</span></div>'
+      +cardsHtml
+      +'</div>';
+  });
+  container.innerHTML='<div class="kanban">'+colsHtml+'</div>';
 }
 
 function renderCandTable(list,container){
@@ -1035,6 +1073,7 @@ function renderCandDetail(id){
         <div class="detail-row"><span class="detail-key">Source</span><span class="detail-val">${c.source||'—'}</span></div>
         ${c.client?`<div class="detail-row"><span class="detail-key">Client</span><span class="detail-val">${c.client}</span></div>`:''}
         <div class="detail-row"><span class="detail-key">Location</span><span class="detail-val">${locDisplay(c)}</span></div>
+        ${c.email?`<div class="detail-row"><span class="detail-key">Email</span><span class="detail-val" style="font-size:12px"><a href="mailto:${c.email}" style="color:var(--accent)">${c.email}</a></span></div>`:''}
         <div class="detail-row"><span class="detail-key">Added</span><span class="detail-val">${relTime(c.addedAt)}</span></div>
         <div class="detail-row"><span class="detail-key">Last Updated</span><span class="detail-val">${relTime(c.updatedAt)}</span></div>
       </div>
@@ -1053,7 +1092,9 @@ function renderCandDetail(id){
       <div class="detail-section">
         <div class="detail-section-title">Status</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">${getList('candStatus').map(s=>`<button class="btn btn-sm ${s===c.candStatus?'btn-primary':'btn-secondary'}" onclick="setCandStatus('${c.id}','${s}')">${s}</button>`).join('')}</div>
+        ${c.rejectionReason?`<div class="detail-row" style="margin-top:10px"><span class="detail-key">Reason</span><span class="detail-val" style="color:var(--text2)">${c.rejectionReason}</span></div>`:''}
       </div>
+      ${(c.stage==='offer'||c.stage==='hired')&&(c.offerAmount||c.offerDate||c.offerStatus)?`<div class="detail-section"><div class="detail-section-title">Offer</div>${c.offerAmount?`<div class="detail-row"><span class="detail-key">Amount</span><span class="detail-val">$${parseInt(c.offerAmount).toLocaleString()}</span></div>`:''}${c.offerDate?`<div class="detail-row"><span class="detail-key">Date</span><span class="detail-val">${c.offerDate}</span></div>`:''}${c.offerStatus?`<div class="detail-row"><span class="detail-key">Status</span><span class="detail-val">${c.offerStatus}</span></div>`:''}</div>`:''}
       <div class="detail-section">
         <div class="detail-section-title">Interviews (${ivs.length}) <button class="btn btn-sm btn-primary" onclick="showAddIvModal('${c.id}')">+ Add</button></div>
         ${buildIvCards(ivs,c.id)}
@@ -1189,11 +1230,25 @@ function showAddCandModal(){
 async function addCand(){
   const fn=document.getElementById('cfn').value.trim(),ln=document.getElementById('cln').value.trim();
   if(!fn||!ln){showToast('Name required');return;}
-  const nc={id:uid(),name:`${fn} ${ln}`,role:document.getElementById('crole').value||'TBD',seniority:document.getElementById('csen').value,specialty:document.getElementById('cspec').value,source:document.getElementById('csrc').value,stage:'sourced',candStatus:document.getElementById('cstat').value,empType:document.getElementById('cetype').value,compType:document.getElementById('cctype').value,compAmount:document.getElementById('ccomp').value,city:document.getElementById('ccity').value,state:document.getElementById('cstate').value,country:document.getElementById('ccountry').value,client:document.getElementById('cclient').value,resumeLink:document.getElementById('cresume').value,addedAt:now(),updatedAt:now(),notes:document.getElementById('cnotes').value};
+  const fullName=(fn+' '+ln).trim();
+  const dupCand=DB.candidates.find(function(c){return c.name.toLowerCase()===fullName.toLowerCase();});
+  if(dupCand){
+    var dupHtml='<div class="modal"><div class="modal-header"><div class="modal-title">Duplicate Candidate</div><button class="detail-close" onclick="closeModal()">x</button></div>'
+      +'<div class="modal-body"><p style="font-size:13px;color:var(--text2)">A candidate named <strong>'+fullName+'</strong> already exists. Add anyway or cancel?</p></div>'
+      +'<div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="doCandAdd(\''+fn.replace(/'/g,"\\'")+'\',' +'\''+ln.replace(/'/g,"\\'")+'\')">Add Anyway</button></div></div>';
+    showModal(dupHtml);
+    return;
+  }
+  await doCandAdd(fn,ln);
+}
+
+async function doCandAdd(fn,ln){
+  const fullName=(fn+' '+ln).trim();
+  const nc={id:uid(),name:fullName,role:document.getElementById('crole').value||'TBD',seniority:document.getElementById('csen').value,specialty:document.getElementById('cspec').value,source:document.getElementById('csrc').value,stage:'sourced',candStatus:document.getElementById('cstat').value,empType:document.getElementById('cetype').value,compType:document.getElementById('cctype').value,compAmount:document.getElementById('ccomp').value,city:document.getElementById('ccity').value,state:document.getElementById('cstate').value,country:document.getElementById('ccountry').value,client:document.getElementById('cclient').value,resumeLink:document.getElementById('cresume').value,addedAt:now(),updatedAt:now(),notes:document.getElementById('cnotes').value};
   DB.candidates.push(nc);
-  DB.activities.unshift({id:uid(),type:'add',desc:`${nc.name} added to pipeline`,at:now()});
+  DB.activities.unshift({id:uid(),type:'add',desc:nc.name+' added to pipeline',at:now()});
   await save('candidates');await save('activities');
-  closeModal();showToast(`${nc.name} added`);refreshHiringView();
+  closeModal();showToast(nc.name+' added');refreshHiringView();
 }
 
 function showEditCandModal(id){
@@ -1208,7 +1263,15 @@ function showEditCandModal(id){
     <div class="form-group"><label class="form-label">Client</label><input class="form-input" id="eclient" value="${c.client||''}"/></div>
     <div class="form-group"><label class="form-label">Resume Link</label><input class="form-input" id="eresume" value="${c.resumeLink||''}"/></div>
     <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="enotes" rows="4">${c.notes||''}</textarea></div>
+    <div class="form-group" id="rej-reason-group" style="display:${(c.candStatus==='Closed'||c.stage==='rejected')?'block':'none'}"><label class="form-label">Rejection reason</label><textarea class="form-input" id="erejreason" rows="2">${c.rejectionReason||''}</textarea></div>
+    <div id="offer-section" style="display:${(c.stage==='offer'||c.stage==='hired')?'block':'none'}"><div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px;margin:12px 0 8px">Offer</div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Offer Amount ($)</label><input type="number" class="form-input" id="eofferamt" value="${c.offerAmount||''}"/></div><div class="form-group"><label class="form-label">Offer Date</label><input type="date" class="form-input" id="eofferdate" value="${c.offerDate||''}"/></div></div>
+    <div class="form-group"><label class="form-label">Offer Status</label><select class="form-input form-select" id="eofferstatus"><option${(c.offerStatus==='pending'||!c.offerStatus)?' selected':''}>pending</option><option${c.offerStatus==='accepted'?' selected':''}>accepted</option><option${c.offerStatus==='declined'?' selected':''}>declined</option></select></div>
+    </div>
   </div><div class="modal-footer"><button class="btn btn-danger btn-sm" style="margin-right:auto" onclick="deleteCand('${c.id}')">Delete</button><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEditCand('${c.id}')">Save Changes</button></div></div>`);
+  // Wire up status select to show/hide rejection reason
+  var estatEl=document.getElementById('estat');
+  if(estatEl){estatEl.onchange=function(){var rg=document.getElementById('rej-reason-group');if(rg)rg.style.display=(this.value==='Closed')?'block':'none';};}
 }
 
 async function saveEditCand(id){
@@ -1219,6 +1282,10 @@ async function saveEditCand(id){
   c.compType=document.getElementById('ectype').value;c.compAmount=document.getElementById('ecomp').value;
   c.city=document.getElementById('ecity').value;c.state=document.getElementById('estate').value;c.country=document.getElementById('ecountry').value;
   c.client=document.getElementById('eclient').value;c.resumeLink=document.getElementById('eresume').value;c.notes=document.getElementById('enotes').value;
+  var rejEl=document.getElementById('erejreason');if(rejEl)c.rejectionReason=rejEl.value;
+  var oaEl=document.getElementById('eofferamt');if(oaEl)c.offerAmount=oaEl.value;
+  var odEl=document.getElementById('eofferdate');if(odEl)c.offerDate=odEl.value;
+  var osEl=document.getElementById('eofferstatus');if(osEl)c.offerStatus=osEl.value;
   touch(c);await save('candidates');closeModal();showToast('Saved');renderCandDetail(id);refreshHiringView();
 }
 
@@ -1304,7 +1371,8 @@ function renderDirectory(){
         <div class="filter-search"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input placeholder="Search name, role, city..." oninput="filterEmps(this.value)" id="emp-search"/></div>
         <select class="filter-select" onchange="filterEmpStatus(this.value)"><option value="">All statuses</option><option>active</option><option>onboarding</option><option>offboarding</option><option>inactive</option></select>
         <select class="filter-select" onchange="filterEmpDept(this.value)" id="dept-filter"><option value="">All departments</option>${[...new Set(DB.employees.map(e=>e.dept))].filter(Boolean).map(d=>`<option>${d}</option>`).join('')}</select>
-        <select class="filter-select" onchange="filterEmpLocation(this.value)" id="loc-filter"><option value="">All locations</option>${[...new Set(DB.employees.map(e=>e.location||e.city||'').filter(Boolean))].map(l=>`<option>${l}</option>`).join('')}</select>
+        <select class="filter-select" onchange="filterEmpState(this.value)" id="state-filter"><option value="">All states</option>${[...new Set(DB.employees.map(e=>e.state).filter(Boolean))].map(s=>`<option>${s}</option>`).join('')}</select>
+        <select class="filter-select" onchange="filterEmpCity(this.value)" id="city-filter"><option value="">All cities</option>${[...new Set(DB.employees.map(e=>e.city).filter(Boolean))].map(c2=>`<option>${c2}</option>`).join('')}</select>
       </div>
     </div>
     <div style="flex:1;display:flex;overflow:hidden">
@@ -1320,19 +1388,22 @@ function renderDirectory(){
     </div>`;
 }
 
-let empFilterQ='',empFilterStatus='',empFilterDept='',empFilterLocation='';
+let empFilterQ='',empFilterStatus='',empFilterDept='',empFilterLocation='',empFilterState='',empFilterCity='';
 function filterEmps(q){empFilterQ=q;refreshEmpTable();}
 function filterEmpStatus(v){empFilterStatus=v;refreshEmpTable();}
 function filterEmpDept(v){empFilterDept=v;refreshEmpTable();}
 function filterEmpLocation(v){empFilterLocation=v;refreshEmpTable();}
+function filterEmpState(v){empFilterState=v;refreshEmpTable();}
+function filterEmpCity(v){empFilterCity=v;refreshEmpTable();}
 function empSortBy(col){if(empSort.col===col)empSort.dir*=-1;else{empSort.col=col;empSort.dir=1;}refreshEmpTable();}
 
 function refreshEmpTable(){
   let list=[...DB.employees];
-  if(empFilterQ){const q=empFilterQ.toLowerCase();list=list.filter(e=>e.name.toLowerCase().includes(q)||e.role.toLowerCase().includes(q)||(e.city||e.location||'').toLowerCase().includes(q));}
+  if(empFilterQ){const q=empFilterQ.toLowerCase();list=list.filter(e=>e.name.toLowerCase().includes(q)||e.role.toLowerCase().includes(q)||(e.city||'').toLowerCase().includes(q)||(e.state||'').toLowerCase().includes(q)||(e.email||'').toLowerCase().includes(q));}
   if(empFilterStatus)list=list.filter(e=>e.status===empFilterStatus);
   if(empFilterDept)list=list.filter(e=>e.dept===empFilterDept);
-  if(empFilterLocation)list=list.filter(e=>(e.location||e.city||'')===empFilterLocation);
+  if(empFilterState)list=list.filter(e=>e.state===empFilterState);
+  if(empFilterCity)list=list.filter(e=>e.city===empFilterCity);
   list.sort((a,b)=>(a[empSort.col]||'').localeCompare(b[empSort.col]||'')*empSort.dir);
   const tb=document.getElementById('emp-tbody');if(tb)tb.innerHTML=empRows(list);
 }
@@ -1362,9 +1433,10 @@ function selectEmp(id){
       <div class="detail-row"><span class="detail-key">Manager</span><span class="detail-val">${e.manager||'—'}</span></div>
       <div class="detail-row"><span class="detail-key">Buddy</span><span class="detail-val">${e.buddy||'—'}</span></div>
       <div class="detail-row"><span class="detail-key">Location</span><span class="detail-val">${[e.city,e.state,e.country].filter(Boolean).join(', ')||e.location||'—'}</span></div>
-      <div class="detail-row"><span class="detail-key">Email</span><span class="detail-val" style="font-size:12px">${e.email||'—'}</span></div>
-      <div class="detail-row"><span class="detail-key">Phone</span><span class="detail-val">${e.phone||'—'}</span></div>
+      <div class="detail-row"><span class="detail-key">Email</span><span class="detail-val" style="font-size:12px">${e.email?`<a href="mailto:${e.email}" style="color:var(--accent)">${e.email}</a>`:'—'}</span></div>
+      <div class="detail-row"><span class="detail-key">Phone</span><span class="detail-val">${e.phone&&e.phone!=='—'?`<a href="tel:${e.phone}" style="color:var(--accent)">${e.phone}</a>`:(e.phone||'—')}</span></div>
       <div class="detail-row"><span class="detail-key">Start Date</span><span class="detail-val">${e.startDate||'—'}</span></div>
+      ${(function(){var candMatch=DB.candidates.find(function(c){return c.name===e.name;});if(candMatch&&candMatch.skills&&candMatch.skills.trim()){var pills=candMatch.skills.split(',').map(function(s){return s.trim();}).filter(Boolean).map(function(s){return'<span class="pill pill-gray" style="margin:2px">'+s+'</span>';}).join('');return'<div class="detail-row"><span class="detail-key">Skills</span><div class="detail-val">'+pills+'</div></div>';}return'<div class="detail-row"><span class="detail-key">Skills</span><span class="detail-val">\u2014</span></div>';})()}
     </div>
     <div class="detail-section"><div class="detail-section-title">Devices (${empDevs.length})</div>
       ${empDevs.length?empDevs.map(dv=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)"><span>${dv.name}</span><span class="pill pill-gray" style="font-size:10px;font-family:var(--mono)">${dv.serial}</span></div>`).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">No devices assigned</div>'}
@@ -1426,11 +1498,24 @@ function showAddEmpModal(){
 async function addEmp(){
   const fn=document.getElementById('efn').value.trim(),ln=document.getElementById('eln').value.trim();
   if(!fn||!ln){showToast('Name required');return;}
+  const fullName=(fn+' '+ln).trim();
+  const dupEmp=DB.employees.find(function(e){return e.name.toLowerCase()===fullName.toLowerCase();});
+  if(dupEmp){
+    var dupHtml='<div class="modal"><div class="modal-header"><div class="modal-title">Duplicate Employee</div><button class="detail-close" onclick="closeModal()">x</button></div>'
+      +'<div class="modal-body"><p style="font-size:13px;color:var(--text2)">An employee named <strong>'+fullName+'</strong> already exists. Add anyway or cancel?</p></div>'
+      +'<div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="doEmpAdd(\''+fn.replace(/'/g,"\\'")+'\',' +'\''+ln.replace(/'/g,"\\'")+'\')">Add Anyway</button></div></div>';
+    showModal(dupHtml);
+    return;
+  }
+  await doEmpAdd(fn,ln);
+}
+
+async function doEmpAdd(fn,ln){
   const city=document.getElementById('ecity2').value;
-  const ne={id:uid(),name:`${fn} ${ln}`,role:document.getElementById('erole').value||'TBD',dept:document.getElementById('edept').value,status:'active',location:city||'Remote',city,state:document.getElementById('estate2').value,country:document.getElementById('ecountry2').value,manager:document.getElementById('emgr').value,startDate:document.getElementById('estart').value||'TBD',email:document.getElementById('eemail').value||fn.toLowerCase()+'@vtwo.co',phone:document.getElementById('ephone').value||'—'};
+  const ne={id:uid(),name:(fn+' '+ln).trim(),role:document.getElementById('erole').value||'TBD',dept:document.getElementById('edept').value,status:'active',location:city||'Remote',city,state:document.getElementById('estate2').value,country:document.getElementById('ecountry2').value,manager:document.getElementById('emgr').value,startDate:document.getElementById('estart').value||'TBD',email:document.getElementById('eemail').value||fn.toLowerCase()+'@vtwo.co',phone:document.getElementById('ephone').value||'—'};
   DB.employees.push(ne);
-  DB.activities.unshift({id:uid(),type:'hire',desc:`${ne.name} added to directory`,at:now()});
-  await save('employees');await save('activities');closeModal();showToast(`${ne.name} added`);renderDirectory();
+  DB.activities.unshift({id:uid(),type:'hire',desc:ne.name+' added to directory',at:now()});
+  await save('employees');await save('activities');closeModal();showToast(ne.name+' added');renderDirectory();
 }
 
 function showDeleteEmpConfirm(id){
@@ -1488,9 +1573,17 @@ function buildTrackCard(track,doneColor){
   }
   return'<div class="card" style="margin-left:52px;margin-bottom:12px;cursor:pointer" onclick="openRunDetail(\''+track.runId+'\')"><div style="font-weight:600;font-size:13px;margin-bottom:10px;color:var(--text)">'+track.trackName+' — '+track.pct+'% complete</div>'+stepsHtml+'</div>';
 }
-function buildGroupCard(emp,bgColor,textColor){
+function buildGroupCard(emp,bgColor,textColor,runType){
   var ini=(emp.empName.match(/\b\w/g)||[]).join('');
-  var html='<div style="margin-bottom:24px"><div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;padding:12px;background:var(--bg);border-radius:var(--radius-lg);cursor:pointer" onclick="nav(\'directory\');setTimeout(function(){selectEmp(\''+emp.empId+'\');},200)"><div style="width:40px;height:40px;border-radius:50%;background:'+bgColor+';color:'+textColor+';display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;flex-shrink:0">'+ini+'</div><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--text)">'+emp.empName+'</div><div style="font-size:12px;color:var(--text2)">'+emp.role+'</div></div><div style="font-size:11px;color:var(--text3);align-self:center">View in Directory →</div></div>';
+  // Find first active run for click-through
+  var firstRun=DB.onboardingRuns.find(function(r){return r.employeeId===emp.empId&&r.status==='active';});
+  var cardClick=firstRun?'openRunDetail(\''+firstRun.id+'\')':'nav(\'directory\');setTimeout(function(){selectEmp(\''+emp.empId+'\');},200)';
+  // Overdue badge
+  var overdueTasks=DB.runTasks.filter(function(t){
+    return t.status!=='completed'&&t.dueDate&&t.dueDate<today()&&emp.tracks.some(function(tr){return tr.runId===t.runId;});
+  });
+  var overdueBadge=overdueTasks.length>0?'<span style="background:var(--amber-light);color:var(--amber);font-size:10px;font-weight:600;padding:2px 6px;border-radius:100px;margin-left:8px">'+overdueTasks.length+' overdue</span>':'';
+  var html='<div style="margin-bottom:24px"><div style="display:flex;gap:12px;align-items:flex-start;margin-bottom:12px;padding:12px;background:var(--bg);border-radius:var(--radius-lg);cursor:pointer" onclick="'+cardClick+'"><div style="width:40px;height:40px;border-radius:50%;background:'+bgColor+';color:'+textColor+';display:flex;align-items:center;justify-content:center;font-weight:600;font-size:12px;flex-shrink:0">'+ini+'</div><div style="flex:1"><div style="font-size:14px;font-weight:600;color:var(--text)">'+emp.empName+overdueBadge+'</div><div style="font-size:12px;color:var(--text2)">'+emp.role+'</div></div><div style="font-size:11px;color:var(--text3);align-self:center">View runs →</div></div>';
   return html;
 }
 function renderOnboarding(){
@@ -1523,20 +1616,41 @@ async function startRun(type){
   DB.onboardingRuns.push({id:runId,employeeId:empId,trackId,type,status:'active',startDate});
   const newTasks=getTrackTasks(trackId).map(tt=>{const due=new Date(startDate);due.setDate(due.getDate()+parseInt(tt.dueDaysOffset||0));return{id:uid(),runId,name:tt.name,ownerRole:tt.ownerRole,status:'pending',dueDate:due.toISOString().split('T')[0]};});
   DB.runTasks.push(...newTasks);
+  if(type==='offboarding'){
+    const e=DB.employees.find(function(x){return x.id===empId;});
+    if(e){e.status='offboarding';e.endDate=startDate;await save('employees');}
+  }
   await save('onboardingRuns');await save('runTasks');
-  closeModal();showToast('Run started');renderOnboarding();
+  closeModal();showToast('Run started');
+  if(type==='offboarding')renderOffboarding();else renderOnboarding();
+}
+
+function getOverdueTasks(){
+  var td=today();
+  return DB.runTasks.filter(function(t){return t.status!=='completed'&&t.dueDate&&t.dueDate<td;});
 }
 
 function openRunDetail(id){
-  const run=DB.onboardingRuns.find(r=>r.id===id);const e=getEmp(run.employeeId);const rt=getRunTasks(id);const done=rt.filter(t=>t.status==='completed').length;
-  showModal(`<div class="modal" style="max-width:560px"><div class="modal-header"><div class="modal-title">${e.name} — ${run.type}</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
-    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Start: ${run.startDate} · ${done}/${rt.length} complete</p>
-    ${rt.map(t=>`<div style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;cursor:pointer" onclick="toggleRunTask('${run.id}','${t.id}')">
-      <div class="task-check${t.status==='completed'?' done':''}">${t.status==='completed'?'✓':''}</div>
-      <div style="flex:1"><div style="font-size:13px;font-weight:${t.status==='completed'?'400':'500'};text-decoration:${t.status==='completed'?'line-through':''};color:${t.status==='completed'?'var(--text3)':'var(--text)'}">${t.name}</div><div style="font-size:11px;color:var(--text3)">${t.ownerRole} · Due ${t.dueDate}</div></div>
-      ${statusPill(t.status)}
-    </div>`).join('')}
-  </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Close</button></div></div>`);
+  var run=DB.onboardingRuns.find(function(r){return r.id===id;});
+  var e=getEmp(run.employeeId);
+  var rt=getRunTasks(id);
+  var done=rt.filter(function(t){return t.status==='completed';}).length;
+  var td=today();
+  var taskRows='';
+  rt.forEach(function(t){
+    var isOverdue=(t.status!=='completed'&&t.dueDate&&t.dueDate<td);
+    var dueDateHtml='<span style="color:'+(isOverdue?'var(--red)':'var(--text3)')+'">Due '+t.dueDate+(isOverdue?' <span style="background:var(--red-light);color:var(--red);font-size:10px;font-weight:600;padding:1px 5px;border-radius:4px">Overdue</span>':'')+'</span>';
+    taskRows+='<div style="display:flex;align-items:center;gap:10px;padding:10px;border:1px solid var(--border);border-radius:var(--radius);margin-bottom:6px;cursor:pointer" onclick="toggleRunTask(\''+run.id+'\',\''+t.id+'\')">'
+      +'<div class="task-check'+(t.status==='completed'?' done':'')+'">'+( t.status==='completed'?'&#10003;':'')+'</div>'
+      +'<div style="flex:1"><div style="font-size:13px;font-weight:'+(t.status==='completed'?'400':'500')+';text-decoration:'+(t.status==='completed'?'line-through':'')+';color:'+(t.status==='completed'?'var(--text3)':'var(--text)')+'">'+t.name+'</div>'
+      +'<div style="font-size:11px;color:var(--text3)">'+t.ownerRole+' &middot; '+dueDateHtml+'</div></div>'
+      +statusPill(t.status)
+      +'</div>';
+  });
+  showModal('<div class="modal" style="max-width:560px"><div class="modal-header"><div class="modal-title">'+e.name+' \u2014 '+run.type+'</div><button class="detail-close" onclick="closeModal()">\u00d7</button></div><div class="modal-body">'
+    +'<p style="font-size:13px;color:var(--text2);margin-bottom:16px">Start: '+run.startDate+' &middot; '+done+'/'+rt.length+' complete</p>'
+    +taskRows
+    +'</div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Close</button></div></div>');
 }
 
 async function toggleRunTask(runId,taskId){
@@ -1653,19 +1767,32 @@ function devCards(list){return list.map(d=>`<div class="device-card" onclick="sh
 function filterDevs(s){const list=s?DB.devices.filter(d=>d.status===s):DB.devices;const g=document.getElementById('device-grid');if(g)g.innerHTML=devCards(list);}
 
 function showDevDetail(id){
-  const d=DB.devices.find(x=>x.id===id);const a=d.assignedTo?getEmp(d.assignedTo):null;
-  showModal(`<div class="modal"><div class="modal-header"><div style="display:flex;align-items:center;gap:10px"><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:4px 8px;background:var(--surface2);border-radius:var(--radius)">${typeLabel[d.type]||d.type||'Device'}</div><div><div class="modal-title">${d.name}</div><div style="font-size:12px;color:var(--text2);font-family:var(--mono)">${d.serial}</div></div></div><button class="detail-close" onclick="closeModal()">×</button></div>
-  <div class="modal-body">
-    <div class="detail-row"><span class="detail-key">Make / Model</span><span class="detail-val">${d.make} ${d.model}</span></div>
-    <div class="detail-row"><span class="detail-key">Status</span>${statusPill(d.status)}</div>
-    <div class="detail-row"><span class="detail-key">Condition</span><span class="detail-val">${d.condition}</span></div>
-    <div class="detail-row"><span class="detail-key">Purchased</span><span class="detail-val">${d.purchaseDate}</span></div>
-    ${d.purchaseStore?`<div class="detail-row"><span class="detail-key">Store</span><span class="detail-val">${d.purchaseStore}</span></div>`:''}
-    ${d.orderNumber?`<div class="detail-row"><span class="detail-key">Order #</span><span class="detail-val" style="font-family:var(--mono);font-size:12px">${d.orderNumber}</span></div>`:''}
-    ${d.specs?`<div class="detail-row" style="flex-direction:column;align-items:flex-start;gap:4px"><span class="detail-key">Specs</span><span style="font-size:12px;color:var(--text2);line-height:1.5">${d.specs}</span></div>`:''}
-    ${a?`<div class="detail-row"><span class="detail-key">Assigned To</span><span class="detail-val">${a.name}</span></div>`:''}
-  </div>
-  <div class="modal-footer"><button class="btn btn-sm btn-secondary" title="Edit" onclick="showEditDeviceModal('${d.id}')">${PENCIL_BTN}</button>${d.status==='available'?`<button class="btn btn-primary" onclick="showAssignModal('${d.id}')">Assign to Employee</button>`:`<button class="btn btn-danger" onclick="returnDevice('${d.id}')">Return Device</button>`}<button class="btn btn-secondary" onclick="closeModal()">Close</button></div></div>`);
+  var d=DB.devices.find(function(x){return x.id===id;});var a=d.assignedTo?getEmp(d.assignedTo):null;
+  var serialEsc=(d.serial||'').replace(/'/g,"\\'");
+  var orderEsc=(d.orderNumber||'').replace(/'/g,"\\'");
+  var serialCopyBtn='<button class="btn btn-sm btn-secondary" style="padding:2px 7px;font-size:11px;margin-left:6px" onclick="navigator.clipboard.writeText(\''+serialEsc+'\');showToast(\'Copied\')">Copy</button>';
+  var orderNumRow=d.orderNumber?'<div class="detail-row"><span class="detail-key">Order #</span><div class="detail-val" style="display:flex;align-items:center"><span style="font-family:var(--mono);font-size:12px">'+d.orderNumber+'</span><button class="btn btn-sm btn-secondary" style="padding:2px 7px;font-size:11px;margin-left:6px" onclick="navigator.clipboard.writeText(\''+orderEsc+'\');showToast(\'Copied\')">Copy</button></div></div>':'';
+  var histHtml=(function(){var hist=DB.assignments.filter(function(x){return x.deviceId===d.id&&x.status==='returned';});if(!hist.length)return'';var rows='<div class="detail-row" style="flex-direction:column;align-items:flex-start"><span class="detail-key" style="margin-bottom:6px">Assignment History</span>';hist.forEach(function(h2){var emp2=DB.employees.find(function(x){return x.id===h2.employeeId;})||{name:'Unknown'};rows+='<div style="display:flex;justify-content:space-between;width:100%;font-size:12px;padding:3px 0"><span>'+emp2.name+'</span><span style="color:var(--text3)">'+relTime(h2.assignedAt)+'</span></div>';});return rows+'</div>';})();
+  var html='<div class="modal"><div class="modal-header"><div style="display:flex;align-items:center;gap:10px">'
+    +'<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:4px 8px;background:var(--surface2);border-radius:var(--radius)">'+(typeLabel[d.type]||d.type||'Device')+'</div>'
+    +'<div><div class="modal-title">'+d.name+'</div><div style="font-size:12px;color:var(--text2);font-family:var(--mono)">'+d.serial+'</div></div></div>'
+    +'<button class="detail-close" onclick="closeModal()">\u00d7</button></div>'
+    +'<div class="modal-body">'
+    +'<div class="detail-row"><span class="detail-key">Make / Model</span><span class="detail-val">'+d.make+' '+d.model+'</span></div>'
+    +'<div class="detail-row"><span class="detail-key">Serial #</span><div class="detail-val" style="display:flex;align-items:center"><span style="font-family:var(--mono);font-size:12px">'+(d.serial||'—')+'</span>'+serialCopyBtn+'</div></div>'
+    +'<div class="detail-row"><span class="detail-key">Status</span>'+statusPill(d.status)+'</div>'
+    +'<div class="detail-row"><span class="detail-key">Condition</span><span class="detail-val">'+(d.condition||'—')+'</span></div>'
+    +'<div class="detail-row"><span class="detail-key">Purchased</span><span class="detail-val">'+(d.purchaseDate||'—')+'</span></div>'
+    +(d.purchaseStore?'<div class="detail-row"><span class="detail-key">Store</span><span class="detail-val">'+d.purchaseStore+'</span></div>':'')
+    +orderNumRow
+    +(d.specs?'<div class="detail-row" style="flex-direction:column;align-items:flex-start;gap:4px"><span class="detail-key">Specs</span><span style="font-size:12px;color:var(--text2);line-height:1.5">'+d.specs+'</span></div>':'')
+    +(a?'<div class="detail-row"><span class="detail-key">Assigned To</span><span class="detail-val">'+a.name+'</span></div>':'')
+    +histHtml
+    +'</div>'
+    +'<div class="modal-footer"><button class="btn btn-sm btn-secondary" title="Edit" onclick="showEditDeviceModal(\''+d.id+'\')">'+PENCIL_BTN+'</button>'
+    +(d.status==='available'?'<button class="btn btn-primary" onclick="showAssignModal(\''+d.id+'\')">Assign to Employee</button>':'<button class="btn btn-danger" onclick="returnDevice(\''+d.id+'\')">Return Device</button>')
+    +'<button class="btn btn-secondary" onclick="closeModal()">Close</button></div></div>';
+  showModal(html);
 }
 
 function showAssignModal(devId){
@@ -1925,32 +2052,90 @@ function showAddTrackModal(){
 async function addTrack(){const name=document.getElementById('ntname').value.trim();if(!name){showToast('Name required');return;}const nt={id:uid(),name,type:document.getElementById('nttype').value,autoApply:document.getElementById('ntauto').value};DB.tracks.push(nt);selectedTrackId=nt.id;await save('tracks');closeModal();showToast('Track created');renderTracks();}
 
 // ── REPORTS ───────────────────────────────────────────────────────────────────
+var reportFrom='';
+var reportTo='';
+
 function renderReports(){
-  const p=document.getElementById('page');
-  const hired=DB.candidates.filter(c=>c.candStatus==='Hired').length;
-  const active=DB.candidates.filter(c=>c.candStatus==='Active').length;
-  const sources=[...new Set(DB.candidates.map(c=>c.source))].filter(Boolean);
-  const specs=[...new Set(DB.candidates.map(c=>c.specialty))].filter(Boolean);
-  const totalIv=DB.interviews.length;
-  p.innerHTML=`<div class="page-header"><div><div class="page-title">Reports</div><div class="page-subtitle">Pipeline analytics</div></div></div>
-  <div class="stat-grid">
-    <div class="stat-card"><div class="stat-label">Total Candidates</div><div class="stat-value">${DB.candidates.length}</div></div>
-    <div class="stat-card"><div class="stat-label">Hired</div><div class="stat-value" style="color:var(--green)">${hired}</div></div>
-    <div class="stat-card"><div class="stat-label">Active Pipeline</div><div class="stat-value">${active}</div></div>
-    <div class="stat-card"><div class="stat-label">Interviews Logged</div><div class="stat-value">${totalIv}</div></div>
-  </div>
-  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
-    <div class="card"><div style="font-weight:600;font-size:13px;margin-bottom:14px">By Stage</div>
-      ${STAGES.map(s=>{const n=DB.candidates.filter(c=>c.stage===s).length;const pct=DB.candidates.length?Math.round(n/DB.candidates.length*100):0;return`<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="text-transform:capitalize">${s}</span><span style="color:var(--text2)">${n}</span></div><div style="background:var(--bg);border-radius:100px;height:6px;overflow:hidden"><div style="width:${pct}%;height:100%;background:var(--accent);border-radius:100px"></div></div></div>`;}).join('')}
-    </div>
-    <div class="card"><div style="font-weight:600;font-size:13px;margin-bottom:14px">By Status</div>
-      ${getList('candStatus').map(s=>{const n=DB.candidates.filter(c=>c.candStatus===s).length;return`<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">${candStatusPill(s)}<span style="font-weight:600">${n}</span></div>`;}).join('')}
-    </div>
-    <div class="card"><div style="font-weight:600;font-size:13px;margin-bottom:14px">By Source</div>
-      ${sources.map(src=>{const n=DB.candidates.filter(c=>c.source===src).length;return`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)"><span style="font-size:13px">${src}</span><span style="font-weight:600">${n}</span></div>`;}).join('')||'<div style="font-size:12px;color:var(--text3)">No data</div>'}
-    </div>
-  </div>
-  ${specs.length?`<div class="card" style="margin-top:16px"><div style="font-weight:600;font-size:13px;margin-bottom:14px">By Specialty</div><div style="display:flex;flex-wrap:wrap;gap:10px">${specs.map(sp=>{const n=DB.candidates.filter(c=>c.specialty===sp).length;return`<div style="background:var(--bg);border-radius:var(--radius);padding:10px 16px;text-align:center"><div style="font-size:20px;font-weight:600">${n}</div><div style="font-size:12px;color:var(--text2);margin-top:2px">${sp}</div></div>`;}).join('')}</div></div>`:''}`;
+  var p=document.getElementById('page');
+  // Default date range: 30 days ago to today
+  if(!reportFrom){var d30=new Date();d30.setDate(d30.getDate()-30);reportFrom=d30.toISOString().split('T')[0];}
+  if(!reportTo){reportTo=today();}
+  var hired=DB.candidates.filter(function(c){return c.candStatus==='Hired';}).length;
+  var active=DB.candidates.filter(function(c){return c.candStatus==='Active';}).length;
+  var sources=[...new Set(DB.candidates.map(function(c){return c.source;}))].filter(Boolean);
+  var specs=[...new Set(DB.candidates.map(function(c){return c.specialty;}))].filter(Boolean);
+  var totalIv=DB.interviews.length;
+  // Period stats
+  var addedInPeriod=DB.candidates.filter(function(c){return c.addedAt&&c.addedAt.split('T')[0]>=reportFrom&&c.addedAt.split('T')[0]<=reportTo;}).length;
+  var ivsInPeriod=DB.interviews.filter(function(iv){return iv.date&&iv.date>=reportFrom&&iv.date<=reportTo;}).length;
+  // Render
+  var stageRows='';
+  STAGES.forEach(function(s){var n=DB.candidates.filter(function(c){return c.stage===s;}).length;var pct=DB.candidates.length?Math.round(n/DB.candidates.length*100):0;stageRows+='<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="text-transform:capitalize">'+s+'</span><span style="color:var(--text2)">'+n+'</span></div><div style="background:var(--bg);border-radius:100px;height:6px;overflow:hidden"><div style="width:'+pct+'%;height:100%;background:var(--accent);border-radius:100px"></div></div></div>';});
+  var statusRows='';
+  getList('candStatus').forEach(function(s){var n=DB.candidates.filter(function(c){return c.candStatus===s;}).length;statusRows+='<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid var(--border)">'+candStatusPill(s)+'<span style="font-weight:600">'+n+'</span></div>';});
+  var sourceRows='';
+  sources.forEach(function(src){var n=DB.candidates.filter(function(c){return c.source===src;}).length;sourceRows+='<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)"><span style="font-size:13px">'+src+'</span><span style="font-weight:600">'+n+'</span></div>';});
+  var specCards='';
+  specs.forEach(function(sp){var n=DB.candidates.filter(function(c){return c.specialty===sp;}).length;specCards+='<div style="background:var(--bg);border-radius:var(--radius);padding:10px 16px;text-align:center"><div style="font-size:20px;font-weight:600">'+n+'</div><div style="font-size:12px;color:var(--text2);margin-top:2px">'+sp+'</div></div>';});
+  p.innerHTML='<div class="page-header"><div><div class="page-title">Reports</div><div class="page-subtitle">Pipeline analytics</div></div></div>'
+    +'<div class="card" style="margin-bottom:20px"><div style="font-size:13px;font-weight:500;margin-bottom:12px">Date Range</div>'
+    +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
+    +'<div class="form-group" style="margin-bottom:0"><label class="form-label">From</label><input type="date" class="form-input" id="r-from" value="'+reportFrom+'" style="width:150px"/></div>'
+    +'<div class="form-group" style="margin-bottom:0"><label class="form-label">To</label><input type="date" class="form-input" id="r-to" value="'+reportTo+'" style="width:150px"/></div>'
+    +'<button class="btn btn-primary btn-sm" style="margin-top:16px" onclick="applyReportFilter()">Apply</button>'
+    +'</div></div>'
+    +'<div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">All-time</div>'
+    +'<div class="stat-grid" style="margin-bottom:12px">'
+    +'<div class="stat-card"><div class="stat-label">Total Candidates</div><div class="stat-value">'+DB.candidates.length+'</div></div>'
+    +'<div class="stat-card"><div class="stat-label">Hired</div><div class="stat-value" style="color:var(--green)">'+hired+'</div></div>'
+    +'<div class="stat-card"><div class="stat-label">Active Pipeline</div><div class="stat-value">'+active+'</div></div>'
+    +'<div class="stat-card"><div class="stat-label">Interviews Logged</div><div class="stat-value">'+totalIv+'</div></div>'
+    +'</div>'
+    +'<div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px">Period ('+reportFrom+' to '+reportTo+')</div>'
+    +'<div class="stat-grid" style="grid-template-columns:1fr 1fr;margin-bottom:20px">'
+    +'<div class="stat-card"><div class="stat-label">Added this period</div><div class="stat-value">'+addedInPeriod+'</div></div>'
+    +'<div class="stat-card"><div class="stat-label">Interviews this period</div><div class="stat-value">'+ivsInPeriod+'</div></div>'
+    +'</div>'
+    +'<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">'
+    +'<div class="card"><div style="font-weight:600;font-size:13px;margin-bottom:14px">By Stage</div>'+stageRows+'</div>'
+    +'<div class="card"><div style="font-weight:600;font-size:13px;margin-bottom:14px">By Status</div>'+statusRows+'</div>'
+    +'<div class="card"><div style="font-weight:600;font-size:13px;margin-bottom:14px">By Source</div>'+(sourceRows||'<div style="font-size:12px;color:var(--text3)">No data</div>')+'</div>'
+    +'</div>'
+    +(specs.length?'<div class="card" style="margin-top:16px"><div style="font-weight:600;font-size:13px;margin-bottom:14px">By Specialty</div><div style="display:flex;flex-wrap:wrap;gap:10px">'+specCards+'</div></div>':'');
+}
+
+function applyReportFilter(){
+  var f=document.getElementById('r-from');var t=document.getElementById('r-to');
+  if(f)reportFrom=f.value;
+  if(t)reportTo=t.value;
+  renderReports();
+}
+
+// ── ACTIVITY LOG ──────────────────────────────────────────────────────────────
+function renderActivity(){
+  var p=document.getElementById('page');
+  var activities=DB.activities.slice(0,100);
+  var typeColors={add:'var(--blue)',hire:'var(--green)',stage:'var(--amber)',offboard:'var(--red)',device:'var(--text3)',interview:'var(--accent)'};
+  var rows='';
+  activities.forEach(function(a){
+    var color=typeColors[a.type]||'var(--text3)';
+    rows+='<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="width:8px;height:8px;border-radius:50%;background:'+color+';flex-shrink:0;margin-top:5px"></div>'
+      +'<div style="flex:1"><div style="font-size:13px;color:var(--text)">'+a.desc+'</div><div style="font-size:11px;color:var(--text3);margin-top:2px">'+relTime(a.at)+'</div></div>'
+      +'</div>';
+  });
+  if(!rows)rows='<div style="padding:48px 0;text-align:center;color:var(--text3);font-size:13px">No activity yet</div>';
+  p.innerHTML='<div class="page-header"><div><div class="page-title">Activity</div><div class="page-subtitle">Recent actions</div></div>'
+    +(DB.activities.length?'<button class="btn btn-secondary btn-sm" onclick="clearActivity()">Clear all</button>':'')+'</div>'
+    +'<div class="card">'+rows+'</div>';
+}
+
+async function clearActivity(){
+  if(!confirm('Clear all activity?'))return;
+  DB.activities=[];
+  await save('activities');
+  showToast('Cleared');
+  renderActivity();
 }
 
 // ── SETTINGS ──────────────────────────────────────────────────────────────────
@@ -1982,7 +2167,51 @@ function renderDropdownsTab(){
 }
 
 function renderTags(listKey){
-  return getList(listKey).map((v,i)=>`<span class="tag" draggable="true" data-index="${i}" data-list="${listKey}" ondragstart="dragStartTag(event)" ondragover="dragOverTag(event)" ondrop="dropTag(event)">${v}<button onclick="removeListItem('${listKey}','${v}')">×</button></span>`).join('');
+  return getList(listKey).map(function(v,i){
+    var vEsc=v.replace(/'/g,"\\'");
+    var lkEsc=listKey.replace(/'/g,"\\'");
+    return '<span class="tag" draggable="true" data-index="'+i+'" data-list="'+listKey+'" ondragstart="dragStartTag(event)" ondragover="dragOverTag(event)" ondrop="dropTag(event)">'
+      +v
+      +'<button onclick="editListItem(\''+lkEsc+'\',\''+vEsc+'\')" title="Rename" style="color:var(--text3);font-size:11px">'+PENCIL_BTN+'</button>'
+      +'<button onclick="removeListItem(\''+lkEsc+'\',\''+vEsc+'\')">\u00d7</button>'
+      +'</span>';
+  }).join('');
+}
+
+function editListItem(listKey,oldVal){
+  showModal('<div class="modal"><div class="modal-header"><div class="modal-title">Rename "'+oldVal+'"</div><button class="detail-close" onclick="closeModal()">\u00d7</button></div>'
+    +'<div class="modal-body"><div class="form-group"><label class="form-label">New value</label><input class="form-input" id="rename-input" value="'+oldVal.replace(/"/g,'&quot;')+'"/></div></div>'
+    +'<div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveListItemRename(\''+listKey.replace(/'/g,"\\'")+'\',\''+oldVal.replace(/'/g,"\\'")+'\',document.getElementById(\'rename-input\').value)">Save</button></div></div>');
+  setTimeout(function(){var el=document.getElementById('rename-input');if(el){el.focus();el.select();}},50);
+}
+
+async function saveListItemRename(listKey,oldVal,newVal){
+  newVal=(newVal||'').trim();
+  if(!newVal){showToast('Value required');return;}
+  if(newVal===oldVal){closeModal();return;}
+  // Update in DB.lists
+  var item=DB.lists.find(function(l){return l.listKey===listKey&&l.value===oldVal;});
+  if(item)item.value=newVal;
+  // Update references in affected tables
+  if(listKey==='candStatus'){DB.candidates.forEach(function(c){if(c.candStatus===oldVal)c.candStatus=newVal;});}
+  if(listKey==='source'){DB.candidates.forEach(function(c){if(c.source===oldVal)c.source=newVal;});}
+  if(listKey==='seniority'){DB.candidates.forEach(function(c){if(c.seniority===oldVal)c.seniority=newVal;});}
+  if(listKey==='specialty'){DB.candidates.forEach(function(c){if(c.specialty===oldVal)c.specialty=newVal;});}
+  if(listKey==='empType'){DB.candidates.forEach(function(c){if(c.empType===oldVal)c.empType=newVal;});}
+  if(listKey==='dept'){DB.employees.forEach(function(e){if(e.dept===oldVal)e.dept=newVal;});}
+  if(listKey==='ownerRole'){DB.tasks.forEach(function(t){if(t.ownerRole===oldVal)t.ownerRole=newVal;});}
+  if(listKey==='deviceType'){DB.devices.forEach(function(d){if(d.type===oldVal)d.type=newVal;});}
+  if(listKey==='interviewScore'){DB.interviews.forEach(function(iv){if(iv.score===oldVal)iv.score=newVal;});}
+  // Save affected tables
+  var saves=[save('lists')];
+  if(listKey==='candStatus'||listKey==='source'||listKey==='seniority'||listKey==='specialty'||listKey==='empType')saves.push(save('candidates'));
+  if(listKey==='dept')saves.push(save('employees'));
+  if(listKey==='ownerRole')saves.push(save('tasks'));
+  if(listKey==='deviceType')saves.push(save('devices'));
+  if(listKey==='interviewScore')saves.push(save('interviews'));
+  await Promise.all(saves);
+  closeModal();showToast('"'+oldVal+'" renamed to "'+newVal+'"');
+  renderDropdownsTab();
 }
 
 let dragSource=null;
@@ -3194,6 +3423,62 @@ CP_FLOWS['export-data']={
   readStep:function(){},
   save:async function(){exportData();}
 };
+
+// ── GLOBAL SEARCH ─────────────────────────────────────────────────────────────
+function toggleGlobalSearch(){
+  var inp=document.getElementById('gs-input');
+  var dd=document.getElementById('gs-dropdown');
+  if(inp.classList.contains('open')){
+    inp.classList.remove('open');
+    if(dd)dd.classList.remove('open');
+  }else{
+    inp.classList.add('open');
+    inp.focus();
+  }
+}
+function closeGlobalSearch(){
+  var inp=document.getElementById('gs-input');
+  var dd=document.getElementById('gs-dropdown');
+  if(inp){inp.classList.remove('open');inp.value='';}
+  if(dd)dd.classList.remove('open');
+}
+function gsSearch(q){
+  var dd=document.getElementById('gs-dropdown');
+  if(!dd)return;
+  if(!q||q.length<2){dd.classList.remove('open');return;}
+  var ql=q.toLowerCase();
+  var candResults=DB.candidates.filter(function(c){return c.name.toLowerCase().includes(ql)||c.role.toLowerCase().includes(ql)||(c.city||'').toLowerCase().includes(ql)||(c.state||'').toLowerCase().includes(ql);}).slice(0,5);
+  var empResults=DB.employees.filter(function(e){return e.name.toLowerCase().includes(ql)||e.role.toLowerCase().includes(ql)||(e.city||'').toLowerCase().includes(ql)||(e.state||'').toLowerCase().includes(ql)||(e.email||'').toLowerCase().includes(ql);}).slice(0,5);
+  var devResults=DB.devices.filter(function(d){return d.name.toLowerCase().includes(ql)||(d.serial||'').toLowerCase().includes(ql)||(d.make||'').toLowerCase().includes(ql)||(d.model||'').toLowerCase().includes(ql);}).slice(0,5);
+  var html='';
+  if(candResults.length){
+    html+='<div class="gs-group"><div class="gs-group-label">Candidates</div>';
+    candResults.forEach(function(c){html+='<div class="gs-item" onclick="closeGlobalSearch();selectCand(\''+c.id+'\');nav(\'hiring\')"><div><div class="gs-item-name">'+c.name+'</div><div class="gs-item-sub">'+c.role+(c.stage?' \u00b7 '+c.stage:'')+'</div></div></div>';});
+    html+='</div>';
+  }
+  if(empResults.length){
+    html+='<div class="gs-group"><div class="gs-group-label">Employees</div>';
+    empResults.forEach(function(e){html+='<div class="gs-item" onclick="closeGlobalSearch();selectEmp(\''+e.id+'\');nav(\'directory\')"><div><div class="gs-item-name">'+e.name+'</div><div class="gs-item-sub">'+e.role+(e.dept?' \u00b7 '+e.dept:'')+'</div></div></div>';});
+    html+='</div>';
+  }
+  if(devResults.length){
+    html+='<div class="gs-group"><div class="gs-group-label">Devices</div>';
+    devResults.forEach(function(d){html+='<div class="gs-item" onclick="closeGlobalSearch();nav(\'inventory\');setTimeout(function(){showDevDetail(\''+d.id+'\');},200)"><div><div class="gs-item-name">'+d.name+'</div><div class="gs-item-sub">'+(d.serial||'')+'</div></div></div>';});
+    html+='</div>';
+  }
+  if(!html){html='<div style="padding:16px;font-size:12px;color:var(--text3);text-align:center">No results</div>';}
+  dd.innerHTML=html;
+  dd.classList.add('open');
+}
+document.addEventListener('keydown',function(e){
+  if(e.key==='/'&&document.activeElement.tagName!=='INPUT'&&document.activeElement.tagName!=='TEXTAREA'){
+    e.preventDefault();toggleGlobalSearch();
+  }
+});
+document.addEventListener('click',function(e){
+  var wrap=document.getElementById('gs-wrap');
+  if(wrap&&!wrap.contains(e.target))closeGlobalSearch();
+});
 
 // ── BOOT ──────────────────────────────────────────────────────────────────────
 (async()=>{
