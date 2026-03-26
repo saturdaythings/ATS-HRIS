@@ -171,7 +171,6 @@ tr.selected td{background:var(--accent-light)}
   /* Sidebar */
   .sidebar{position:fixed;left:-100%;top:0;bottom:0;z-index:200;transition:left .2s;box-shadow:4px 0 20px rgba(0,0,0,.15)}
   .sidebar.open{left:0}
-  .sidebar-backdrop{display:block!important}
   .main{width:100vw}
 
   /* Topbar */
@@ -233,7 +232,7 @@ tr.selected td{background:var(--accent-light)}
 </head>
 <body>
 <div class="app show-hamburger">
-<div class="sidebar-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:199" onclick="closeSidebar()"></div>
+<div class="sidebar-backdrop" id="sidebar-backdrop" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:199;pointer-events:none" onclick="closeSidebar()"></div>
 <nav class="sidebar" id="sidebar">
   <div class="sidebar-logo">
     <div class="logo-mark">V2</div>
@@ -540,13 +539,18 @@ const TITLES={dashboard:'Dashboard',hiring:'Hiring',directory:'Directory',onboar
 let currentPage='';
 
 function toggleSidebar(){
-  const sidebar=document.querySelector('.sidebar');
-  sidebar.classList.toggle('open');
-  document.querySelector('.sidebar-backdrop').style.display=sidebar.classList.contains('open')?'block':'none';
+  const s=document.querySelector('.sidebar');
+  const b=document.getElementById('sidebar-backdrop');
+  const open=s.classList.toggle('open');
+  b.style.display=open?'block':'none';
+  b.style.pointerEvents=open?'auto':'none';
 }
 function closeSidebar(){
-  document.querySelector('.sidebar').classList.remove('open');
-  document.querySelector('.sidebar-backdrop').style.display='none';
+  const s=document.querySelector('.sidebar');
+  const b=document.getElementById('sidebar-backdrop');
+  s.classList.remove('open');
+  b.style.display='none';
+  b.style.pointerEvents='none';
 }
 function nav(page){
   currentPage=page;
