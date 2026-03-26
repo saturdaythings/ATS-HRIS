@@ -490,76 +490,8 @@ const DEFAULT_LISTS=[
   {id:'ls26',listKey:'specialty',value:'Other',order:'7'},
 ];
 
-const SEED={
-  candidates:[
-    {id:'c1',name:'Priya Nair',role:'Senior Engineer',seniority:'Senior',specialty:'Engineering',source:'LinkedIn',stage:'sourced',candStatus:'Active',empType:'FTE',compType:'salary',compAmount:'160000',resumeLink:'',client:'',city:'San Francisco',state:'CA',country:'US',addedAt:'2026-03-10T00:00:00Z',updatedAt:'2026-03-22T00:00:00Z',notes:'Strong Python background, referred by Anita'},
-    {id:'c2',name:'Marcus Webb',role:'Product Designer',seniority:'Mid',specialty:'Design',source:'Referral',stage:'screening',candStatus:'Active',empType:'FTE',compType:'salary',compAmount:'120000',resumeLink:'',client:'',city:'New York',state:'NY',country:'US',addedAt:'2026-03-05T00:00:00Z',updatedAt:'2026-03-23T00:00:00Z',notes:'Portfolio looks great'},
-    {id:'c3',name:'Sophie Tremblay',role:'Engineering Manager',seniority:'Staff',specialty:'Engineering',source:'Outbound',stage:'interview',candStatus:'Active',empType:'Open to Both',compType:'salary',compAmount:'180000',resumeLink:'',client:'',city:'Austin',state:'TX',country:'US',addedAt:'2026-02-28T00:00:00Z',updatedAt:'2026-03-20T00:00:00Z',notes:'2nd round done, panel next week'},
-    {id:'c4',name:'Jin Park',role:'Backend Engineer',seniority:'Mid',specialty:'Engineering',source:'LinkedIn',stage:'offer',candStatus:'Active',empType:'FTE',compType:'salary',compAmount:'145000',resumeLink:'',client:'',city:'Remote',state:'',country:'US',addedAt:'2026-02-15T00:00:00Z',updatedAt:'2026-03-24T00:00:00Z',notes:'Offer extended $145k'},
-    {id:'c5',name:'Tom Eriksson',role:'DevOps Engineer',seniority:'Mid',specialty:'Engineering',source:'LinkedIn',stage:'sourced',candStatus:'Nurturing',empType:'FTE',compType:'salary',compAmount:'140000',resumeLink:'',client:'',city:'Chicago',state:'IL',country:'US',addedAt:'2026-03-18T00:00:00Z',updatedAt:'2026-03-18T00:00:00Z',notes:'Not ready for 3 months'},
-    {id:'c6',name:'Daria Ivanova',role:'Data Scientist',seniority:'Senior',specialty:'Data',source:'Website',stage:'screening',candStatus:'Active',empType:'FTE',compType:'salary',compAmount:'155000',resumeLink:'',client:'',city:'Seattle',state:'WA',country:'US',addedAt:'2026-03-15T00:00:00Z',updatedAt:'2026-03-24T00:00:00Z',notes:'PhD, very strong ML background'},
-  ],
-  employees:[
-    {id:'e1',name:'Jordan Lee',role:'Engineering Lead',dept:'Engineering',status:'active',location:'Remote',city:'Remote',state:'',country:'US',manager:'Dana Kim',startDate:'2024-01-15',email:'jordan@vtwo.co',phone:'555-0101'},
-    {id:'e2',name:'Nina Patel',role:'Product Manager',dept:'Product',status:'active',location:'SF',city:'San Francisco',state:'CA',country:'US',manager:'Dana Kim',startDate:'2023-09-12',email:'nina@vtwo.co',phone:'555-0104'},
-    {id:'e3',name:'Rafael Santos',role:'Backend Engineer',dept:'Engineering',status:'active',location:'Remote',city:'Remote',state:'',country:'US',manager:'Jordan Lee',startDate:'2023-06-01',email:'rafael@vtwo.co',phone:'555-0103'},
-    {id:'e4',name:'Rafi Amara',role:'Backend Engineer',dept:'Engineering',status:'active',location:'Remote',city:'Remote',state:'',country:'US',manager:'Jordan Lee',startDate:'2026-04-01',email:'rafi@vtwo.co',phone:'555-0105'},
-    {id:'e5',name:'Nina Park',role:'Data Analyst',dept:'Product',status:'active',location:'SF',city:'San Francisco',state:'CA',country:'US',manager:'Dana Kim',startDate:'2026-04-07',email:'nina.p@vtwo.co',phone:'555-0106'},
-    {id:'e6',name:'Hana Greco',role:'Full Stack Engineer',dept:'Engineering',status:'active',location:'NYC',city:'New York',state:'NY',country:'US',manager:'Jordan Lee',startDate:'2026-04-14',email:'hana@vtwo.co',phone:'555-0107'},
-  ],
-  devices:[
-    {id:'d1',name:'MacBook Pro 16"',type:'laptop',make:'Apple',model:'MBP M3 Pro',serial:'MBP24001',status:'assigned',assignedTo:'e1',condition:'good',purchaseDate:'2024-01-10'},
-    {id:'d2',name:'MacBook Air 13"',type:'laptop',make:'Apple',model:'MBA M2',serial:'MBA23042',status:'available',assignedTo:'',condition:'good',purchaseDate:'2023-06-01'},
-    {id:'d3',name:'MacBook Pro 14"',type:'laptop',make:'Apple',model:'MBP M3',serial:'MBP24033',status:'available',assignedTo:'',condition:'good',purchaseDate:'2024-06-15'},
-  ],
-  assignments:[{id:'a1',employeeId:'e1',deviceId:'d1',assignedAt:'2024-01-15T00:00:00Z',status:'active'}],
-  tracks:[
-    {id:'t1',name:'Engineering Onboarding',type:'role',autoApply:'true'},
-    {id:'t2',name:'Company General Onboarding',type:'company',autoApply:'true'},
-    {id:'t3',name:'Engineering Offboarding',type:'role',autoApply:'false'},
-  ],
-  tasks:[
-    {id:'tt1',trackId:'t1',name:'Complete I-9 and W-4 paperwork',ownerRole:'HR',dueDaysOffset:'-7'},
-    {id:'tt2',trackId:'t1',name:'Set up dev environment',ownerRole:'IT',dueDaysOffset:'1'},
-    {id:'tt3',trackId:'t1',name:'Access to repos and tools',ownerRole:'IT',dueDaysOffset:'1'},
-    {id:'tt4',trackId:'t1',name:'Meet team and manager 1:1',ownerRole:'Manager',dueDaysOffset:'3'},
-    {id:'tt5',trackId:'t1',name:'Complete security training',ownerRole:'HR',dueDaysOffset:'7'},
-    {id:'tt6',trackId:'t2',name:'Welcome email and Slack invite',ownerRole:'HR',dueDaysOffset:'-1'},
-    {id:'tt7',trackId:'t2',name:'Benefits enrollment',ownerRole:'HR',dueDaysOffset:'3'},
-    {id:'tt8',trackId:'t3',name:'Return devices',ownerRole:'IT',dueDaysOffset:'-3'},
-    {id:'tt9',trackId:'t3',name:'Revoke system access',ownerRole:'IT',dueDaysOffset:'0'},
-  ],
-  onboardingRuns:[
-    {id:'r1',employeeId:'e1',trackId:'t1',type:'onboarding',status:'active',startDate:'2026-03-14'},
-    {id:'r2',employeeId:'e2',trackId:'t1',type:'onboarding',status:'active',startDate:'2026-03-20'},
-  ],
-  runTasks:[
-    {id:'rt1',runId:'r1',name:'Complete I-9 and W-4 paperwork',ownerRole:'HR',status:'completed',dueDate:'2026-03-07'},
-    {id:'rt2',runId:'r1',name:'Set up dev environment',ownerRole:'IT',status:'completed',dueDate:'2026-03-15'},
-    {id:'rt3',runId:'r1',name:'Access to repos and tools',ownerRole:'IT',status:'completed',dueDate:'2026-03-15'},
-    {id:'rt4',runId:'r1',name:'Meet team and manager 1:1',ownerRole:'Manager',status:'pending',dueDate:'2026-03-17'},
-    {id:'rt5',runId:'r1',name:'Complete security training',ownerRole:'HR',status:'pending',dueDate:'2026-03-21'},
-    {id:'rt6',runId:'r2',name:'Complete I-9 and W-4 paperwork',ownerRole:'HR',status:'completed',dueDate:'2026-03-13'},
-    {id:'rt7',runId:'r2',name:'Set up dev environment',ownerRole:'IT',status:'pending',dueDate:'2026-03-21'},
-    {id:'rt8',runId:'r2',name:'Access to repos and tools',ownerRole:'IT',status:'pending',dueDate:'2026-03-21'},
-    {id:'rt9',runId:'r2',name:'Meet team and manager 1:1',ownerRole:'Manager',status:'pending',dueDate:'2026-03-23'},
-  ],
-  interviews:[
-    {id:'i1',candidateId:'c3',date:'2026-03-10',interviewers:'Dana Kim',score:'3',notes:'Solid, scheduling panel.'},
-    {id:'i2',candidateId:'c3',date:'2026-03-20',interviewers:'Dana Kim, Jordan Lee',score:'4',notes:'Panel went well.'},
-    {id:'i3',candidateId:'c4',date:'2026-03-15',interviewers:'Jordan Lee',score:'5',notes:'Exceptional candidate.'},
-    {id:'i4',candidateId:'c2',date:'2026-03-26T14:00:00Z',interviewers:'Oliver',score:'',notes:''},
-    {id:'i5',candidateId:'c1',date:'2026-03-28T10:00:00Z',interviewers:'Oliver',score:'',notes:''},
-    {id:'i6',candidateId:'c3',date:'2026-03-31T15:00:00Z',interviewers:'Oliver, Sam',score:'',notes:''},
-    {id:'i7',candidateId:'c5',date:'2026-04-01T11:00:00Z',interviewers:'Oliver',score:'',notes:''},
-  ],
-  activities:[
-    {id:'ac1',type:'add',desc:'Jordan Lee added to directory',at:'2024-01-15T10:30:00Z'},
-    {id:'ac2',type:'stage',desc:'Jin Park moved to Offer stage',at:'2026-03-24T09:15:00Z'},
-    {id:'ac3',type:'add',desc:'Priya Nair added to pipeline',at:'2026-03-10T09:00:00Z'},
-  ],
-  lists:DEFAULT_LISTS,
-};
+// SEED only provides default list values (dropdown options). All other tables start empty.
+const SEED={lists:DEFAULT_LISTS};
 
 const SHEET_KEYS=['candidates','employees','devices','assignments','tracks','tasks','onboardingRuns','runTasks','interviews','activities','lists'];
 const SHEET_NAMES={candidates:'Candidates',employees:'Employees',devices:'Devices',assignments:'Assignments',tracks:'Tracks',tasks:'TrackTasks',onboardingRuns:'OnboardingRuns',runTasks:'RunTasks',interviews:'Interviews',activities:'Activities',lists:'Lists'};
@@ -570,8 +502,12 @@ async function loadAll(){
     try{
       const rows=await sheetsGet(SHEET_NAMES[key]);
       if(rows.length>0){DB[key]=rows;}
-      else{DB[key]=[];}
-    }catch(e){console.warn(key,e);DB[key]=[];}
+      else{
+        // Only lists gets a default seed so dropdowns always work
+        DB[key]=(key==='lists'?DEFAULT_LISTS:[]);
+        if(key==='lists')await sheetsSet(SHEET_NAMES[key],DB[key]);
+      }
+    }catch(e){console.warn(key,e);DB[key]=(key==='lists'?DEFAULT_LISTS:[]);}
   }));
   setSyncState('ok');
 }
