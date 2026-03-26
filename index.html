@@ -1577,7 +1577,7 @@ function showAddDeviceModal(){
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Add Device</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
     <div class="form-group">
       <label class="form-label">Paste product description (optional)</label>
-      <textarea class="form-input" id="d-paste" rows="2" placeholder="e.g. 14-inch MacBook Pro - Apple M5 chip with 10-core CPU - 16GB Memory - 512GB SSD - Space Black" oninput="parseDeviceDescription(this.value)"></textarea>
+      <textarea class="form-input" id="d-paste" rows="3" placeholder="Paste product description, e.g.:\n14-inch MacBook Pro - Apple M5 chip - 16GB Memory - 512GB SSD - Space Black\nSerial: SDFJY2FDJMT\nModel:MDE04LL/A SKU:6565871" onpaste="setTimeout(function(){parseDeviceDescription(document.getElementById('d-paste').value);},0)" oninput="parseDeviceDescription(this.value)"></textarea>
     </div>
     <div class="form-row"><div class="form-group"><label class="form-label">Make</label><input class="form-input" id="dmk" placeholder="Apple"/></div><div class="form-group"><label class="form-label">Model</label><input class="form-input" id="dml" placeholder='MacBook Pro 14"'/></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Type</label><select class="form-input form-select" id="dtp"><option value="laptop">Laptop</option><option value="monitor">Monitor</option><option value="phone">Phone</option><option value="keyboard">Keyboard</option><option value="mouse">Mouse</option></select></div><div class="form-group"><label class="form-label">Serial #</label><input class="form-input" id="dsr" placeholder="ABC123"/></div></div>
@@ -1632,39 +1632,73 @@ async function deleteDevice(id){
 
 function parseDeviceDescription(text){
   if(!text||text.length<10)return;
-  const t=text.toLowerCase();
+  var t=text.toLowerCase();
+  var lines=text.split('\n').map(function(l){return l.trim();}).filter(Boolean);
 
-  // Make
-  const makeMap={apple:'Apple',dell:'Dell',lenovo:'Lenovo',hp:'HP',microsoft:'Microsoft',samsung:'Samsung',lg:'LG',logitech:'Logitech',sony:'Sony'};
-  for(const[k,v]of Object.entries(makeMap)){
-    if(t.includes(k)){const f=document.getElementById('dmk');if(f&&!f.value)f.value=v;}
+  // ── Serial: may be on same line as "Serial:" or on next line ──
+  var serial='';
+  for(var i=0;i<lines.length;i++){
+    var sm=lines[i].match(/serial\s*[:#]?\s*(.+)/i);
+    if(sm){
+      var val=sm[1].trim();
+      if(val.length>2){serial=val;}
+      else if(i+1<lines.length){serial=lines[i+1].trim();}
+      break;
+    }
+  }
+  if(serial){var sf=document.getElementById('dsr');if(sf)sf.value=serial;}
+
+  // ── Model number: "Model:XXX" or "Model: XXX" ──
+  var modelNum='';
+  var mm=text.match(/model\s*[:#]\s*(\S+)/i);
+  if(mm)modelNum=mm[1];
+
+  // ── SKU: "SKU:XXX" or "SKU: XXX" ──
+  var sku='';
+  var skm=text.match(/sku\s*[:#]\s*(\S+)/i);
+  if(skm)sku=skm[1];
+
+  // ── Parse first line: "14-inch MacBook Pro - specs - specs - Color" ──
+  var firstLine=lines[0]||'';
+  var parts=firstLine.split(/\s*[-–—]\s*/);
+
+  // Model/Name is the first segment
+  var modelName=parts[0]||'';
+  if(modelName){var mlf=document.getElementById('dml');if(mlf)mlf.value=modelName;}
+
+  // Color is typically the last segment (if it's short and not a spec)
+  var color='';
+  if(parts.length>2){
+    var lastPart=parts[parts.length-1];
+    // If last part is short (< 30 chars) and doesn't contain Memory/CPU/SSD/GPU, it's a color
+    if(lastPart.length<30&&!(/memory|cpu|gpu|ssd|chip/i.test(lastPart))){
+      color=lastPart;
+    }
   }
 
-  // Model — extract after make name or common patterns
-  const modelPatterns=[
-    /macbook pro [\w\s"-]+/i,/macbook air [\w\s"-]+/i,
-    /ipad [\w\s]+/i,/iphone [\w\s]+/i,
-    /xps [\w\s]+/i,/thinkpad [\w\s]+/i,/surface [\w\s]+/i,
-  ];
-  for(const p of modelPatterns){
-    const m=text.match(p);
-    if(m){const f=document.getElementById('dml');if(f&&!f.value)f.value=m[0].trim();break;}
+  // Specs are the middle segments (skip first=name, skip last if it's color)
+  var specParts=parts.slice(1);
+  if(color&&specParts.length>0)specParts=specParts.slice(0,-1);
+  var specsStr=specParts.join(', ');
+  // Append model number and SKU if found
+  if(modelNum)specsStr+=(specsStr?', ':'')+'Model: '+modelNum;
+  if(sku)specsStr+=(specsStr?', ':'')+'SKU: '+sku;
+  if(color)specsStr+=(specsStr?', ':'')+'Color: '+color;
+  if(specsStr){var spf=document.getElementById('dspecs');if(spf)spf.value=specsStr;}
+
+  // ── Make — detect from text ──
+  var makeMap={apple:'Apple',dell:'Dell',lenovo:'Lenovo',hp:'HP',microsoft:'Microsoft',samsung:'Samsung',lg:'LG',logitech:'Logitech',sony:'Sony'};
+  var makeKeys=Object.keys(makeMap);
+  for(var mi=0;mi<makeKeys.length;mi++){
+    if(t.indexOf(makeKeys[mi])>=0){var mkf=document.getElementById('dmk');if(mkf)mkf.value=makeMap[makeKeys[mi]];break;}
   }
 
-  // Type
-  const typeMap={laptop:'laptop',macbook:'laptop',notebook:'laptop',monitor:'monitor',display:'monitor',phone:'phone',iphone:'phone',ipad:'phone',keyboard:'keyboard',mouse:'mouse'};
-  for(const[k,v]of Object.entries(typeMap)){
-    if(t.includes(k)){const f=document.getElementById('dtp');if(f)f.value=v;break;}
+  // ── Type — detect from text ──
+  var typeMap={laptop:'laptop',macbook:'laptop',notebook:'laptop',monitor:'monitor',display:'monitor',phone:'phone',iphone:'phone',ipad:'phone',keyboard:'keyboard',mouse:'mouse'};
+  var typeKeys=Object.keys(typeMap);
+  for(var ti=0;ti<typeKeys.length;ti++){
+    if(t.indexOf(typeKeys[ti])>=0){var tpf=document.getElementById('dtp');if(tpf)tpf.value=typeMap[typeKeys[ti]];break;}
   }
-
-  // Build a clean name from the description (first line or first 60 chars)
-  const name=text.split('\n')[0].split('-')[0].trim().slice(0,60);
-  const nameField=document.getElementById('dml');
-  if(nameField&&!nameField.value)nameField.value=name;
-
-  // Specs — store full description in a specs field if it exists
-  const specs=document.getElementById('dspecs');
-  if(specs)specs.value=text.trim();
 }
 
 // ── ASSIGNMENTS ───────────────────────────────────────────────────────────────
