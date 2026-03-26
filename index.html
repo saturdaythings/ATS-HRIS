@@ -627,45 +627,39 @@ function nav(page){
 }
 
 // ── DASHBOARD ─────────────────────────────────────────────────────────────────
-function getAvatarColor(name){
-  const colors=['av-blue','av-teal','av-amber','av-purple','av-coral'];
-  return colors[name.charCodeAt(0)%colors.length];
-}
-function getInterview(candId,num){
-  const cand=DB.candidates.find(c=>c.id===candId);
-  if(!cand||!cand.interviews)return null;
-  return cand.interviews[num-1];
-}
 function renderDashboard(){
   const p=document.getElementById('page');
   // Upcoming interviews (future, sorted by date ascending)
   const upcomingIvs=[];
-  DB.candidates.forEach(c=>{
-    if(!c.interviews)return;
-    c.interviews.forEach((iv,idx)=>{
-      if(new Date(iv.date)>new Date()){
-        upcomingIvs.push({candId:c.id,candName:c.name,role:c.role,interviewer:iv.interviewer||'',date:iv.date,num:idx+1,initials:(c.name.match(/\b\w/g)||[]).join('')});
-      }
-    });
+  DB.interviews.forEach(iv=>{
+    const cand=DB.candidates.find(c=>c.id===iv.candidateId);
+    if(!cand)return;
+    if(new Date(iv.date)>new Date()){
+      const allCandIvs=DB.interviews.filter(i=>i.candidateId===iv.candidateId).sort((a,b)=>new Date(a.date)-new Date(b.date));
+      const ivNum=allCandIvs.findIndex(i=>i.id===iv.id)+1;
+      upcomingIvs.push({candId:cand.id,candName:cand.name,role:cand.role,interviewer:iv.interviewers||'',date:iv.date,num:ivNum,initials:(cand.name.match(/\b\w/g)||[]).join('')});
+    }
   });
   upcomingIvs.sort((a,b)=>new Date(a.date)-new Date(b.date));
   // Recent interviews (past, sorted by date descending, last ~4)
   const recentIvs=[];
-  DB.candidates.forEach(c=>{
-    if(!c.interviews)return;
-    c.interviews.forEach((iv,idx)=>{
-      if(new Date(iv.date)<=new Date()){
-        recentIvs.push({candId:c.id,candName:c.name,role:c.role,interviewer:iv.interviewer||'',date:iv.date,num:idx+1,stage:c.stage,initials:(c.name.match(/\b\w/g)||[]).join('')});
-      }
-    });
+  DB.interviews.forEach(iv=>{
+    const cand=DB.candidates.find(c=>c.id===iv.candidateId);
+    if(!cand)return;
+    if(new Date(iv.date)<=new Date()){
+      const allCandIvs=DB.interviews.filter(i=>i.candidateId===iv.candidateId).sort((a,b)=>new Date(a.date)-new Date(b.date));
+      const ivNum=allCandIvs.findIndex(i=>i.id===iv.id)+1;
+      recentIvs.push({candId:cand.id,candName:cand.name,role:cand.role,interviewer:iv.interviewers||'',date:iv.date,num:ivNum,stage:cand.stage,initials:(cand.name.match(/\b\w/g)||[]).join('')});
+    }
   });
   recentIvs.sort((a,b)=>new Date(b.date)-new Date(a.date));
   // Active onboarding
   const activeOnb=DB.onboardingRuns.filter(r=>r.status==='active').map(run=>{
-    const emp=DB.employees.find(e=>e.id===run.empId);
+    const emp=DB.employees.find(e=>e.id===run.employeeId);
     if(!emp)return null;
-    const totalTasks=run.tasks?run.tasks.length:0;
-    const completedTasks=run.tasks?run.tasks.filter(t=>t.done).length:0;
+    const runTasksList=DB.runTasks.filter(t=>t.runId===run.id);
+    const completedTasks=runTasksList.filter(t=>t.status==='completed').length;
+    const totalTasks=runTasksList.length;
     const daysSince=emp.startDate?Math.floor((new Date()-new Date(emp.startDate))/86400000):0;
     const pct=totalTasks?Math.round(completedTasks/totalTasks*100):0;
     let dotColor='dot-green';
