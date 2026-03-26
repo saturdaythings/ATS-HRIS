@@ -568,6 +568,10 @@ const DEFAULT_LISTS=[
   {id:'ls40',listKey:'ownerRole',value:'Manager',order:'3'},
   {id:'ls41',listKey:'ownerRole',value:'Finance',order:'4'},
   {id:'ls42',listKey:'ownerRole',value:'Employee',order:'5'},
+  {id:'ls43',listKey:'interviewScore',value:'Strong Yes',order:'1'},
+  {id:'ls44',listKey:'interviewScore',value:'Yes',order:'2'},
+  {id:'ls45',listKey:'interviewScore',value:'No',order:'3'},
+  {id:'ls46',listKey:'interviewScore',value:'Strong No',order:'4'},
 ];
 
 // SEED only provides default list values (dropdown options). All other tables start empty.
@@ -616,15 +620,13 @@ const getCandIvs=id=>DB.interviews.filter(i=>i.candidateId===id);
 const getTrackTasks=id=>DB.tasks.filter(t=>t.trackId===id);
 const getRunTasks=id=>DB.runTasks.filter(t=>t.runId===id);
 
-const SCORE_LABELS={1:'No hire',2:'Lean no',3:'Maybe',4:'Lean yes',5:'Strong hire'};
-const SCORE_COLORS={1:'#c0392b',2:'#e67e22',3:'#f1c40f',4:'#27ae60',5:'#1a9c6e'};
 const IV_TYPES=['Phone','Video','Onsite'];
 
 function stagePill(s){const m={sourced:'gray',screening:'blue',interview:'amber',offer:'purple',hired:'green'};return`<span class="pill pill-${m[s]||'gray'}">${s}</span>`;}
 function candStatusPill(s){const m={'Active':'green','On Hold':'amber','Nurturing':'blue','Hired':'purple','Closed':'red'};return`<span class="pill pill-${m[s]||'gray'}">${s}</span>`;}
 function statusPill(s){if(['active','good','new','available'].includes(s))return`<span class="pill pill-green">${s}</span>`;if(s==='onboarding')return`<span class="pill pill-blue">onboarding</span>`;if(s==='assigned')return`<span class="pill pill-purple">assigned</span>`;if(s==='pending')return`<span class="pill pill-amber">pending</span>`;if(s==='inactive')return`<span class="pill pill-gray">inactive</span>`;return`<span class="pill pill-gray">${s||'—'}</span>`;}
 function personCell(name,sub=''){return`<div class="person-cell"><div class="person-av" style="${av(name)}">${initials(name)}</div><div><div class="person-name">${name}</div>${sub?`<div class="person-sub">${sub}</div>`:''}</div></div>`;}
-function scoreDisplay(score){if(!score)return'<span style="color:var(--text3);font-size:12px">—</span>';const s=parseInt(score);return`<span style="display:inline-flex;align-items:center;gap:4px;font-size:12px"><span class="score-dot" style="background:${SCORE_COLORS[s]||'#999'}"></span>${SCORE_LABELS[s]||score}</span>`;}
+function scoreDisplay(score){if(!score)return'<span style="color:var(--text3);font-size:12px">—</span>';return'<span style="font-size:12px;font-weight:500">'+score+'</span>';}
 function compDisplay(c){if(!c.compAmount)return'—';return c.compType==='hourly'?`$${parseInt(c.compAmount).toLocaleString()}/hr`:`$${parseInt(c.compAmount).toLocaleString()}/yr`;}
 function locDisplay(c){return[c.city,c.state,c.country].filter(Boolean).join(', ')||'—';}
 function touch(c){c.updatedAt=now();}
@@ -981,6 +983,31 @@ function selectCand(id){
   refreshHiringView();
 }
 
+var PENCIL_BTN='<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2l3 3-8 8H3v-3l8-8z"/></svg>';
+
+function buildIvCards(ivs,candId){
+  if(!ivs.length)return'<div style="font-size:12px;color:var(--text3);padding:8px 0">No interviews logged yet</div>';
+  var past=ivs.filter(function(iv){return new Date(iv.date)<=new Date();}).sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  var future=ivs.filter(function(iv){return new Date(iv.date)>new Date();}).sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+  var sorted=past.concat(future);
+  return sorted.map(function(iv){
+    var isFuture=new Date(iv.date)>new Date();
+    var dateHtml=isFuture
+      ?'<div style="font-weight:500;font-size:13px;color:#185FA5">'+iv.date+' <span style="font-size:11px;font-weight:400">Upcoming</span></div>'
+      :'<div style="font-weight:500;font-size:13px">'+iv.date+'</div>';
+    var notesHtml=iv.notes?'<p style="font-size:12px;color:var(--text2);line-height:1.5">'+iv.notes+'</p>':'';
+    return '<div class="interview-card">'
+      +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">'
+      +'<div>'+dateHtml+'<div style="font-size:12px;color:var(--text2)">'+(iv.interviewers||'—')+'</div></div>'
+      +'<div style="display:flex;align-items:center;gap:8px">'+scoreDisplay(iv.score)
+      +'<button class="btn btn-sm btn-secondary" title="Edit" onclick="showEditIvModal(\''+iv.id+'\',\''+candId+'\')">'+PENCIL_BTN+'</button>'
+      +'<button class="btn-ghost btn-sm" style="color:var(--red);padding:4px 6px" onclick="deleteIv(\''+iv.id+'\',\''+candId+'\')">\u00d7</button>'
+      +'</div></div>'
+      +notesHtml
+      +'</div>';
+  }).join('');
+}
+
 function renderCandDetail(id){
   const c=DB.candidates.find(x=>x.id===id);if(!c)return;
   const d=document.getElementById('cand-detail');if(!d)return;
@@ -996,7 +1023,7 @@ function renderCandDetail(id){
         <div style="display:flex;gap:6px;flex-wrap:wrap">${stagePill(c.stage)}${candStatusPill(c.candStatus)}${c.specialty?`<span class="pill pill-gray">${c.specialty}</span>`:''}</div>
       </div>
       <div style="display:flex;gap:4px;align-items:flex-start">
-        <button class="btn btn-sm btn-secondary" onclick="showEditCandModal('${c.id}')">Edit</button>
+        <button class="btn btn-sm btn-secondary" title="Edit" onclick="showEditCandModal('${c.id}')">${PENCIL_BTN}</button>
         <button class="detail-close" onclick="closeCandDetail()">×</button>
       </div>
     </div>
@@ -1029,12 +1056,7 @@ function renderCandDetail(id){
       </div>
       <div class="detail-section">
         <div class="detail-section-title">Interviews (${ivs.length}) <button class="btn btn-sm btn-primary" onclick="showAddIvModal('${c.id}')">+ Add</button></div>
-        ${ivs.length?ivs.map(iv=>`<div class="interview-card">
-          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-            <div><div style="font-weight:500;font-size:13px">${iv.date}</div><div style="font-size:12px;color:var(--text2)">${iv.interviewers||'—'}</div></div>
-            <div style="display:flex;align-items:center;gap:8px">${scoreDisplay(iv.score)}<button class="btn-ghost btn-sm" style="padding:4px 6px" onclick="showEditIvModal('${iv.id}','${c.id}')">Edit</button><button class="btn-ghost btn-sm" style="color:var(--red);padding:4px 6px" onclick="deleteIv('${iv.id}','${c.id}')">✕</button></div>
-          </div>
-          ${iv.notes?`<p style="font-size:12px;color:var(--text2);line-height:1.5">${iv.notes}</p>`:''}</div>`).join(''):'<div style="font-size:12px;color:var(--text3);padding:8px 0">No interviews logged yet</div>'}
+        ${buildIvCards(ivs,c.id)}
       </div>
     </div>`;
 }
@@ -1101,22 +1123,22 @@ async function saveCandName(candId){
 
 function showAddIvModal(candId){
   const c=DB.candidates.find(x=>x.id===candId);
-  const typeButtons=IV_TYPES.map(t=>`<button type="button" class="btn btn-secondary btn-sm" onclick="selectIvType('iv-type','${t}')">${t}</button>`).join('');
-  showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Log Interview — <span id="cand-name-display" onclick="toggleCandNameEdit()" style="cursor:pointer;text-decoration:underline">${c.name}</span><input type="text" id="cand-name-input" class="form-input" value="${c.name}" style="display:none;width:200px;height:24px;font-size:14px" onblur="saveCandName('${candId}')" onkeydown="if(event.key==='Enter')saveCandName('${candId}')"/></div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
-    <div class="form-row"><div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="iv-date" value="${today()}"/></div><div class="form-group"><label class="form-label">Time</label><input type="time" class="form-input" id="iv-time"/></div></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Score</label><select class="form-input form-select" id="iv-score"><option value="">— No score —</option>${[1,2,3,4,5].map(n=>`<option value="${n}">${n} — ${SCORE_LABELS[n]}</option>`).join('')}</select></div></div>
-    <div class="form-group"><label class="form-label">Type</label><div style="display:flex;gap:8px;flex-wrap:wrap">${typeButtons}<input type="hidden" id="iv-type"/></div></div>
-    <div class="form-group"><label class="form-label">Interviewer(s)</label><input class="form-input" id="iv-int" placeholder="Jordan Lee, Nina Patel"/></div>
-    <div class="form-group"><label class="form-label">Notes / Comments</label><textarea class="form-input" id="iv-notes" rows="4" placeholder="Key observations, strengths, concerns..."></textarea></div>
-  </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addIv('${candId}')">Save Interview</button></div></div>`);
+  var scoreOpts='<option value="">— No score —</option>';
+  getList('interviewScore').forEach(function(s){scoreOpts+='<option>'+s+'</option>';});
+  showModal('<div class="modal"><div class="modal-header"><div class="modal-title">Log Interview \u2014 <span id="cand-name-display" onclick="toggleCandNameEdit()" style="cursor:pointer;text-decoration:underline">'+c.name+'</span><input type="text" id="cand-name-input" class="form-input" value="'+c.name+'" style="display:none;width:200px;height:24px;font-size:14px" onblur="saveCandName(\''+candId+'\')" onkeydown="if(event.key===\'Enter\')saveCandName(\''+candId+'\')"/></div><button class="detail-close" onclick="closeModal()">\u00d7</button></div><div class="modal-body">'
+    +'<div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="iv-date" value="'+today()+'"/></div>'
+    +'<div class="form-group"><label class="form-label">Score</label><select class="form-input form-select" id="iv-score">'+scoreOpts+'</select></div>'
+    +'<div class="form-group"><label class="form-label">Interviewer(s)</label><input class="form-input" id="iv-int" placeholder="Jordan Lee, Nina Patel"/></div>'
+    +'<div class="form-group"><label class="form-label">Notes / Comments</label><textarea class="form-input" id="iv-notes" rows="4" placeholder="Key observations, strengths, concerns..."></textarea></div>'
+    +'</div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addIv(\''+candId+'\')">Save Interview</button></div></div>');
 }
 
 async function addIv(candId){
   const date=document.getElementById('iv-date').value;if(!date){showToast('Date required');return;}
   const c=DB.candidates.find(x=>x.id===candId);
-  const iv={id:uid(),candidateId:candId,date,time:document.getElementById('iv-time').value,type:document.getElementById('iv-type').value,interviewers:document.getElementById('iv-int').value,score:document.getElementById('iv-score').value,notes:document.getElementById('iv-notes').value};
+  const iv={id:uid(),candidateId:candId,date,interviewers:document.getElementById('iv-int').value,score:document.getElementById('iv-score').value,notes:document.getElementById('iv-notes').value};
   DB.interviews.push(iv);touch(c);
-  DB.activities.unshift({id:uid(),type:'interview',desc:`Interview logged for ${c.name}`,at:now()});
+  DB.activities.unshift({id:uid(),type:'interview',desc:'Interview logged for '+c.name,at:now()});
   await save('interviews');await save('candidates');await save('activities');
   closeModal();showToast('Interview saved');renderCandDetail(candId);refreshHiringView();
 }
@@ -1129,21 +1151,19 @@ async function deleteIv(ivId,candId){
 function showEditIvModal(ivId, candId){
   const iv=DB.interviews.find(x=>x.id===ivId);
   const c=DB.candidates.find(x=>x.id===candId);
-  const typeButtons=IV_TYPES.map(t=>`<button type="button" class="btn btn-secondary btn-sm${iv.type===t?' btn-active':''}" onclick="selectIvType('eiv-type','${t}')">${t}</button>`).join('');
-  showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Edit Interview — <span id="cand-name-display" onclick="toggleCandNameEdit()" style="cursor:pointer;text-decoration:underline">${c.name}</span><input type="text" id="cand-name-input" class="form-input" value="${c.name}" style="display:none;width:200px;height:24px;font-size:14px" onblur="saveCandName('${candId}')" onkeydown="if(event.key==='Enter')saveCandName('${candId}')"/></div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
-    <div class="form-row"><div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="eiv-date" value="${iv.date}"/></div><div class="form-group"><label class="form-label">Time</label><input type="time" class="form-input" id="eiv-time" value="${iv.time||''}"/></div></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Score</label><select class="form-input form-select" id="eiv-score"><option value="">— No score —</option>${[1,2,3,4,5].map(n=>`<option value="${n}"${iv.score==n?' selected':''}>${n} — ${SCORE_LABELS[n]}</option>`).join('')}</select></div></div>
-    <div class="form-group"><label class="form-label">Type</label><div style="display:flex;gap:8px;flex-wrap:wrap">${typeButtons}<input type="hidden" id="eiv-type" value="${iv.type||''}"/></div></div>
-    <div class="form-group"><label class="form-label">Interviewer(s)</label><input class="form-input" id="eiv-int" value="${iv.interviewers||''}"/></div>
-    <div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="eiv-notes" rows="4">${iv.notes||''}</textarea></div>
-  </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEditIv('${ivId}','${candId}')">Save</button></div></div>`);
+  var scoreOpts='<option value="">— No score —</option>';
+  getList('interviewScore').forEach(function(s){scoreOpts+='<option'+(iv.score===s?' selected':'')+'>'+s+'</option>';});
+  showModal('<div class="modal"><div class="modal-header"><div class="modal-title">Edit Interview \u2014 <span id="cand-name-display" onclick="toggleCandNameEdit()" style="cursor:pointer;text-decoration:underline">'+c.name+'</span><input type="text" id="cand-name-input" class="form-input" value="'+c.name+'" style="display:none;width:200px;height:24px;font-size:14px" onblur="saveCandName(\''+candId+'\')" onkeydown="if(event.key===\'Enter\')saveCandName(\''+candId+'\')"/></div><button class="detail-close" onclick="closeModal()">\u00d7</button></div><div class="modal-body">'
+    +'<div class="form-group"><label class="form-label">Date</label><input type="date" class="form-input" id="eiv-date" value="'+iv.date+'"/></div>'
+    +'<div class="form-group"><label class="form-label">Score</label><select class="form-input form-select" id="eiv-score">'+scoreOpts+'</select></div>'
+    +'<div class="form-group"><label class="form-label">Interviewer(s)</label><input class="form-input" id="eiv-int" value="'+(iv.interviewers||'')+'"/></div>'
+    +'<div class="form-group"><label class="form-label">Notes</label><textarea class="form-input" id="eiv-notes" rows="4">'+(iv.notes||'')+'</textarea></div>'
+    +'</div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="saveEditIv(\''+ivId+'\',\''+candId+'\')">Save</button></div></div>');
 }
 
 async function saveEditIv(ivId, candId){
   const iv=DB.interviews.find(x=>x.id===ivId);
   iv.date=document.getElementById('eiv-date').value;
-  iv.time=document.getElementById('eiv-time').value;
-  iv.type=document.getElementById('eiv-type').value;
   iv.score=document.getElementById('eiv-score').value;
   iv.interviewers=document.getElementById('eiv-int').value;
   iv.notes=document.getElementById('eiv-notes').value;
@@ -1334,7 +1354,7 @@ function selectEmp(id){
       <div class="person-av" style="${av(e.name)};width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:600">${initials(e.name)}</div>
       <div><div style="font-weight:600;font-size:15px">${e.name}</div><div style="font-size:12px;color:var(--text2)">${e.role} · ${e.dept||''}</div></div>
     </div>
-    <div style="display:flex;gap:4px"><button class="btn btn-sm btn-secondary" onclick="showEditEmpModal('${e.id}')">Edit</button><button class="detail-close" onclick="closeEmpDetail()">×</button></div>
+    <div style="display:flex;gap:4px"><button class="btn btn-sm btn-secondary" title="Edit" onclick="showEditEmpModal('${e.id}')">${PENCIL_BTN}</button><button class="detail-close" onclick="closeEmpDetail()">×</button></div>
   </div>
   <div class="detail-body">
     <div class="detail-section"><div class="detail-section-title">Info</div>
@@ -1645,7 +1665,7 @@ function showDevDetail(id){
     ${d.specs?`<div class="detail-row" style="flex-direction:column;align-items:flex-start;gap:4px"><span class="detail-key">Specs</span><span style="font-size:12px;color:var(--text2);line-height:1.5">${d.specs}</span></div>`:''}
     ${a?`<div class="detail-row"><span class="detail-key">Assigned To</span><span class="detail-val">${a.name}</span></div>`:''}
   </div>
-  <div class="modal-footer"><button class="btn btn-secondary btn-sm" onclick="showEditDeviceModal('${d.id}')">Edit</button>${d.status==='available'?`<button class="btn btn-primary" onclick="showAssignModal('${d.id}')">Assign to Employee</button>`:`<button class="btn btn-danger" onclick="returnDevice('${d.id}')">Return Device</button>`}<button class="btn btn-secondary" onclick="closeModal()">Close</button></div></div>`);
+  <div class="modal-footer"><button class="btn btn-sm btn-secondary" title="Edit" onclick="showEditDeviceModal('${d.id}')">${PENCIL_BTN}</button>${d.status==='available'?`<button class="btn btn-primary" onclick="showAssignModal('${d.id}')">Assign to Employee</button>`:`<button class="btn btn-danger" onclick="returnDevice('${d.id}')">Return Device</button>`}<button class="btn btn-secondary" onclick="closeModal()">Close</button></div></div>`);
 }
 
 function showAssignModal(devId){
@@ -1854,7 +1874,7 @@ function renderTrackDetail(id){
   const t=DB.tracks.find(x=>x.id===id);const d=document.getElementById('track-detail');if(!d||!t)return;
   const tasks=getTrackTasks(id);
   d.innerHTML=`<div class="page-header"><div><div class="page-title">${t.name}</div><div class="page-subtitle">Type: ${t.type} · Auto-apply: ${t.autoApply==='true'||t.autoApply===true?'Yes':'No'}</div></div>
-  <div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm" onclick="showEditTrackModal('${t.id}')">Edit Track</button><button class="btn btn-primary btn-sm" onclick="showStartRunModal('onboarding')">Apply Track</button></div></div>
+  <div style="display:flex;gap:8px"><button class="btn btn-sm btn-secondary" title="Edit" onclick="showEditTrackModal('${t.id}')">${PENCIL_BTN}</button><button class="btn btn-primary btn-sm" onclick="showStartRunModal('onboarding')">Apply Track</button></div></div>
   <div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px"><div style="font-size:12px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.6px">Tasks (${tasks.length})</div><button class="btn btn-sm btn-secondary" onclick="showAddTaskModal('${t.id}')">+ Add Task</button></div>
   <div id="task-list">${taskListHTML(t,tasks)}</div></div>`;
 }
@@ -1912,13 +1932,12 @@ function renderReports(){
   const sources=[...new Set(DB.candidates.map(c=>c.source))].filter(Boolean);
   const specs=[...new Set(DB.candidates.map(c=>c.specialty))].filter(Boolean);
   const totalIv=DB.interviews.length;
-  const avgScore=totalIv?Math.round(DB.interviews.filter(i=>i.score).reduce((s,i)=>s+parseInt(i.score),0)/DB.interviews.filter(i=>i.score).length*10)/10:0;
   p.innerHTML=`<div class="page-header"><div><div class="page-title">Reports</div><div class="page-subtitle">Pipeline analytics</div></div></div>
   <div class="stat-grid">
     <div class="stat-card"><div class="stat-label">Total Candidates</div><div class="stat-value">${DB.candidates.length}</div></div>
     <div class="stat-card"><div class="stat-label">Hired</div><div class="stat-value" style="color:var(--green)">${hired}</div></div>
     <div class="stat-card"><div class="stat-label">Active Pipeline</div><div class="stat-value">${active}</div></div>
-    <div class="stat-card"><div class="stat-label">Interviews Logged</div><div class="stat-value">${totalIv}${avgScore?`<span style="font-size:14px;color:var(--text3);font-weight:400;margin-left:8px">avg ${avgScore}</span>`:''}</div></div>
+    <div class="stat-card"><div class="stat-label">Interviews Logged</div><div class="stat-value">${totalIv}</div></div>
   </div>
   <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px">
     <div class="card"><div style="font-weight:600;font-size:13px;margin-bottom:14px">By Stage</div>
@@ -1947,7 +1966,7 @@ function settingsTab(el,tab){
   if(tab==='dropdowns')renderDropdownsTab();else renderDataTab();
 }
 
-const LIST_KEYS=[{key:'candStatus',label:'Candidate Status'},{key:'empType',label:'Employment Type'},{key:'source',label:'Source'},{key:'seniority',label:'Seniority'},{key:'specialty',label:'Specialty'},{key:'dept',label:'Department'},{key:'deviceType',label:'Device Type'},{key:'ownerRole',label:'Task Owner Role'}];
+const LIST_KEYS=[{key:'candStatus',label:'Candidate Status'},{key:'empType',label:'Employment Type'},{key:'source',label:'Source'},{key:'seniority',label:'Seniority'},{key:'specialty',label:'Specialty'},{key:'dept',label:'Department'},{key:'deviceType',label:'Device Type'},{key:'ownerRole',label:'Task Owner Role'},{key:'interviewScore',label:'Interview Score'}];
 
 function renderDropdownsTab(){
   const c=document.getElementById('settings-content');
@@ -2267,7 +2286,7 @@ function cpIvOpts(candId,selectedId){
   var ivs=DB.interviews.filter(function(i){return i.candidateId===candId;});
   var opts='<option value="">-- Select interview --</option>';
   ivs.forEach(function(iv){
-    opts+='<option value="'+iv.id+'"'+(iv.id===selectedId?' selected':'')+'>'+iv.type+' on '+iv.date+'</option>';
+    opts+='<option value="'+iv.id+'"'+(iv.id===selectedId?' selected':'')+'>'+iv.date+(iv.interviewers?' - '+iv.interviewers:'')+'</option>';
   });
   return opts;
 }
@@ -2553,9 +2572,7 @@ CP_FLOWS['schedule-multi-iv']={
     }
     var ivIdx=step-3;
     if(ivIdx>=0){
-      var ivTypeOpts='';IV_TYPES.forEach(function(t){ivTypeOpts+='<option'+((data['ivType'+ivIdx]||'')==t?' selected':'')+'>'+t+'</option>';});
       return '<div style="font-size:12px;color:var(--text3);margin-bottom:12px">Interview '+(ivIdx+1)+' of '+data.count+'</div>'+
-        cpFormRow('Type',cpSelect('cp-iv-type-'+ivIdx,ivTypeOpts))+
         cpFormRow('Interviewer',cpInput('cp-iv-int-'+ivIdx,'Name',data['ivInt'+ivIdx]||''))+
         cpFormRow('Date',cpInput('cp-iv-date-'+ivIdx,'',data['ivDate'+ivIdx]||today(),'date'));
     }
@@ -2564,12 +2581,12 @@ CP_FLOWS['schedule-multi-iv']={
   readStep:function(step,data){
     if(step===1){data.candId=gv('cp-candId');data.count=gv('cp-count');}
     var ivIdx=step-3;
-    if(ivIdx>=0){data['ivType'+ivIdx]=gv('cp-iv-type-'+ivIdx);data['ivInt'+ivIdx]=gv('cp-iv-int-'+ivIdx);data['ivDate'+ivIdx]=gv('cp-iv-date-'+ivIdx);}
+    if(ivIdx>=0){data['ivInt'+ivIdx]=gv('cp-iv-int-'+ivIdx);data['ivDate'+ivIdx]=gv('cp-iv-date-'+ivIdx);}
   },
   save:async function(data){
     var count=parseInt(data.count||1);
     for(var i=0;i<count;i++){
-      DB.interviews.push({id:uid(),candidateId:data.candId,type:data['ivType'+i]||'Phone',interviewer:data['ivInt'+i]||'',date:data['ivDate'+i]||today(),score:null,notes:'',createdAt:now()});
+      DB.interviews.push({id:uid(),candidateId:data.candId,interviewers:data['ivInt'+i]||'',date:data['ivDate'+i]||today(),score:'',notes:'',createdAt:now()});
     }
     await save('interviews');
     if(currentPage==='hiring')refreshHiringView();
@@ -2582,12 +2599,14 @@ CP_FLOWS['add-emp']={
   successMsg:'Employee added',
   renderStep:function(step,data){
     if(step===1){
+      var srcOpts='';getList('source').forEach(function(s){srcOpts+='<option'+(s===data.source?' selected':'')+'>'+s+'</option>';});
       return '<div class="cp-form-2col">'+
         cpFormRow('First name',cpInput('cp-fn','First name',data.fn||''))+
         cpFormRow('Last name',cpInput('cp-ln','Last name',data.ln||''))+
         '</div>'+
         cpFormRow('Role / title',cpInput('cp-role','e.g. Software Engineer',data.role||''))+
-        cpFormRow('Work email',cpInput('cp-email','name@vtwo.co',data.email||'','email'));
+        cpFormRow('Work email',cpInput('cp-email','name@vtwo.co',data.email||'','email'))+
+        cpFormRow('Source',cpSelect('cp-source',srcOpts));
     }
     if(step===2){
       var deptOpts='';getList('department').forEach(function(s){deptOpts+='<option'+(s===data.dept?' selected':'')+'>'+s+'</option>';});
@@ -2612,14 +2631,14 @@ CP_FLOWS['add-emp']={
     }
   },
   readStep:function(step,data){
-    if(step===1){data.fn=gv('cp-fn');data.ln=gv('cp-ln');data.role=gv('cp-role');data.email=gv('cp-email');}
+    if(step===1){data.fn=gv('cp-fn');data.ln=gv('cp-ln');data.role=gv('cp-role');data.email=gv('cp-email');data.source=gv('cp-source');}
     if(step===2){data.dept=gv('cp-dept');data.startDate=gv('cp-startDate');data.city=gv('cp-city');data.country=gv('cp-country');data.mgrId=gv('cp-mgr');}
   },
   save:async function(data){
     var fn=data.fn||'';var ln=data.ln||'';
     var mgrEmp=data.mgrId?DB.employees.find(function(x){return x.id===data.mgrId;}):null;
     var mgr=mgrEmp?mgrEmp.name:'';
-    var ne={id:uid(),name:(fn+' '+ln).trim(),role:data.role,dept:data.dept,status:'active',location:data.city||'Remote',city:data.city,state:'',country:data.country||'US',manager:mgr,startDate:data.startDate,email:data.email||(fn.toLowerCase()+'@vtwo.co'),phone:'—'};
+    var ne={id:uid(),name:(fn+' '+ln).trim(),role:data.role,dept:data.dept,status:'active',location:data.city||'Remote',city:data.city,state:'',country:data.country||'US',manager:mgr,source:data.source,startDate:data.startDate,email:data.email||(fn.toLowerCase()+'@vtwo.co'),phone:'—'};
     DB.employees.push(ne);
     DB.activities.unshift({id:uid(),type:'hire',desc:ne.name+' added to directory',at:now()});
     await save('employees');await save('activities');
@@ -2731,25 +2750,26 @@ CP_FLOWS['add-iv']={
   successMsg:'Interview added',
   renderStep:function(step,data){
     if(step===1){
-      var ivTypeOpts='';IV_TYPES.forEach(function(t){ivTypeOpts+='<option'+(t===data.ivType?' selected':'')+'>'+t+'</option>';});
+      var scoreOpts='<option value="">-- No score --</option>';
+      getList('interviewScore').forEach(function(s){scoreOpts+='<option'+(s===data.score?' selected':'')+'>'+s+'</option>';});
       return cpFormRow('Candidate',cpSelect('cp-candId',cpCandOpts(data.candId)))+
-        cpFormRow('Type',cpSelect('cp-ivType',ivTypeOpts))+
         cpFormRow('Interviewer',cpInput('cp-interviewer','Name',data.interviewer||''))+
-        cpFormRow('Date',cpInput('cp-ivDate','',data.ivDate||today(),'date'));
+        cpFormRow('Date',cpInput('cp-ivDate','',data.ivDate||today(),'date'))+
+        cpFormRow('Score',cpSelect('cp-score',scoreOpts));
     }
     if(step===2){
       var c=DB.candidates.find(function(x){return x.id===data.candId;})||{name:'?'};
       return '<table class="cp-summary-table">'+
         cpSummaryRow('Candidate',c.name)+
-        cpSummaryRow('Type',data.ivType)+
         cpSummaryRow('Interviewer',data.interviewer)+
         cpSummaryRow('Date',data.ivDate)+
+        cpSummaryRow('Score',data.score)+
         '</table>';
     }
   },
-  readStep:function(step,data){if(step===1){data.candId=gv('cp-candId');data.ivType=gv('cp-ivType');data.interviewer=gv('cp-interviewer');data.ivDate=gv('cp-ivDate');}},
+  readStep:function(step,data){if(step===1){data.candId=gv('cp-candId');data.interviewer=gv('cp-interviewer');data.ivDate=gv('cp-ivDate');data.score=gv('cp-score');}},
   save:async function(data){
-    DB.interviews.push({id:uid(),candidateId:data.candId,type:data.ivType,interviewer:data.interviewer,date:data.ivDate,score:null,notes:'',createdAt:now()});
+    DB.interviews.push({id:uid(),candidateId:data.candId,interviewers:data.interviewer,date:data.ivDate,score:data.score||'',notes:'',createdAt:now()});
     await save('interviews');
     if(currentPage==='hiring')refreshHiringView();
   }
@@ -2764,13 +2784,9 @@ CP_FLOWS['edit-iv']={
     if(step===2){return cpFormRow('Interview',cpSelect('cp-ivId',cpIvOpts(data.candId,data.ivId)));}
     if(step===3){
       var iv=DB.interviews.find(function(x){return x.id===data.ivId;})||{};
-      var ivTypeOpts='';IV_TYPES.forEach(function(t){ivTypeOpts+='<option'+(t===(data.ivType||iv.type)?' selected':'')+'>'+t+'</option>';});
-      var scoreOpts='<option value="">--</option>';
-      [['1','No hire'],['2','Lean no'],['3','Maybe'],['4','Lean yes'],['5','Strong hire']].forEach(function(p){
-        scoreOpts+='<option value="'+p[0]+'"'+(String(data.score||iv.score||'')==p[0]?' selected':'')+'>'+p[1]+'</option>';
-      });
-      return cpFormRow('Type',cpSelect('cp-ivType',ivTypeOpts))+
-        cpFormRow('Interviewer',cpInput('cp-interviewer','Name',data.interviewer||iv.interviewer||''))+
+      var scoreOpts='<option value="">-- No score --</option>';
+      getList('interviewScore').forEach(function(s){scoreOpts+='<option'+((data.score||iv.score||'')==s?' selected':'')+'>'+s+'</option>';});
+      return cpFormRow('Interviewer',cpInput('cp-interviewer','Name',data.interviewer||iv.interviewers||''))+
         cpFormRow('Date',cpInput('cp-ivDate','',data.ivDate||iv.date||today(),'date'))+
         cpFormRow('Score',cpSelect('cp-score',scoreOpts));
     }
@@ -2778,12 +2794,12 @@ CP_FLOWS['edit-iv']={
   readStep:function(step,data){
     if(step===1){data.candId=gv('cp-candId');}
     if(step===2){data.ivId=gv('cp-ivId');}
-    if(step===3){data.ivType=gv('cp-ivType');data.interviewer=gv('cp-interviewer');data.ivDate=gv('cp-ivDate');data.score=gv('cp-score');}
+    if(step===3){data.interviewer=gv('cp-interviewer');data.ivDate=gv('cp-ivDate');data.score=gv('cp-score');}
   },
   save:async function(data){
     var iv=DB.interviews.find(function(x){return x.id===data.ivId;});
     if(!iv)throw new Error('Interview not found');
-    iv.type=data.ivType;iv.interviewer=data.interviewer;iv.date=data.ivDate;if(data.score)iv.score=parseInt(data.score);
+    iv.interviewers=data.interviewer;iv.date=data.ivDate;iv.score=data.score;
     await save('interviews');
     if(currentPage==='hiring')refreshHiringView();
   }
@@ -2798,9 +2814,9 @@ CP_FLOWS['delete-iv']={
     if(step===1){return cpFormRow('Candidate',cpSelect('cp-candId',cpCandOpts(data.candId)));}
     if(step===2){return cpFormRow('Interview',cpSelect('cp-ivId',cpIvOpts(data.candId,data.ivId)));}
     if(step===3){
-      var iv=DB.interviews.find(function(x){return x.id===data.ivId;})||{type:'?',date:'?'};
+      var iv=DB.interviews.find(function(x){return x.id===data.ivId;})||{date:'?'};
       return '<div style="color:var(--red);font-weight:500;margin-bottom:12px">Delete this interview?</div>'+
-        '<table class="cp-summary-table">'+cpSummaryRow('Interview',iv.type+' on '+iv.date)+'</table>';
+        '<table class="cp-summary-table">'+cpSummaryRow('Interview',iv.date)+'</table>';
     }
   },
   readStep:function(step,data){
