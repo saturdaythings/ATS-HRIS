@@ -367,10 +367,6 @@ tr.selected td{background:var(--accent-light)}
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 13v-1.5a3 3 0 00-3-3H5a3 3 0 00-3 3V13"/><circle cx="8" cy="5" r="2.5"/></svg>
       Directory
     </div>
-    <div class="nav-item" onclick="nav('activity')">
-      <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M1 8h3l2-5 3 10 2-5h3"/></svg>
-      Activity
-    </div>
     <div class="nav-item" onclick="nav('onboarding')">
       <svg class="nav-icon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 8H3M13 4H3M9 12H3"/></svg>
       Onboarding
@@ -578,13 +574,6 @@ const DEFAULT_LISTS=[
   {id:'ls17',listKey:'seniority',value:'Senior',order:'3'},
   {id:'ls18',listKey:'seniority',value:'Staff',order:'4'},
   {id:'ls19',listKey:'seniority',value:'Principal',order:'5'},
-  {id:'ls20',listKey:'specialty',value:'Engineering',order:'1'},
-  {id:'ls21',listKey:'specialty',value:'Product',order:'2'},
-  {id:'ls22',listKey:'specialty',value:'Design',order:'3'},
-  {id:'ls23',listKey:'specialty',value:'Data',order:'4'},
-  {id:'ls24',listKey:'specialty',value:'Quality Assurance',order:'5'},
-  {id:'ls25',listKey:'specialty',value:'Operations',order:'6'},
-  {id:'ls26',listKey:'specialty',value:'Other',order:'7'},
   {id:'ls27',listKey:'dept',value:'Engineering',order:'1'},
   {id:'ls28',listKey:'dept',value:'Product',order:'2'},
   {id:'ls29',listKey:'dept',value:'Design',order:'3'},
@@ -596,11 +585,6 @@ const DEFAULT_LISTS=[
   {id:'ls35',listKey:'deviceType',value:'phone',order:'3'},
   {id:'ls36',listKey:'deviceType',value:'keyboard',order:'4'},
   {id:'ls37',listKey:'deviceType',value:'mouse',order:'5'},
-  {id:'ls38',listKey:'ownerRole',value:'HR',order:'1'},
-  {id:'ls39',listKey:'ownerRole',value:'IT',order:'2'},
-  {id:'ls40',listKey:'ownerRole',value:'Manager',order:'3'},
-  {id:'ls41',listKey:'ownerRole',value:'Finance',order:'4'},
-  {id:'ls42',listKey:'ownerRole',value:'Employee',order:'5'},
   {id:'ls43',listKey:'interviewScore',value:'Strong Yes',order:'1'},
   {id:'ls44',listKey:'interviewScore',value:'Yes',order:'2'},
   {id:'ls45',listKey:'interviewScore',value:'No',order:'3'},
@@ -680,7 +664,7 @@ const getRunTasks=id=>DB.runTasks.filter(t=>t.runId===id);
 
 function stagePill(s){const m={sourced:'gray',screening:'blue',interview:'amber',offer:'purple',hired:'green'};return`<span class="pill pill-${m[s]||'gray'}">${s}</span>`;}
 function candStatusPill(s){const m={'Active':'green','On Hold':'amber','Nurturing':'blue','Hired':'purple','Closed':'red'};return`<span class="pill pill-${m[s]||'gray'}">${s}</span>`;}
-function statusPill(s){if(['active','good','new','available'].includes(s))return`<span class="pill pill-green">${s}</span>`;if(s==='onboarding')return`<span class="pill pill-blue">onboarding</span>`;if(s==='assigned')return`<span class="pill pill-purple">assigned</span>`;if(s==='pending')return`<span class="pill pill-amber">pending</span>`;if(s==='inactive')return`<span class="pill pill-gray">inactive</span>`;return`<span class="pill pill-gray">${s||'—'}</span>`;}
+function statusPill(s){if(['active','good','new','available'].includes(s))return'<span class="pill pill-green">'+s+'</span>';if(s==='onboarding')return'<span class="pill pill-blue">onboarding</span>';if(s==='assigned')return'<span class="pill pill-purple">assigned</span>';if(s==='pending')return'<span class="pill pill-amber">pending</span>';if(s==='inactive')return'<span class="pill pill-gray">inactive</span>';if(s==='lost')return'<span class="pill pill-red">lost</span>';return'<span class="pill pill-gray">'+(s||'—')+'</span>';}
 function personCell(name,sub=''){return`<div class="person-cell"><div class="person-av" style="${av(name)}">${initials(name)}</div><div><div class="person-name">${name}</div>${sub?`<div class="person-sub">${sub}</div>`:''}</div></div>`;}
 function scoreDisplay(score){if(!score)return'<span style="color:var(--text3);font-size:12px">—</span>';return'<span style="font-size:12px;font-weight:500">'+score+'</span>';}
 function compDisplay(c){if(!c.compAmount)return'—';return c.compType==='hourly'?`$${parseInt(c.compAmount).toLocaleString()}/hr`:`$${parseInt(c.compAmount).toLocaleString()}/yr`;}
@@ -693,7 +677,7 @@ function renderEmpty(title,sub=''){return`<div class="empty-state"><div class="e
 function fmtSelect(opts,val,id,cls='form-input form-select'){return`<select class="${cls}" id="${id}">${opts.map(o=>`<option${o===val?' selected':''}>${o}</option>`).join('')}</select>`;}
 
 // ── NAV ───────────────────────────────────────────────────────────────────────
-const TITLES={dashboard:'Dashboard',hiring:'Hiring',directory:'Directory',activity:'Activity',onboarding:'Onboarding',offboarding:'Offboarding',inventory:'Inventory',assignments:'Assignments',tracks:'Tracks',reports:'Reports',settings:'Settings'};
+const TITLES={dashboard:'Dashboard',hiring:'Hiring',directory:'Directory',onboarding:'Onboarding',offboarding:'Offboarding',inventory:'Inventory',assignments:'Assignments',tracks:'Tracks',reports:'Reports',settings:'Settings'};
 let currentPage='';
 
 function toggleSidebar(){
@@ -719,7 +703,7 @@ function nav(page){
   const p=document.getElementById('page');
   p.style.cssText='flex:1;overflow-y:auto;padding:28px 28px 40px';
   p.innerHTML='';
-  ({dashboard:renderDashboard,hiring:renderHiring,directory:renderDirectory,activity:renderActivity,onboarding:renderOnboarding,offboarding:renderOffboarding,inventory:renderInventory,assignments:renderAssignments,tracks:renderTracks,reports:renderReports,settings:renderSettings}[page]||function(){})();
+  ({dashboard:renderDashboard,hiring:renderHiring,directory:renderDirectory,onboarding:renderOnboarding,offboarding:renderOffboarding,inventory:renderInventory,assignments:renderAssignments,tracks:renderTracks,reports:renderReports,settings:renderSettings}[page]||function(){})();
 }
 
 // ── HELPERS ───────────────────────────────────────────────────────────────────
@@ -908,7 +892,7 @@ function renderDashboard(){
 // ── HIRING ────────────────────────────────────────────────────────────────────
 let selectedCandId=null;
 let hiringView='kanban'; // 'kanban' | 'table'
-let hiringFilters={q:'',status:'',stage:'',specialty:'',location:'',showArchived:false};
+let hiringFilters={q:'',status:'',stage:'',dept:'',location:'',showArchived:false};
 let sortCol='updatedAt';let sortDir=-1;
 
 function getFilteredCands(){
@@ -926,7 +910,7 @@ function getFilteredCands(){
   if(f.q){const q=f.q.toLowerCase();list=list.filter(c=>c.name.toLowerCase().includes(q)||c.role.toLowerCase().includes(q)||(c.city||'').toLowerCase().includes(q));}
   if(f.status)list=list.filter(c=>c.candStatus===f.status);
   if(f.stage)list=list.filter(c=>c.stage===f.stage);
-  if(f.specialty)list=list.filter(c=>c.specialty===f.specialty);
+  if(f.dept)list=list.filter(c=>c.dept===f.dept);
   if(f.location)list=list.filter(c=>(c.city||'').toLowerCase().includes(f.location.toLowerCase())||(c.state||'').toLowerCase().includes(f.location.toLowerCase()));
   return list;
 }
@@ -935,7 +919,7 @@ function renderHiring(){
   const p=document.getElementById('page');
   p.style.cssText='flex:1;overflow:hidden;display:flex;flex-direction:column;padding:0';
   const statuses=getList('candStatus');
-  const specialties=getList('specialty');
+  const depts=getList('dept');
   p.innerHTML=`
     <div style="padding:20px 24px 0;background:var(--surface);border-bottom:1px solid var(--border)">
       <div class="page-header" style="margin-bottom:12px">
@@ -946,7 +930,7 @@ function renderHiring(){
         <div class="filter-search"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input placeholder="Search name, role, city..." value="${hiringFilters.q}" oninput="hiringFilters.q=this.value;refreshHiringView()"/></div>
         <select class="filter-select" onchange="hiringFilters.status=this.value;refreshHiringView()"><option value="">All statuses</option>${statuses.map(s=>`<option${s===hiringFilters.status?' selected':''}>${s}</option>`).join('')}</select>
         <select class="filter-select" onchange="hiringFilters.stage=this.value;refreshHiringView()"><option value="">All stages</option>${STAGES.map(s=>`<option${s===hiringFilters.stage?' selected':''}>${s}</option>`).join('')}</select>
-        <select class="filter-select" onchange="hiringFilters.specialty=this.value;refreshHiringView()"><option value="">All specialties</option>${specialties.map(s=>`<option${s===hiringFilters.specialty?' selected':''}>${s}</option>`).join('')}</select>
+        <select class="filter-select" onchange="hiringFilters.dept=this.value;refreshHiringView()"><option value="">All departments</option>${depts.map(s=>`<option${s===hiringFilters.dept?' selected':''}>${s}</option>`).join('')}</select>
         <div class="filter-search" style="min-width:140px"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 4v4l3 1.5"/></svg><input placeholder="City, state..." value="${hiringFilters.location}" oninput="hiringFilters.location=this.value;refreshHiringView()"/></div>
         <button id="archive-toggle" class="btn btn-sm ${hiringFilters.showArchived?'btn-active btn-secondary':'btn-secondary'}" style="${hiringFilters.showArchived?'':'border-color:var(--amber);color:var(--amber)'}" onclick="hiringFilters.showArchived=!hiringFilters.showArchived;refreshHiringView()" title="Show/hide Hired & Closed in Kanban">${hiringFilters.showArchived?'Hiding Archived':'Show Archived'}</button>
         <div class="view-toggle" style="margin-left:auto">
@@ -1000,7 +984,7 @@ function renderKanban(list,container){
     cols.forEach(function(c){
       var ivCount=getCandIvs(c.id).length;
       var ivBadge=ivCount?'<span style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:3px"><svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><path d="M8 5v3l2 1"/></svg>'+ivCount+'</span>':'';
-      var specialtyPill=c.specialty?'<span class="pill pill-gray" style="font-size:10px">'+c.specialty+'</span>':'';
+      var specialtyPill=c.dept?'<span class="pill pill-gray" style="font-size:10px">'+c.dept+'</span>':'';
       cardsHtml+='<div class="kanban-card'+(selectedCandId===c.id?' selected':'')+'" draggable="true" ondragstart="kanDragStart(event,\''+c.id+'\')" onclick="selectCand(\''+c.id+'\')">'
         +'<div class="kanban-name">'+c.name+'</div>'
         +'<div class="kanban-role">'+c.role+'</div>'
@@ -1026,14 +1010,14 @@ function renderCandTable(list,container){
   const th=(col,label)=>`<th onclick="tableSortBy('${col}')" class="${sortCol===col?'sorted':''}">${label}${sortCol===col?arrow(sortDir):''}</th>`;
   container.innerHTML=`<div class="table-wrap"><table>
     <thead><tr>
-      ${th('name','Name')}${th('role','Role')}${th('seniority','Seniority')}${th('specialty','Specialty')}${th('stage','Stage')}${th('candStatus','Status')}${th('empType','Type')}${th('compAmount','Comp')}${th('source','Source')}${th('city','Location')}
+      ${th('name','Name')}${th('role','Role')}${th('seniority','Seniority')}${th('dept','Dept')}${th('stage','Stage')}${th('candStatus','Status')}${th('empType','Type')}${th('compAmount','Comp')}${th('source','Source')}${th('city','Location')}
       <th>Interviews</th>${th('updatedAt','Updated')}
     </tr></thead>
     <tbody>${sortedList.map(c=>{
       const ivCount=getCandIvs(c.id).length;
       return`<tr class="clickable${selectedCandId===c.id?' selected':''}" onclick="selectCand('${c.id}')">
         <td>${personCell(c.name)}</td>
-        <td>${c.role}</td><td>${c.seniority||'—'}</td><td>${c.specialty||'—'}</td>
+        <td>${c.role}</td><td>${c.seniority||'—'}</td><td>${c.dept||'—'}</td>
         <td>${stagePill(c.stage)}</td><td>${candStatusPill(c.candStatus)}</td>
         <td>${c.empType||'—'}</td><td style="font-size:12px">${compDisplay(c)}</td>
         <td>${c.source||'—'}</td><td style="font-size:12px">${locDisplay(c)}</td>
@@ -1092,7 +1076,7 @@ function renderCandDetail(id){
           <div class="person-av" style="${av(c.name)};width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600">${initials(c.name)}</div>
           <div><div style="font-weight:600;font-size:15px">${c.name}</div><div style="font-size:12px;color:var(--text2)">${c.role}${c.seniority?` · ${c.seniority}`:''}</div></div>
         </div>
-        <div style="display:flex;gap:6px;flex-wrap:wrap">${stagePill(c.stage)}${candStatusPill(c.candStatus)}${c.specialty?`<span class="pill pill-gray">${c.specialty}</span>`:''}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">${stagePill(c.stage)}${candStatusPill(c.candStatus)}${c.dept?`<span class="pill pill-gray">${c.dept}</span>`:''}</div>
       </div>
       <div style="display:flex;gap:4px;align-items:flex-start">
         <button class="btn btn-sm btn-secondary" title="Edit" onclick="showEditCandModal('${c.id}')">${PENCIL_BTN}</button>
@@ -1247,11 +1231,11 @@ async function saveEditIv(ivId, candId){
 }
 
 function showAddCandModal(){
-  const statuses=getList('candStatus');const specs=getList('specialty');const sources=getList('source');const sens=getList('seniority');const etypes=getList('empType');
+  const statuses=getList('candStatus');const depts=getList('dept');const sources=getList('source');const sens=getList('seniority');const etypes=getList('empType');
   showModal(`<div class="modal modal-lg"><div class="modal-header"><div class="modal-title">Add Candidate</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
     <div class="form-row"><div class="form-group"><label class="form-label">First Name</label><input class="form-input" id="cfn" placeholder="Jane"/></div><div class="form-group"><label class="form-label">Last Name</label><input class="form-input" id="cln" placeholder="Smith"/></div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Role</label><input class="form-input" id="crole" placeholder="Software Engineer"/></div><div class="form-group"><label class="form-label">Seniority</label>${fmtSelect(sens,'Mid','csen')}</div></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Specialty</label>${fmtSelect(specs,'Engineering','cspec')}</div><div class="form-group"><label class="form-label">Source</label>${fmtSelect(sources,'LinkedIn','csrc')}</div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Department</label>${fmtSelect(depts,'Engineering','cdept')}</div><div class="form-group"><label class="form-label">Source</label>${fmtSelect(sources,'LinkedIn','csrc')}</div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Status</label>${fmtSelect(statuses,'Active','cstat')}</div><div class="form-group"><label class="form-label">Employment Type</label>${fmtSelect(etypes,'FTE','cetype')}</div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Comp Type</label><select class="form-input form-select" id="cctype"><option value="salary">Salary (annual)</option><option value="hourly">Hourly</option></select></div><div class="form-group"><label class="form-label">Amount ($)</label><input type="number" class="form-input" id="ccomp" placeholder="120000"/></div></div>
     <div class="form-row-3"><div class="form-group"><label class="form-label">City</label><input class="form-input" id="ccity" placeholder="San Francisco"/></div><div class="form-group"><label class="form-label">State</label><input class="form-input" id="cstate" placeholder="CA"/></div><div class="form-group"><label class="form-label">Country</label><input class="form-input" id="ccountry" value="US"/></div></div>
@@ -1278,7 +1262,7 @@ async function addCand(){
 
 async function doCandAdd(fn,ln){
   const fullName=(fn+' '+ln).trim();
-  const nc={id:uid(),name:fullName,role:document.getElementById('crole').value||'TBD',seniority:document.getElementById('csen').value,specialty:document.getElementById('cspec').value,source:document.getElementById('csrc').value,stage:'sourced',candStatus:document.getElementById('cstat').value,empType:document.getElementById('cetype').value,compType:document.getElementById('cctype').value,compAmount:document.getElementById('ccomp').value,city:document.getElementById('ccity').value,state:document.getElementById('cstate').value,country:document.getElementById('ccountry').value,client:document.getElementById('cclient').value,resumeLink:document.getElementById('cresume').value,addedAt:now(),updatedAt:now(),notes:document.getElementById('cnotes').value};
+  const nc={id:uid(),name:fullName,role:document.getElementById('crole').value||'TBD',seniority:document.getElementById('csen').value,dept:document.getElementById('cdept').value,source:document.getElementById('csrc').value,stage:'sourced',candStatus:document.getElementById('cstat').value,empType:document.getElementById('cetype').value,compType:document.getElementById('cctype').value,compAmount:document.getElementById('ccomp').value,city:document.getElementById('ccity').value,state:document.getElementById('cstate').value,country:document.getElementById('ccountry').value,client:document.getElementById('cclient').value,resumeLink:document.getElementById('cresume').value,addedAt:now(),updatedAt:now(),notes:document.getElementById('cnotes').value};
   DB.candidates.push(nc);
   DB.activities.unshift({id:uid(),type:'add',desc:nc.name+' added to pipeline',at:now()});
   await save('candidates');await save('activities');
@@ -1287,10 +1271,10 @@ async function doCandAdd(fn,ln){
 
 function showEditCandModal(id){
   const c=DB.candidates.find(x=>x.id===id);
-  const statuses=getList('candStatus');const specs=getList('specialty');const sources=getList('source');const sens=getList('seniority');const etypes=getList('empType');
+  const statuses=getList('candStatus');const depts=getList('dept');const sources=getList('source');const sens=getList('seniority');const etypes=getList('empType');
   showModal(`<div class="modal modal-lg"><div class="modal-header"><div class="modal-title">Edit — ${c.name}</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
     <div class="form-row"><div class="form-group"><label class="form-label">Role</label><input class="form-input" id="er" value="${c.role}"/></div><div class="form-group"><label class="form-label">Seniority</label>${fmtSelect(sens,c.seniority,'esen')}</div></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Specialty</label>${fmtSelect(specs,c.specialty,'espec')}</div><div class="form-group"><label class="form-label">Source</label>${fmtSelect(sources,c.source,'esrc')}</div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Department</label>${fmtSelect(depts,c.dept,'edept')}</div><div class="form-group"><label class="form-label">Source</label>${fmtSelect(sources,c.source,'esrc')}</div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Status</label>${fmtSelect(statuses,c.candStatus,'estat')}</div><div class="form-group"><label class="form-label">Employment Type</label>${fmtSelect(etypes,c.empType,'eetype')}</div></div>
     <div class="form-row"><div class="form-group"><label class="form-label">Comp Type</label><select class="form-input form-select" id="ectype"><option value="salary"${c.compType==='salary'?' selected':''}>Salary</option><option value="hourly"${c.compType==='hourly'?' selected':''}>Hourly</option></select></div><div class="form-group"><label class="form-label">Amount ($)</label><input type="number" class="form-input" id="ecomp" value="${c.compAmount||''}"/></div></div>
     <div class="form-row-3"><div class="form-group"><label class="form-label">City</label><input class="form-input" id="ecity" value="${c.city||''}"/></div><div class="form-group"><label class="form-label">State</label><input class="form-input" id="estate" value="${c.state||''}"/></div><div class="form-group"><label class="form-label">Country</label><input class="form-input" id="ecountry" value="${c.country||'US'}"/></div></div>
@@ -1311,7 +1295,7 @@ function showEditCandModal(id){
 async function saveEditCand(id){
   const c=DB.candidates.find(x=>x.id===id);
   c.role=document.getElementById('er').value;c.seniority=document.getElementById('esen').value;
-  c.specialty=document.getElementById('espec').value;c.source=document.getElementById('esrc').value;
+  c.dept=document.getElementById('edept').value;c.source=document.getElementById('esrc').value;
   c.candStatus=document.getElementById('estat').value;c.empType=document.getElementById('eetype').value;
   c.compType=document.getElementById('ectype').value;c.compAmount=document.getElementById('ecomp').value;
   c.city=document.getElementById('ecity').value;c.state=document.getElementById('estate').value;c.country=document.getElementById('ecountry').value;
@@ -1796,17 +1780,20 @@ function groupOffboardingCompletedByEmployee(){
 // ── INVENTORY ─────────────────────────────────────────────────────────────────
 function renderInventory(){
   const p=document.getElementById('page');const avail=DB.devices.filter(d=>d.status==='available').length;
-  p.innerHTML=`<div class="page-header"><div><div class="page-title">Device Inventory</div><div class="page-subtitle">${DB.devices.length} devices · ${avail} available</div></div><button class="btn btn-primary" onclick="showAddDeviceModal()">+ Add Device</button></div>
-  <div style="display:flex;gap:8px;margin-bottom:20px">
-    <button class="btn btn-secondary btn-sm" onclick="filterDevs('')">All (${DB.devices.length})</button>
-    <button class="btn btn-secondary btn-sm" onclick="filterDevs('available')">Available (${avail})</button>
-    <button class="btn btn-secondary btn-sm" onclick="filterDevs('assigned')">Assigned (${DB.devices.filter(d=>d.status==='assigned').length})</button>
-  </div>
-  <div class="device-grid" id="device-grid">${devCards(DB.devices)}</div>`;
+  var inactiveCount=DB.devices.filter(function(d){return d.status==='inactive';}).length;
+  var lostCount=DB.devices.filter(function(d){return d.status==='lost';}).length;
+  p.innerHTML='<div class="page-header"><div><div class="page-title">Device Inventory</div><div class="page-subtitle">'+DB.devices.length+' devices \u00b7 '+avail+' available</div></div><button class="btn btn-primary" onclick="showAddDeviceModal()">+ Add Device</button></div>'
+    +'<div style="display:flex;gap:8px;margin-bottom:20px">'
+    +'<button class="btn btn-secondary btn-sm" onclick="filterDevs(\'\')">All ('+DB.devices.length+')</button>'
+    +'<button class="btn btn-secondary btn-sm" onclick="filterDevs(\'available\')">Available ('+avail+')</button>'
+    +'<button class="btn btn-secondary btn-sm" onclick="filterDevs(\'assigned\')">Assigned ('+DB.devices.filter(function(d){return d.status==='assigned';}).length+')</button>'
+    +'<button class="btn btn-secondary btn-sm" onclick="filterDevs(\'inactive\')">Inactive ('+inactiveCount+')</button>'
+    +'<button class="btn btn-secondary btn-sm" onclick="filterDevs(\'lost\')">Lost ('+lostCount+')</button>'
+    +'</div>'
+    +'<div class="device-grid" id="device-grid">'+devCards(DB.devices)+'</div>';
 }
 
-const typeLabel={laptop:'Laptop',monitor:'Monitor',phone:'Phone',keyboard:'Keyboard',mouse:'Mouse'};
-function devCards(list){return list.map(d=>`<div class="device-card" onclick="showDevDetail('${d.id}')"><div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:8px">${typeLabel[d.type]||d.type||'Device'}</div><div style="font-weight:600;font-size:14px;margin-bottom:2px">${d.name}</div><div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:8px">${d.serial}</div><div style="display:flex;align-items:center;justify-content:space-between">${statusPill(d.status)}${d.assignedTo?`<span style="font-size:12px;color:var(--text2)">${getEmp(d.assignedTo).name.split(' ')[0]}</span>`:''}</div></div>`).join('');}
+function devCards(list){return list.map(d=>'<div class="device-card" onclick="showDevDetail(\''+d.id+'\')">'+'<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);margin-bottom:8px">'+(d.type||'Device')+'</div>'+'<div style="font-weight:600;font-size:14px;margin-bottom:2px">'+d.name+'</div>'+'<div style="font-size:11px;color:var(--text3);font-family:var(--mono);margin-bottom:8px">'+d.serial+'</div>'+'<div style="display:flex;align-items:center;justify-content:space-between">'+statusPill(d.status)+(d.assignedTo?'<span style="font-size:12px;color:var(--text2)">'+getEmp(d.assignedTo).name.split(' ')[0]+'</span>':'')+'</div></div>').join('');}
 function filterDevs(s){const list=s?DB.devices.filter(d=>d.status===s):DB.devices;const g=document.getElementById('device-grid');if(g)g.innerHTML=devCards(list);}
 
 function showDevDetail(id){
@@ -1817,7 +1804,7 @@ function showDevDetail(id){
   var orderNumRow=d.orderNumber?'<div class="detail-row"><span class="detail-key">Order #</span><div class="detail-val" style="display:flex;align-items:center"><span style="font-family:var(--mono);font-size:12px">'+d.orderNumber+'</span><button class="btn btn-sm btn-secondary" style="padding:2px 7px;font-size:11px;margin-left:6px" onclick="navigator.clipboard.writeText(\''+orderEsc+'\');showToast(\'Copied\')">Copy</button></div></div>':'';
   var histHtml=(function(){var hist=DB.assignments.filter(function(x){return x.deviceId===d.id&&x.status==='returned';});if(!hist.length)return'';var rows='<div class="detail-row" style="flex-direction:column;align-items:flex-start"><span class="detail-key" style="margin-bottom:6px">Assignment History</span>';hist.forEach(function(h2){var emp2=DB.employees.find(function(x){return x.id===h2.employeeId;})||{name:'Unknown'};rows+='<div style="display:flex;justify-content:space-between;width:100%;font-size:12px;padding:3px 0"><span>'+emp2.name+'</span><span style="color:var(--text3)">'+relTime(h2.assignedAt)+'</span></div>';});return rows+'</div>';})();
   var html='<div class="modal"><div class="modal-header"><div style="display:flex;align-items:center;gap:10px">'
-    +'<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:4px 8px;background:var(--surface2);border-radius:var(--radius)">'+(typeLabel[d.type]||d.type||'Device')+'</div>'
+    +'<div style="font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;color:var(--text3);padding:4px 8px;background:var(--surface2);border-radius:var(--radius)">'+(d.type||'Device')+'</div>'
     +'<div><div class="modal-title">'+d.name+'</div><div style="font-size:12px;color:var(--text2);font-family:var(--mono)">'+d.serial+'</div></div></div>'
     +'<button class="detail-close" onclick="closeModal()">\u00d7</button></div>'
     +'<div class="modal-body">'
@@ -1833,7 +1820,11 @@ function showDevDetail(id){
     +histHtml
     +'</div>'
     +'<div class="modal-footer"><button class="btn btn-sm btn-secondary" title="Edit" onclick="showEditDeviceModal(\''+d.id+'\')">'+PENCIL_BTN+'</button>'
-    +(d.status==='available'?'<button class="btn btn-primary" onclick="showAssignModal(\''+d.id+'\')">Assign to Employee</button>':'<button class="btn btn-danger" onclick="returnDevice(\''+d.id+'\')">Return Device</button>')
+    +(d.status==='available'
+      ?'<button class="btn btn-primary" onclick="showAssignModal(\''+d.id+'\')">Assign to Employee</button>'
+       +'<button class="btn btn-secondary btn-sm" onclick="setDeviceStatus(\''+d.id+'\',\'inactive\')">Mark inactive</button>'
+       +'<button class="btn btn-secondary btn-sm" onclick="setDeviceStatus(\''+d.id+'\',\'lost\')">Mark lost</button>'
+      :(d.status==='assigned'?'<button class="btn btn-danger" onclick="doReturnDevice(\''+d.id+'\')">Return Device</button>':''))
     +'<button class="btn btn-secondary" onclick="closeModal()">Close</button></div></div>';
   showModal(html);
 }
@@ -1841,6 +1832,7 @@ function showDevDetail(id){
 function showAssignModal(devId){
   closeModal();
   const d=DB.devices.find(x=>x.id===devId);
+  if(!d||d.status!=='available'){showToast('Device is not available');return;}
   // Show all employees; flag ones who already have a device of same type
   const empOptions=DB.employees.map(e=>{
     const hasType=DB.assignments.filter(a=>a.employeeId===e.id&&a.status==='active').some(a=>{const dv=getDev(a.deviceId);return dv.type===d.type;});
@@ -1858,20 +1850,30 @@ async function assignDev(devId){
   closeModal();showToast(`${d.name} → ${e.name}`);renderInventory();
 }
 
-function returnDevice(devId){
-  const d=DB.devices.find(x=>x.id===devId);
-  const a=DB.assignments.find(a=>a.deviceId===devId&&a.status==='active');
-  const empName=a?DB.employees.find(e=>e.id===a.employeeId)?.name||'employee':'employee';
-  showModal('<div class="modal"><div class="modal-header"><div class="modal-title">Return Device</div><button class="detail-close" onclick="closeModal()">×</button></div>'
-    +'<div class="modal-body"><p style="margin:0 0 8px">Return <strong>'+d.name+'</strong> from <strong>'+empName+'</strong>?</p>'
-    +'<p style="margin:0;color:var(--text3);font-size:13px">Device will be marked available and assignment closed.</p></div>'
-    +'<div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>'
-    +'<button class="btn btn-primary" onclick="doReturnDevice(\''+devId+'\')">Return Device</button></div></div>');
+function doReturnDevice(devId){
+  var d=DB.devices.find(function(x){return x.id===devId;});
+  var a=DB.assignments.find(function(x){return x.deviceId===devId&&x.status==='active';});
+  var empName=a?(DB.employees.find(function(e){return e.id===a.employeeId;})||{name:'employee'}).name:'employee';
+  showModal('<div class="modal"><div class="modal-header"><div class="modal-title">Return Device</div><button class="detail-close" onclick="closeModal()">\u00d7</button></div>'
+    +'<div class="modal-body"><p style="margin:0 0 16px">Return <strong>'+d.name+'</strong> from <strong>'+empName+'</strong>. Set new status:</p>'
+    +'<div style="display:flex;flex-direction:column;gap:8px">'
+    +'<button class="btn btn-secondary" style="text-align:left;justify-content:flex-start" onclick="finalizeReturn(\''+devId+'\',\'available\')">Available — back in stock</button>'
+    +'<button class="btn btn-secondary" style="text-align:left;justify-content:flex-start" onclick="finalizeReturn(\''+devId+'\',\'inactive\')">Inactive — retired or broken</button>'
+    +'<button class="btn btn-secondary" style="text-align:left;justify-content:flex-start;color:var(--red)" onclick="finalizeReturn(\''+devId+'\',\'lost\')">Lost — cannot locate</button>'
+    +'</div></div>'
+    +'<div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button></div></div>');
 }
-async function doReturnDevice(devId){
-  const d=DB.devices.find(x=>x.id===devId);d.status='available';d.assignedTo='';
-  const i=DB.assignments.findIndex(a=>a.deviceId===devId&&a.status==='active');if(i>=0)DB.assignments[i].status='returned';
+async function finalizeReturn(devId,status){
+  var d=DB.devices.find(function(x){return x.id===devId;});
+  d.status=status;d.assignedTo='';
+  var i=DB.assignments.findIndex(function(a){return a.deviceId===devId&&a.status==='active';});
+  if(i>=0)DB.assignments[i].status='returned';
   await save('devices');await save('assignments');closeModal();showToast('Device returned');renderInventory();
+}
+async function setDeviceStatus(devId,status){
+  var d=DB.devices.find(function(x){return x.id===devId;});
+  d.status=status;
+  await save('devices');closeModal();showToast('Device marked '+status);renderInventory();
 }
 
 function showAddDeviceModal(){
@@ -2076,7 +2078,7 @@ async function deleteTask(taskId,trackId){DB.tasks=DB.tasks.filter(x=>x.id!==tas
 function showAddTaskModal(trackId){
   showModal(`<div class="modal"><div class="modal-header"><div class="modal-title">Add Task</div><button class="detail-close" onclick="closeModal()">×</button></div><div class="modal-body">
     <div class="form-group"><label class="form-label">Task Name</label><input class="form-input" id="tname" placeholder="e.g. Complete I-9 paperwork"/></div>
-    <div class="form-row"><div class="form-group"><label class="form-label">Owner Role</label><select class="form-input form-select" id="towner">${getList('ownerRole').map(r=>'<option>'+r+'</option>').join('')}</select></div><div class="form-group"><label class="form-label">Due (days from start date)</label><input type="number" class="form-input" id="tdays" value="1" placeholder="1"/></div></div>
+    <div class="form-row"><div class="form-group"><label class="form-label">Owner</label><input class="form-input" id="towner" placeholder="e.g. HR, IT, Manager"/></div><div class="form-group"><label class="form-label">Due (days from start date)</label><input type="number" class="form-input" id="tdays" value="1" placeholder="1"/></div></div>
   </div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button><button class="btn btn-primary" onclick="addTask('${trackId}')">Add Task</button></div></div>`);
 }
 
@@ -2088,10 +2090,9 @@ async function addTask(trackId){
 
 function showEditTaskModal(taskId,trackId){
   var task=DB.tasks.find(function(x){return x.id===taskId;});if(!task)return;
-  var roleOpts='';getList('ownerRole').forEach(function(r){roleOpts+='<option'+(r===task.ownerRole?' selected':'')+'>'+r+'</option>';});
   showModal('<div class="modal"><div class="modal-header"><div class="modal-title">Edit Task</div><button class="detail-close" onclick="closeModal()">\u00d7</button></div><div class="modal-body">'
     +'<div class="form-group"><label class="form-label">Task Name</label><input class="form-input" id="etask-name" value="'+task.name.replace(/"/g,'&quot;')+'"/></div>'
-    +'<div class="form-row"><div class="form-group"><label class="form-label">Owner Role</label><select class="form-input form-select" id="etask-owner">'+roleOpts+'</select></div>'
+    +'<div class="form-row"><div class="form-group"><label class="form-label">Owner</label><input class="form-input" id="etask-owner" value="'+(task.ownerRole||'').replace(/"/g,'&quot;')+'" placeholder="e.g. HR, IT, Manager"/></div>'
     +'<div class="form-group"><label class="form-label">Due (days from start)</label><input type="number" class="form-input" id="etask-days" value="'+(task.dueDaysOffset||'0')+'"/></div></div>'
     +'</div><div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button>'
     +'<button class="btn btn-primary" onclick="saveEditTask(\''+taskId+'\',\''+trackId+'\')">Save</button></div></div>');
@@ -2155,7 +2156,7 @@ function renderReports(){
   var hired=DB.candidates.filter(function(c){return c.candStatus==='Hired';}).length;
   var active=DB.candidates.filter(function(c){return c.candStatus==='Active';}).length;
   var sources=[...new Set(DB.candidates.map(function(c){return c.source;}))].filter(Boolean);
-  var specs=[...new Set(DB.candidates.map(function(c){return c.specialty;}))].filter(Boolean);
+  var specs=[...new Set(DB.candidates.map(function(c){return c.dept;}))].filter(Boolean);
   var totalIv=DB.interviews.length;
   // Period stats
   var addedInPeriod=DB.candidates.filter(function(c){return c.addedAt&&c.addedAt.split('T')[0]>=reportFrom&&c.addedAt.split('T')[0]<=reportTo;}).length;
@@ -2168,7 +2169,7 @@ function renderReports(){
   var sourceRows='';
   sources.forEach(function(src){var n=DB.candidates.filter(function(c){return c.source===src;}).length;sourceRows+='<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--border)"><span style="font-size:13px">'+src+'</span><span style="font-weight:600">'+n+'</span></div>';});
   var specCards='';
-  specs.forEach(function(sp){var n=DB.candidates.filter(function(c){return c.specialty===sp;}).length;specCards+='<div style="background:var(--bg);border-radius:var(--radius);padding:10px 16px;text-align:center"><div style="font-size:20px;font-weight:600">'+n+'</div><div style="font-size:12px;color:var(--text2);margin-top:2px">'+sp+'</div></div>';});
+  specs.forEach(function(sp){var n=DB.candidates.filter(function(c){return c.dept===sp;}).length;specCards+='<div style="background:var(--bg);border-radius:var(--radius);padding:10px 16px;text-align:center"><div style="font-size:20px;font-weight:600">'+n+'</div><div style="font-size:12px;color:var(--text2);margin-top:2px">'+sp+'</div></div>';});
   p.innerHTML='<div class="page-header"><div><div class="page-title">Reports</div><div class="page-subtitle">Pipeline analytics</div></div></div>'
     +'<div class="card" style="margin-bottom:20px"><div style="font-size:13px;font-weight:500;margin-bottom:12px">Date Range</div>'
     +'<div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">'
@@ -2193,7 +2194,27 @@ function renderReports(){
     +'<div class="card"><div style="font-weight:600;font-size:13px;margin-bottom:14px">By Status</div>'+statusRows+'</div>'
     +'<div class="card"><div style="font-weight:600;font-size:13px;margin-bottom:14px">By Source</div>'+(sourceRows||'<div style="font-size:12px;color:var(--text3)">No data</div>')+'</div>'
     +'</div>'
-    +(specs.length?'<div class="card" style="margin-top:16px"><div style="font-weight:600;font-size:13px;margin-bottom:14px">By Specialty</div><div style="display:flex;flex-wrap:wrap;gap:10px">'+specCards+'</div></div>':'');
+    +(specs.length?'<div class="card" style="margin-top:16px"><div style="font-weight:600;font-size:13px;margin-bottom:14px">By Department</div><div style="display:flex;flex-wrap:wrap;gap:10px">'+specCards+'</div></div>':'')
+    +renderRecentActivity();
+}
+
+function renderRecentActivity(){
+  var activities=DB.activities.slice(0,50);
+  var typeColors={add:'var(--blue)',hire:'var(--green)',stage:'var(--amber)',offboard:'var(--red)',device:'var(--text3)',interview:'var(--accent)'};
+  var rows='';
+  activities.forEach(function(a){
+    var color=typeColors[a.type]||'var(--text3)';
+    rows+='<div style="display:flex;align-items:flex-start;gap:12px;padding:12px 0;border-bottom:1px solid var(--border)">'
+      +'<div style="width:8px;height:8px;border-radius:50%;background:'+color+';flex-shrink:0;margin-top:5px"></div>'
+      +'<div style="flex:1"><div style="font-size:13px;color:var(--text)">'+a.desc+'</div><div style="font-size:11px;color:var(--text3);margin-top:2px">'+relTime(a.at)+'</div></div>'
+      +'</div>';
+  });
+  if(!rows)rows='<div style="padding:24px 0;text-align:center;color:var(--text3);font-size:13px">No activity yet</div>';
+  return '<div class="card" style="margin-top:16px">'
+    +'<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">'
+    +'<div style="font-weight:600;font-size:13px">Recent activity</div>'
+    +(DB.activities.length?'<button class="btn btn-secondary btn-sm" onclick="clearActivity()">Clear all</button>':'')
+    +'</div>'+rows+'</div>';
 }
 
 function applyReportFilter(){
@@ -2231,7 +2252,7 @@ function clearActivity(){
 async function doClearActivity(){
   DB.activities=[];
   await save('activities');
-  closeModal();showToast('Cleared');renderActivity();
+  closeModal();showToast('Cleared');renderReports();
 }
 
 // ── SETTINGS ──────────────────────────────────────────────────────────────────
@@ -2247,7 +2268,7 @@ function settingsTab(el,tab){
   if(tab==='dropdowns')renderDropdownsTab();else renderDataTab();
 }
 
-const LIST_KEYS=[{key:'candStatus',label:'Candidate Status'},{key:'empType',label:'Employment Type'},{key:'source',label:'Source'},{key:'seniority',label:'Seniority'},{key:'specialty',label:'Specialty'},{key:'dept',label:'Department'},{key:'deviceType',label:'Device Type'},{key:'ownerRole',label:'Onboarding Task Owners'},{key:'interviewScore',label:'Interview Score'}];
+const LIST_KEYS=[{key:'candStatus',label:'Candidate Status'},{key:'empType',label:'Employment Type'},{key:'source',label:'Source'},{key:'seniority',label:'Seniority'},{key:'dept',label:'Department (candidates & employees)'},{key:'deviceType',label:'Device Type'},{key:'interviewScore',label:'Interview Score'}];
 
 function renderDropdownsTab(){
   const c=document.getElementById('settings-content');
@@ -2718,7 +2739,7 @@ CP_FLOWS['add-cand']={
     if(step===2){data.seniority=gv('cp-seniority');data.empType=gv('cp-empType');data.compType=gv('cp-compType');data.compAmount=gv('cp-compAmount');data.city=gv('cp-city');data.country=gv('cp-country');data.resumeLink=gv('cp-resume');}
   },
   save:async function(data){
-    var nc={id:uid(),name:(data.fn+' '+data.ln).trim(),role:data.role,seniority:data.seniority,specialty:'',source:data.source,stage:'sourced',candStatus:getList('candStatus')[0]||'Active',empType:data.empType,compType:data.compType,compAmount:data.compAmount,city:data.city,state:'',country:data.country||'US',client:'',resumeLink:data.resumeLink,addedAt:now(),updatedAt:now(),notes:''};
+    var nc={id:uid(),name:(data.fn+' '+data.ln).trim(),role:data.role,seniority:data.seniority,dept:'',source:data.source,stage:'sourced',candStatus:getList('candStatus')[0]||'Active',empType:data.empType,compType:data.compType,compAmount:data.compAmount,city:data.city,state:'',country:data.country||'US',client:'',resumeLink:data.resumeLink,addedAt:now(),updatedAt:now(),notes:''};
     DB.candidates.push(nc);
     DB.activities.unshift({id:uid(),type:'add',desc:nc.name+' added to pipeline',at:now()});
     await save('candidates');await save('activities');
@@ -3435,10 +3456,9 @@ CP_FLOWS['add-task']={
   successMsg:'Task added',
   renderStep:function(step,data){
     if(step===1){
-      var roleOpts='';getList('ownerRole').forEach(function(s){roleOpts+='<option'+(s===data.ownerRole?' selected':'')+'>'+s+'</option>';});
       return cpFormRow('Track',cpSelect('cp-trackId',cpTrackOpts(data.trackId)))+
         cpFormRow('Task name',cpInput('cp-taskName','e.g. IT equipment setup',data.taskName||''))+
-        cpFormRow('Owner role',cpSelect('cp-ownerRole',roleOpts))+
+        cpFormRow('Owner',cpInput('cp-ownerRole','e.g. HR, IT, Manager',data.ownerRole||''))+
         cpFormRow('Due (days from start)',cpInput('cp-dueDays','0',data.dueDays||'0','number'));
     }
     if(step===2){
@@ -3469,9 +3489,8 @@ CP_FLOWS['edit-task']={
     if(step===2){return cpFormRow('Task',cpSelect('cp-taskId',cpTrackTaskOpts(data.trackId,data.taskId)));}
     if(step===3){
       var t=DB.tasks.find(function(x){return x.id===data.taskId;})||{};
-      var roleOpts='';getList('ownerRole').forEach(function(s){roleOpts+='<option'+(s===(data.ownerRole||t.ownerRole)?' selected':'')+'>'+s+'</option>';});
       return cpFormRow('Task name',cpInput('cp-taskName','Name',data.taskName||t.name||''))+
-        cpFormRow('Owner role',cpSelect('cp-ownerRole',roleOpts))+
+        cpFormRow('Owner',cpInput('cp-ownerRole','e.g. HR, IT, Manager',data.ownerRole||t.ownerRole||''))+
         cpFormRow('Due (days from start)',cpInput('cp-dueDays','0',data.dueDays!=null?String(data.dueDays):String(t.dueDaysOffset||0),'number'));
     }
   },
