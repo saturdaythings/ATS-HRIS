@@ -778,7 +778,7 @@ function dashGroupCard(emp,navTarget){
     +'</div>';
 }
 function dashUpcomingIvRow(iv){
-  var dateStr=new Date(iv.date).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+  var dateStr=parseLocalDate(iv.date).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
   return'<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="selectedCandId=\''+iv.candId+'\';nav(\'hiring\')">'
     +'<div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;background:#E6F1FB;color:#0C447C">'+iv.initials+'</div>'
     +'<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+iv.candName+'</div>'
