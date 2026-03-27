@@ -605,6 +605,29 @@ const DEFAULT_LISTS=[
   {id:'ls44',listKey:'interviewScore',value:'Yes',order:'2'},
   {id:'ls45',listKey:'interviewScore',value:'No',order:'3'},
   {id:'ls46',listKey:'interviewScore',value:'Strong No',order:'4'},
+  {id:'ls47',listKey:'skill',value:'JavaScript',order:'1'},
+  {id:'ls48',listKey:'skill',value:'TypeScript',order:'2'},
+  {id:'ls49',listKey:'skill',value:'Python',order:'3'},
+  {id:'ls50',listKey:'skill',value:'Java',order:'4'},
+  {id:'ls51',listKey:'skill',value:'React',order:'5'},
+  {id:'ls52',listKey:'skill',value:'Node.js',order:'6'},
+  {id:'ls53',listKey:'skill',value:'SQL',order:'7'},
+  {id:'ls54',listKey:'skill',value:'AWS',order:'8'},
+  {id:'ls55',listKey:'skill',value:'Go',order:'9'},
+  {id:'ls56',listKey:'skill',value:'Swift',order:'10'},
+  {id:'ls57',listKey:'skill',value:'Kotlin',order:'11'},
+  {id:'ls58',listKey:'skill',value:'C#',order:'12'},
+  {id:'ls59',listKey:'skill',value:'PHP',order:'13'},
+  {id:'ls60',listKey:'skill',value:'Vue',order:'14'},
+  {id:'ls61',listKey:'skill',value:'Angular',order:'15'},
+  {id:'ls62',listKey:'skill',value:'Docker',order:'16'},
+  {id:'ls63',listKey:'skill',value:'Kubernetes',order:'17'},
+  {id:'ls64',listKey:'skill',value:'Product Management',order:'18'},
+  {id:'ls65',listKey:'skill',value:'UX Design',order:'19'},
+  {id:'ls66',listKey:'skill',value:'Data Analysis',order:'20'},
+  {id:'ls67',listKey:'skill',value:'Project Management',order:'21'},
+  {id:'ls68',listKey:'skill',value:'Figma',order:'22'},
+  {id:'ls69',listKey:'skill',value:'Salesforce',order:'23'},
 ];
 
 // SEED only provides default list values (dropdown options). All other tables start empty.
@@ -771,7 +794,7 @@ function dashGroupCard(emp,navTarget){
     +'</div>';
 }
 function dashUpcomingIvRow(iv){
-  var dateStr=new Date(iv.date).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+  var dateStr=new Date(iv.date).toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
   return'<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);cursor:pointer" onclick="selectedCandId=\''+iv.candId+'\';nav(\'hiring\')">'
     +'<div style="width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;background:#E6F1FB;color:#0C447C">'+iv.initials+'</div>'
     +'<div style="flex:1;min-width:0"><div style="font-size:12px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+iv.candName+'</div>'
@@ -1038,7 +1061,7 @@ function buildIvCards(ivs,candId){
   if(!ivs.length)return'<div style="font-size:12px;color:var(--text3);padding:8px 0">No interviews logged yet</div>';
   var past=ivs.filter(function(iv){return parseLocalDate(iv.date)<todayMidnight();}).sort(function(a,b){return parseLocalDate(b.date)-parseLocalDate(a.date);});
   var future=ivs.filter(function(iv){return parseLocalDate(iv.date)>=todayMidnight();}).sort(function(a,b){return parseLocalDate(a.date)-parseLocalDate(b.date);});
-  var sorted=past.concat(future);
+  var sorted=future.concat(past);
   return sorted.map(function(iv){
     var isFuture=parseLocalDate(iv.date)>=todayMidnight();
     var dateHtml=isFuture
@@ -2224,7 +2247,7 @@ function settingsTab(el,tab){
   if(tab==='dropdowns')renderDropdownsTab();else renderDataTab();
 }
 
-const LIST_KEYS=[{key:'candStatus',label:'Candidate Status'},{key:'empType',label:'Employment Type'},{key:'source',label:'Source'},{key:'seniority',label:'Seniority'},{key:'specialty',label:'Specialty'},{key:'dept',label:'Department'},{key:'deviceType',label:'Device Type'},{key:'ownerRole',label:'Task Owner Role'},{key:'interviewScore',label:'Interview Score'}];
+const LIST_KEYS=[{key:'candStatus',label:'Candidate Status'},{key:'empType',label:'Employment Type'},{key:'source',label:'Source'},{key:'seniority',label:'Seniority'},{key:'specialty',label:'Specialty'},{key:'dept',label:'Department'},{key:'deviceType',label:'Device Type'},{key:'ownerRole',label:'Onboarding Task Owners'},{key:'interviewScore',label:'Interview Score'}];
 
 function renderDropdownsTab(){
   const c=document.getElementById('settings-content');
