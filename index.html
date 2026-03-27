@@ -646,6 +646,8 @@ const daysAgo=d=>Math.floor((Date.now()-new Date(d))/86400000);
 const relTime=d=>{const n=daysAgo(d);if(n===0)return'Today';if(n===1)return'Yesterday';if(n<7)return n+'d ago';if(n<30)return Math.floor(n/7)+'w ago';return Math.floor(n/30)+'mo ago'};
 const now=()=>new Date().toISOString();
 const today=()=>new Date().toISOString().split('T')[0];
+function parseLocalDate(str){var p=str.split('-').map(Number);return new Date(p[0],p[1]-1,p[2]);}
+function todayMidnight(){var d=new Date();d.setHours(0,0,0,0);return d;}
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,5);
 const getEmp=id=>DB.employees.find(e=>e.id===id)||{name:'Unknown'};
 const getDev=id=>DB.devices.find(d=>d.id===id)||{name:'Unknown'};
@@ -808,25 +810,25 @@ function renderDashboard(){
   DB.interviews.forEach(function(iv){
     var cand=DB.candidates.find(function(c){return c.id===iv.candidateId;});
     if(!cand)return;
-    if(new Date(iv.date)>new Date()){
-      var allCandIvs=DB.interviews.filter(function(i){return i.candidateId===iv.candidateId;}).sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+    if(parseLocalDate(iv.date)>=todayMidnight()){
+      var allCandIvs=DB.interviews.filter(function(i){return i.candidateId===iv.candidateId;}).sort(function(a,b){return parseLocalDate(a.date)-parseLocalDate(b.date);});
       var ivNum=allCandIvs.findIndex(function(i){return i.id===iv.id;})+1;
       upcomingIvs.push({candId:cand.id,candName:cand.name,role:cand.role,interviewer:iv.interviewers||'',date:iv.date,num:ivNum,initials:(cand.name.match(/\b\w/g)||[]).join('')});
     }
   });
-  upcomingIvs.sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+  upcomingIvs.sort(function(a,b){return parseLocalDate(a.date)-parseLocalDate(b.date);});
   // Recent interviews (past, descending)
   var recentIvs=[];
   DB.interviews.forEach(function(iv){
     var cand=DB.candidates.find(function(c){return c.id===iv.candidateId;});
     if(!cand)return;
-    if(new Date(iv.date)<=new Date()){
-      var allCandIvs=DB.interviews.filter(function(i){return i.candidateId===iv.candidateId;}).sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+    if(parseLocalDate(iv.date)<todayMidnight()){
+      var allCandIvs=DB.interviews.filter(function(i){return i.candidateId===iv.candidateId;}).sort(function(a,b){return parseLocalDate(a.date)-parseLocalDate(b.date);});
       var ivNum=allCandIvs.findIndex(function(i){return i.id===iv.id;})+1;
       recentIvs.push({candId:cand.id,candName:cand.name,role:cand.role,interviewer:iv.interviewers||'',date:iv.date,num:ivNum,stage:cand.stage,initials:(cand.name.match(/\b\w/g)||[]).join('')});
     }
   });
-  recentIvs.sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  recentIvs.sort(function(a,b){return parseLocalDate(b.date)-parseLocalDate(a.date);});
   // Upcoming start dates
   var upcomingStarts=DB.employees.filter(function(e){return e.startDate&&new Date(e.startDate)>new Date();}).map(function(e){
     var daysAway=Math.ceil((new Date(e.startDate)-new Date())/86400000);
@@ -1034,11 +1036,11 @@ var PENCIL_BTN='<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stro
 
 function buildIvCards(ivs,candId){
   if(!ivs.length)return'<div style="font-size:12px;color:var(--text3);padding:8px 0">No interviews logged yet</div>';
-  var past=ivs.filter(function(iv){return new Date(iv.date)<=new Date();}).sort(function(a,b){return new Date(b.date)-new Date(a.date);});
-  var future=ivs.filter(function(iv){return new Date(iv.date)>new Date();}).sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+  var past=ivs.filter(function(iv){return parseLocalDate(iv.date)<todayMidnight();}).sort(function(a,b){return parseLocalDate(b.date)-parseLocalDate(a.date);});
+  var future=ivs.filter(function(iv){return parseLocalDate(iv.date)>=todayMidnight();}).sort(function(a,b){return parseLocalDate(a.date)-parseLocalDate(b.date);});
   var sorted=past.concat(future);
   return sorted.map(function(iv){
-    var isFuture=new Date(iv.date)>new Date();
+    var isFuture=parseLocalDate(iv.date)>=todayMidnight();
     var dateHtml=isFuture
       ?'<div style="font-weight:500;font-size:13px;color:#185FA5">'+iv.date+' <span style="font-size:11px;font-weight:400">Upcoming</span></div>'
       :'<div style="font-weight:500;font-size:13px">'+iv.date+'</div>';
