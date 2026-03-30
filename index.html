@@ -1863,12 +1863,16 @@ function doReturnDevice(devId){
     +'</div></div>'
     +'<div class="modal-footer"><button class="btn btn-secondary" onclick="closeModal()">Cancel</button></div></div>');
 }
+function refreshDeviceViews(){
+  if(document.getElementById('assign-tbody'))renderAssignments();
+  else renderInventory();
+}
 async function finalizeReturn(devId,status){
   var d=DB.devices.find(function(x){return x.id===devId;});
   d.status=status;d.assignedTo='';
   var i=DB.assignments.findIndex(function(a){return a.deviceId===devId&&a.status==='active';});
   if(i>=0)DB.assignments[i].status='returned';
-  await save('devices');await save('assignments');closeModal();showToast('Device returned');renderInventory();
+  await save('devices');await save('assignments');closeModal();showToast('Device returned');refreshDeviceViews();
 }
 async function setDeviceStatus(devId,status){
   var d=DB.devices.find(function(x){return x.id===devId;});
@@ -2021,11 +2025,11 @@ function filterAssignments(q){
   var ql=(q||'').toLowerCase();
   if(ql){active=active.filter(function(a){var e=getEmp(a.employeeId),d=getDev(a.deviceId);return e.name.toLowerCase().includes(ql)||d.name.toLowerCase().includes(ql);});}
   var tbody=document.getElementById('assign-tbody');
-  if(tbody){tbody.innerHTML=active.map(function(a){var e=getEmp(a.employeeId),d=getDev(a.deviceId);return'<tr><td>'+personCell(e.name)+'</td><td>'+d.name+'</td><td style="font-family:var(--mono);font-size:12px">'+(d.serial||'—')+'</td><td>'+relTime(a.assignedAt)+'</td><td>'+statusPill(a.status)+'</td><td><button class="btn btn-secondary btn-sm" onclick="returnDevice(\''+d.id+'\')">Return</button></td></tr>';}).join('');}
+  if(tbody){tbody.innerHTML=active.map(function(a){var e=getEmp(a.employeeId),d=getDev(a.deviceId);return'<tr><td>'+personCell(e.name)+'</td><td>'+d.name+'</td><td style="font-family:var(--mono);font-size:12px">'+(d.serial||'—')+'</td><td>'+relTime(a.assignedAt)+'</td><td>'+statusPill(a.status)+'</td><td><button class="btn btn-secondary btn-sm" onclick="doReturnDevice(\''+d.id+'\')">Return</button></td></tr>';}).join('');}
 }
 function renderAssignments(){
   var active=DB.assignments.filter(function(a){return a.status==='active';});
-  var rows=active.map(function(a){var e=getEmp(a.employeeId),d=getDev(a.deviceId);return'<tr><td>'+personCell(e.name)+'</td><td>'+d.name+'</td><td style="font-family:var(--mono);font-size:12px">'+(d.serial||'—')+'</td><td>'+relTime(a.assignedAt)+'</td><td>'+statusPill(a.status)+'</td><td><button class="btn btn-secondary btn-sm" onclick="returnDevice(\''+d.id+'\')">Return</button></td></tr>';}).join('');
+  var rows=active.map(function(a){var e=getEmp(a.employeeId),d=getDev(a.deviceId);return'<tr><td>'+personCell(e.name)+'</td><td>'+d.name+'</td><td style="font-family:var(--mono);font-size:12px">'+(d.serial||'—')+'</td><td>'+relTime(a.assignedAt)+'</td><td>'+statusPill(a.status)+'</td><td><button class="btn btn-secondary btn-sm" onclick="doReturnDevice(\''+d.id+'\')">Return</button></td></tr>';}).join('');
   document.getElementById('page').innerHTML='<div class="page-header"><div><div class="page-title">Assignments</div><div class="page-subtitle">'+active.length+' active</div></div></div>'
     +'<div class="filter-search" style="margin-bottom:14px;max-width:300px"><svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg><input placeholder="Filter by employee or device..." oninput="filterAssignments(this.value)" value="'+_assignmentFilter+'"/></div>'
     +'<div class="table-wrap"><table><thead><tr><th>Employee</th><th>Device</th><th>Serial</th><th>Assigned</th><th>Status</th><th></th></tr></thead>'
